@@ -35,6 +35,15 @@ git remote add origin https://github.com/pawbandhan-tech/Pawbandhan.git
 git push -u origin main
 ```
 
+**Note:** If you lack permission on the `pawbandhan-tech` org, create the empty repo there (GitHub → New repository), then:
+
+```bash
+git remote set-url origin https://github.com/pawbandhan-tech/Pawbandhan.git
+git push -u origin main
+```
+
+Current push (if created under your user): https://github.com/vdgogatememorialfoundation/Pawbandhan — transfer to the org via **Settings → Transfer ownership**.
+
 ## Deploy API + Neon (Render)
 
 1. Push this repo to **GitHub** (`pawbandhan-tech/Pawbandhan`).
