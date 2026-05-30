@@ -512,4 +512,12 @@ body.pb-customer .leader-banner {
     .cd-actions { grid-template-columns: 1fr; }
     .cd-header-inner { padding: 12px 16px; }
     .cd-btn-logout span { display: none; }
+    .cd-main { padding: 20px 16px 100px; }
+}
+
+@media (max-width: 480px) {
+    .cd-welcome p { font-size: 0.9rem; }
+    .cd-stat-pill { padding: 12px 10px; }
+    .cd-stat-pill strong { font-size: 1.1rem; }
+    .pb-notif-drawer { width: 100%; max-width: 100%; }
 }

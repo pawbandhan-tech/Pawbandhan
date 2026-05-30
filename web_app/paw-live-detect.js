@@ -16,17 +16,55 @@
     };
 
     var MIN_SCORE = 0.30;
-    var DETECT_INTERVAL_MS = 350;
     var LOCK_FRAMES = 1;
 
     var model = null;
     var modelLoading = null;
     var active = false;
+    var activeState = null;
     var timer = null;
     var busy = false;
     var lockHits = 0;
     var locked = null;
     var lastPredictions = [];
+    var resizeBound = false;
+
+    function isMobileViewport() {
+        return window.matchMedia('(max-width: 768px)').matches ||
+            ((navigator.maxTouchPoints || 0) > 0 && window.innerWidth < 900);
+    }
+
+    function detectIntervalMs() {
+        return isMobileViewport() ? 480 : 350;
+    }
+
+    function onViewportChange() {
+        if (!active || !activeState) return;
+        syncOverlaySize(activeState.video, activeState.overlay);
+        if (activeState.video && activeState.overlay && lastPredictions.length) {
+            drawOverlay(activeState.video, activeState.overlay, lastPredictions);
+        }
+    }
+
+    function bindViewportEvents() {
+        if (resizeBound) return;
+        resizeBound = true;
+        window.addEventListener('resize', onViewportChange);
+        window.addEventListener('orientationchange', onViewportChange);
+        if (window.visualViewport) {
+            window.visualViewport.addEventListener('resize', onViewportChange);
+        }
+    }
+
+    function unbindViewportEvents() {
+        if (!resizeBound) return;
+        resizeBound = false;
+        window.removeEventListener('resize', onViewportChange);
+        window.removeEventListener('orientationchange', onViewportChange);
+        if (window.visualViewport) {
+            window.visualViewport.removeEventListener('resize', onViewportChange);
+        }
+    }
 
     function animalPredictions(preds) {
         return (preds || []).filter(function (p) {
@@ -142,7 +180,7 @@
     function tick(state) {
         if (!active || !state.video) return;
         if (busy || !model) {
-            timer = setTimeout(function () { tick(state); }, DETECT_INTERVAL_MS);
+            timer = setTimeout(function () { tick(state); }, detectIntervalMs());
             return;
         }
         busy = true;
@@ -168,7 +206,7 @@
             .catch(function () { /* skip frame */ })
             .finally(function () {
                 busy = false;
-                if (active) timer = setTimeout(function () { tick(state); }, DETECT_INTERVAL_MS);
+                if (active) timer = setTimeout(function () { tick(state); }, detectIntervalMs());
             });
     }
 
@@ -179,17 +217,21 @@
         lockHits = 0;
         locked = null;
         lastPredictions = [];
-        var state = {
+        activeState = {
             video: opts.video,
             overlay: opts.overlay || null,
             feedEl: opts.feedEl || null,
             onUpdate: opts.onUpdate || null
         };
-        tick(state);
+        bindViewportEvents();
+        onViewportChange();
+        tick(activeState);
     }
 
     function stop() {
         active = false;
+        activeState = null;
+        unbindViewportEvents();
         if (timer) {
             clearTimeout(timer);
             timer = null;
@@ -239,6 +281,8 @@
         labelFor: labelFor,
         clearOverlay: clearOverlay,
         snapshotToCanvas: snapshotToCanvas,
-        isActive: function () { return active; }
+        isActive: function () { return active; },
+        isMobileViewport: isMobileViewport,
+        refreshOverlay: onViewportChange
     };
 })(window);
