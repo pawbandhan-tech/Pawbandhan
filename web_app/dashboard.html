@@ -7,6 +7,7 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="shared-portal.css">
+    <link rel="stylesheet" href="portal-shell.css">
     <link rel="stylesheet" href="customer-dashboard.css">
     <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs"></script>
     <script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/coco-ssd"></script>
@@ -716,6 +717,7 @@
         <button type="button" onclick="toggleNotifDrawer()"><i class="fas fa-bell"></i> Alerts</button>
     </nav>
 
+    <script src="config.js"></script>
     <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
     <script src="paw-api.js?v=1"></script>
     <script src="paw-tracker.js?v=3"></script>
@@ -732,13 +734,15 @@
             if (typeof initCustomerPortal === 'function') initCustomerPortal(uid);
         }
 
-        const portalUid = sessionStorage.getItem('customer_uid');
+        const portalUid = sessionStorage.getItem('customer_uid') || sessionStorage.getItem('portal_customer_uid');
+        const portalName = sessionStorage.getItem('portal_customer_name');
         if (sessionStorage.getItem('demo_session') === 'true' && !portalUid) {
             setUserName('John Doe');
             bootCustomerApp('demo');
         } else if (portalUid) {
+            if (portalName) setUserName(portalName);
             bootCustomerApp(portalUid);
-            fetch('/api/customers/' + portalUid + '/profile').then(r => r.json()).then(p => setUserName(p.name || 'Customer')).catch(() => setUserName('Customer'));
+            fetch('/api/customers/' + portalUid + '/profile').then(r => r.json()).then(p => setUserName(p.name || portalName || 'Customer')).catch(() => { if (!portalName) setUserName('Customer'); });
         } else {
             auth.onAuthStateChanged(user => {
                 if (user) {

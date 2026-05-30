@@ -63,10 +63,32 @@
 
         async function handleLogin(e) {
             e.preventDefault();
+            const email = document.getElementById('loginEmail').value.trim();
+            const password = document.getElementById('loginPassword').value;
             try {
-                await auth.signInWithEmailAndPassword(document.getElementById('loginEmail').value, document.getElementById('loginPassword').value);
+                await auth.signInWithEmailAndPassword(email, password);
+                sessionStorage.setItem('customer_uid', auth.currentUser.uid);
+                sessionStorage.removeItem('portal_customer_uid');
                 window.location.href = 'dashboard.html';
-            } catch (err) { alert(err.message); }
+            } catch (err) {
+                try {
+                    const res = await fetch(PAW_SITE.api('/api/customers/portal-login'), {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ email, accessCode: password })
+                    });
+                    const data = await res.json();
+                    if (res.ok && data.uid) {
+                        sessionStorage.setItem('customer_uid', data.uid);
+                        sessionStorage.setItem('portal_customer_name', data.name || 'Customer');
+                        window.location.href = 'dashboard.html';
+                        return false;
+                    }
+                    alert(data.error || err.message);
+                } catch (e2) {
+                    alert(err.message || 'Sign in failed');
+                }
+            }
             return false;
         }
 

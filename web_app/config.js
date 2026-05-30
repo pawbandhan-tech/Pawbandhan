@@ -21,4 +21,18 @@
             return data;
         }
     };
+
+    /* Route /api/* to Render on Vercel static hosting */
+    if (!window.__pawFetchPatched) {
+        window.__pawFetchPatched = true;
+        const nativeFetch = window.fetch.bind(window);
+        window.fetch = function (input, init) {
+            let url = typeof input === 'string' ? input : (input && input.url) || '';
+            if (url.startsWith('/') && !url.startsWith('//') && url.indexOf('/api/') === 0) {
+                url = (window.PAW_API_BASE || '') + url;
+                return nativeFetch(url, init);
+            }
+            return nativeFetch(input, init);
+        };
+    }
 })();

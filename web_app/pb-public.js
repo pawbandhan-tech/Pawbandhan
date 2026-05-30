@@ -31,6 +31,38 @@
         return x >= 1000 ? (x / 1000).toFixed(1).replace(/\.0$/, '') + 'k' : String(x);
     }
 
+    function animateCounter(el, target, duration) {
+        if (!el || isNaN(target)) return;
+        var start = 0;
+        var startTime = null;
+        var card = el.closest('.pb-stat');
+        function step(ts) {
+            if (!startTime) startTime = ts;
+            var p = Math.min((ts - startTime) / duration, 1);
+            var eased = 1 - Math.pow(1 - p, 3);
+            el.textContent = fmt(Math.round(start + (target - start) * eased));
+            if (p < 1) requestAnimationFrame(step);
+            else if (card) card.classList.add('pb-stat-animated');
+        }
+        requestAnimationFrame(step);
+    }
+
+    function initTrackerDemo() {
+        var steps = document.querySelectorAll('.pb-track-step');
+        if (!steps.length) return;
+        var idx = 2;
+        setInterval(function () {
+            steps.forEach(function (s, i) {
+                s.classList.remove('active');
+                if (i < idx) s.classList.add('done');
+                else s.classList.remove('done');
+            });
+            if (steps[idx]) steps[idx].classList.add('active');
+            idx = (idx + 1) % steps.length;
+            if (idx === 0) idx = 1;
+        }, 2800);
+    }
+
     async function loadCms() {
         if (!window.PAW_SITE) {
             loadStories();
@@ -38,6 +70,12 @@
         }
         try {
             var config = await PAW_SITE.fetchJson('/api/site-config');
+            if (config.hero_title) {
+                var h1 = document.querySelector('.pb-hero h1');
+                if (h1 && config.hero_title.indexOf('paw') === -1) {
+                    /* keep creative headline unless CMS has custom full title */
+                }
+            }
             if (config.hero_subtitle) {
                 var sub = document.getElementById('heroSubtitle');
                 if (sub) sub.textContent = config.hero_subtitle;
@@ -56,15 +94,27 @@
             var map = {
                 statRescues: stats.totalRescues,
                 statNgos: stats.totalNGOs,
-                statHeroes: stats.totalRiders || stats.totalVolunteers,
+                statHeroes: stats.totalRiders,
                 statVets: stats.totalDoctors
             };
             Object.keys(map).forEach(function (id) {
                 var el = document.getElementById(id);
-                if (el) el.textContent = fmt(map[id]);
+                if (el) animateCounter(el, Number(map[id]) || 0, 1400);
             });
             var hr = document.getElementById('heroRescues');
-            if (hr && stats.totalRescues) hr.textContent = fmt(stats.totalRescues) + '+ rescues';
+            if (hr && stats.totalRescues) {
+                var t = Number(stats.totalRescues) || 0;
+                var start = 0;
+                var startTime = null;
+                function heroStep(ts) {
+                    if (!startTime) startTime = ts;
+                    var p = Math.min((ts - startTime) / 1200, 1);
+                    var eased = 1 - Math.pow(1 - p, 3);
+                    hr.textContent = fmt(Math.round(start + (t - start) * eased)) + '+ rescues';
+                    if (p < 1) requestAnimationFrame(heroStep);
+                }
+                requestAnimationFrame(heroStep);
+            }
         } catch (e) {
             ['statRescues', 'statNgos', 'statHeroes', 'statVets'].forEach(function (id) {
                 var el = document.getElementById(id);
@@ -111,7 +161,7 @@
     function storyCard(s, featured) {
         var img = s.image_url || 'https://images.unsplash.com/photo-1548199973-03cce0fe87b9?w=600&q=80';
         var tag = s.tag || 'Rescue story';
-        var meta = s.meta || '';
+        var meta = s.meta || s.location || '';
         var desc = (s.description || '').slice(0, featured ? 220 : 130);
         var cls = featured ? 'pb-story pb-story-featured' : 'pb-story';
         return '<article class="' + cls + '">' +
@@ -151,8 +201,9 @@
                         title: s.title,
                         description: s.description,
                         image_url: s.image_url,
+                        location: s.location,
                         tag: i === 0 ? 'Featured' : 'Recovery',
-                        meta: ''
+                        meta: s.location || ''
                     };
                 });
                 renderStories(mapped);
@@ -167,6 +218,7 @@
     document.addEventListener('DOMContentLoaded', function () {
         initNav();
         initReveal();
+        initTrackerDemo();
         loadCms();
     });
 })();

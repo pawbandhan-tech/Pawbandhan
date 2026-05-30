@@ -7,7 +7,10 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;600;700&family=Fraunces:wght@600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="portal-shell.css">
+    <script src="config.js"></script>
+    <script src="paw-api.js"></script>
     <style>
         :root {
             --primary: #10B981;
@@ -282,12 +285,12 @@
         @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
     </style>
 </head>
-<body>
+<body class="pp-shell">
 
     <aside>
         <div class="logo"><i class="fas fa-stethoscope"></i> PawBandhan</div>
         <ul class="nav-links">
-            <li><a href="#" class="nav-btn active" onclick="switchTab(event, 'tab-rescue'); loadDoctorCases();"><i class="fas fa-truck-medical"></i> Rescue Cases</a></li>
+            <li><a href="#" class="nav-btn active" onclick="switchTab(event, 'tab-rescue')"><i class="fas fa-truck-medical"></i> Rescue Cases</a></li>
             <li><a href="#" class="nav-btn" onclick="switchTab(event, 'tab-appointments')"><i class="fas fa-calendar-check"></i> Appointments</a></li>
             <li><a href="#" class="nav-btn" onclick="switchTab(event, 'tab-records')"><i class="fas fa-notes-medical"></i> Clinical Records</a></li>
             <li><a href="#" class="nav-btn" onclick="switchTab(event, 'tab-tele')"><i class="fas fa-video"></i> Tele-Consult</a></li>
@@ -318,7 +321,7 @@
                         <i class="fas fa-stethoscope" style="font-size: 3rem; color: #CBD5E1; margin-bottom: 20px;"></i>
                         <h3 style="font-weight: 800; margin-bottom: 15px;">Clinical Board Enrollment Required</h3>
                         <p style="color: var(--text-dim); margin-bottom: 30px;">Please upload your veterinary license and capture real-time registry photos of your clinic environment.</p>
-                        <button class="btn-action" onclick="window.location.href='/doctor_onboarding.html'">Start Onboarding Journey</button>
+                        <button class="btn-action" onclick="window.location.href='doctor_onboarding.html'">Start Onboarding Journey</button>
                     </div>
                     <div id="kycSubmittedMsg" style="display: none;">
                         <i class="fas fa-microchip" style="font-size: 3rem; color: var(--primary); margin-bottom: 20px;"></i>
@@ -404,8 +407,8 @@
 
         <div class="stats-grid">
             <div class="stat-card">
-                <span class="label">Daily Patients</span>
-                <span class="val">14</span>
+                <span class="label">Rescue cases</span>
+                <span class="val" id="docStatCases">—</span>
             </div>
             <div class="stat-card">
                 <span class="label">Pending Reports</span>
@@ -497,124 +500,39 @@
 
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+    <script src="doctor-portal.js?v=1"></script>
     <script>
         const firebaseConfig = { apiKey: 'AIzaSyDRuOTikCSLCdb73oYSnrnhoEiKbv-6Ozc', authDomain: 'pawbandhan-29f84.firebaseapp.com', projectId: 'pawbandhan-29f84', storageBucket: 'pawbandhan-29f84.firebasestorage.app', messagingSenderId: '378867729624', appId: '1:378867729624:web:2371a816457fdcfe2303ad' };
         firebase.initializeApp(firebaseConfig);
         const auth = firebase.auth();
 
         function switchTab(event, tabId) {
-            if(event) event.preventDefault();
-            document.querySelectorAll('.nav-btn').forEach(btn => btn.classList.remove('active'));
-            if(event) event.currentTarget.classList.add('active');
-            document.querySelectorAll('.tab-content').forEach(tab => tab.classList.remove('active'));
+            if (event) event.preventDefault();
+            document.querySelectorAll('.nav-btn').forEach((btn) => btn.classList.remove('active'));
+            if (event && event.currentTarget) event.currentTarget.classList.add('active');
+            document.querySelectorAll('.tab-content').forEach((tab) => tab.classList.remove('active'));
             document.getElementById(tabId).classList.add('active');
+            if (tabId === 'tab-rescue' && window.DoctorPortal) DoctorPortal.loadDoctorCases();
         }
 
-        const ctx = document.getElementById('medChart').getContext('2d');
-        new Chart(ctx, {
-            type: 'bar',
-            data: {
-                labels: ['Week 1', 'Week 2', 'Week 3', 'Week 4'],
-                datasets: [{
-                    label: 'Patients',
-                    data: [42, 58, 35, 72],
-                    backgroundColor: '#10B981',
-                    borderRadius: 12,
-                    barThickness: 20
-                }]
-            },
-            options: { plugins: { legend: { display: false } }, scales: { y: { display: false }, x: { grid: { display: false } } } }
-        });
-
-        auth.onAuthStateChanged(async (user) => {
-            const isDemo = sessionStorage.getItem('demo_session') === 'true';
-            if (!user && !isDemo) { window.location.href = 'index.html'; return; }
-            
-            const uid = user ? user.uid : 'demo-doc-id';
-            
-            try {
-                const docRes = await fetch(`/api/admin/application-details/doctor/${uid}`);
-                if(docRes.ok) {
-                    const docData = await docRes.json();
-                    if(docData.name) document.getElementById('doctorInfo').innerText = `Dr. ${docData.name} • ${docData.specialization || 'Veterinarian'}`;
-                    
-                    if(docData.status === 'pending') {
-                        document.getElementById('verificationOverlay').style.display = 'flex';
-                        if(docData.kyc_data) {
-                            document.getElementById('kycSubmittedMsg').style.display = 'block';
-                            document.getElementById('kycPendingMsg').style.display = 'none';
-                            updateTracker('pending', true);
-                        } else {
-                            updateTracker('pending', false);
-                        }
-                    } else if(docData.status === 'active') {
-                        document.getElementById('verificationOverlay').style.display = 'none';
-                    }
-                } else {
-                    document.getElementById('verificationOverlay').style.display = 'flex';
-                }
-            } catch(e) {
-                console.error(e);
-            }
-        });
-
-        function updateTracker(status, submitted) {
-            const progress = document.getElementById('statusProgress');
-            if(submitted) {
-                progress.style.width = '33%';
-                document.getElementById('stepKyc').classList.add('completed');
-                progress.style.width = '66%';
-                document.getElementById('stepReview').classList.add('active');
-            }
-            if(status === 'active') {
-                progress.style.width = '100%';
-                document.getElementById('stepReview').classList.add('completed');
-                document.getElementById('stepApproved').classList.add('completed');
-            }
+        const medChartEl = document.getElementById('medChart');
+        if (medChartEl && typeof Chart !== 'undefined') {
+            new Chart(medChartEl.getContext('2d'), {
+                type: 'bar',
+                data: {
+                    labels: ['Assigned', 'In treatment', 'Completed', 'Pending'],
+                    datasets: [{ label: 'Cases', data: [0, 0, 0, 0], backgroundColor: '#10B981', borderRadius: 12, barThickness: 20 }]
+                },
+                options: { plugins: { legend: { display: false } }, scales: { y: { display: false }, x: { grid: { display: false } } } }
+            });
         }
 
-        let doctorUid = null;
-        auth.onAuthStateChanged(async u => {
-            if (!u) return;
-            doctorUid = u.uid;
-            if (document.getElementById('tab-rescue').classList.contains('active')) loadDoctorCases();
-        });
-        async function loadDoctorCases() {
-            if (!doctorUid) return;
-            const cases = await (await fetch('/api/doctors/' + doctorUid + '/cases')).json();
-            const el = document.getElementById('doctorCasesList');
-            if (!cases.length) { el.innerHTML = '<p>No rescue cases assigned.</p>'; return; }
-            el.innerHTML = cases.map(c => `
-                <div style="border:1px solid #e2e8f0;border-radius:16px;padding:16px;margin-bottom:12px;">
-                    <strong>${c.incident_code} • ${c.animal_type}</strong><br>
-                    <small>${c.status_label} • ${c.injury_type || ''}</small>
-                    ${c.workflow_status === 'doctor_assigned' ? `<button class="btn-action" style="margin-top:10px;" onclick="doctorApprove('${c.incident_code}')">Approve case</button>` : ''}
-                    ${c.workflow_status === 'handover_otp_pending' ? `<p style="margin-top:8px;">Handover OTP: <b id="otp_${c.incident_code}">...</b> <button onclick="showOtp('${c.incident_code}')">Show OTP</button></p>` : ''}
-                    ${c.workflow_status === 'at_doctor' || c.workflow_status === 'doctor_approved' ? `<button class="btn-action" style="margin-top:8px;" onclick="startTreatment('${c.incident_code}')">Start treatment</button>` : ''}
-                    ${c.workflow_status === 'treatment_in_progress' ? `<textarea id="tr_${c.incident_code}" placeholder="Treatment report" style="width:100%;margin-top:8px;padding:10px;"></textarea>
-                    <button class="btn-action" onclick="completeTreatment('${c.incident_code}')">Complete treatment</button>` : ''}
-                    ${(c.photos||[]).map(p => `<img src="${p.file_url}" style="width:60px;height:60px;object-fit:cover;border-radius:8px;margin:4px;">`).join('')}
-                </div>`).join('');
-        }
-        async function doctorApprove(code) {
-            await fetch('/api/workflow/' + code + '/doctor-approve', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ doctorUid }) });
-            loadDoctorCases();
-        }
-        async function showOtp(code) {
-            const d = await (await fetch('/api/workflow/' + code + '/handover-otp')).json();
-            document.getElementById('otp_' + code).innerText = d.otp || 'N/A';
-        }
-        async function startTreatment(code) {
-            await fetch('/api/workflow/' + code + '/treatment-start', { method: 'POST' });
-            loadDoctorCases();
-        }
-        async function completeTreatment(code) {
-            const report = document.getElementById('tr_' + code).value;
-            await fetch('/api/workflow/' + code + '/treatment-complete', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ treatmentReport: report }) });
-            loadDoctorCases();
-        }
+        DoctorPortal.init(auth);
 
-        function logout() { sessionStorage.removeItem('demo_session'); auth.signOut().then(() => window.location.href = 'index.html'); }
+        function logout() {
+            sessionStorage.removeItem('demo_session');
+            auth.signOut().then(() => { window.location.href = 'doctor_auth.html'; });
+        }
     </script>
 </body>
 </html>
