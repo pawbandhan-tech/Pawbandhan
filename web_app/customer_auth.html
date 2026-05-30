@@ -3,67 +3,48 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Customer Portal | PawBandhan</title>
-    <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <title>Customer sign in | PawBandhan</title>
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;600;700;800&family=Fraunces:wght@600&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link rel="stylesheet" href="style.css">
-    <link rel="stylesheet" href="shared-portal.css">
-    <style>
-        body { background: #FFF8F0; display: flex; align-items: center; justify-content: center; min-height: 100vh; padding: 20px; }
-        .auth-card-centered { background: #fff; width: 100%; max-width: 480px; padding: 48px 40px; border-radius: 32px; box-shadow: 0 20px 60px rgba(45, 74, 62, 0.12); border: 1px solid rgba(45, 74, 62, 0.08); }
-        .auth-logo { font-family: 'Fredoka', sans-serif; font-size: 1.75rem; font-weight: 700; color: #2D4A3E; margin-bottom: 32px; display: block; text-decoration: none; }
-        .auth-logo i { color: #E86B3A; }
-        .auth-form { display: none; text-align: left; }
-        .auth-form.active { display: block; animation: fadeIn 0.4s ease; }
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
-        .demo-box { margin-top: 24px; padding: 16px; background: #EEF6F0; border-radius: 16px; border: 1px dashed #5BA87C; font-size: 0.85rem; color: #2D4A3E; }
-    </style>
+    <link rel="stylesheet" href="pb-public.css">
+    <script src="config.js"></script>
 </head>
-<body class="pb-portal">
+<body class="pb-public pb-auth-page">
 
-    <div class="auth-card-centered">
-        <a href="index.html" class="auth-logo"><i class="fas fa-paw"></i> PawBandhan</a>
-        
-        <div class="auth-tabs" style="justify-content: center;">
-            <div class="auth-tab active" id="tab-login" onclick="showTab('login')">Sign In</div>
-            <div class="auth-tab" id="tab-signup" onclick="showTab('signup')">Create Account</div>
+    <div class="pb-auth-card">
+        <a href="index.html" class="pb-brand" style="margin-bottom:24px;">
+            <span class="pb-brand-icon"><i class="fas fa-paw"></i></span> PawBandhan
+        </a>
+        <div class="pb-auth-tabs">
+            <div class="pb-auth-tab active" id="tab-login" onclick="showAuthTab('login')">Sign in</div>
+            <div class="pb-auth-tab" id="tab-signup" onclick="showAuthTab('signup')">Create account</div>
         </div>
 
-        <form id="loginForm" class="auth-form active">
-            <h2 style="font-family:Fredoka,sans-serif;margin-bottom:8px;">Welcome back</h2>
-            <p style="color: #6B5E52; margin-bottom: 24px;">Report and track animal rescues in your area.</p>
-            
-            <div class="form-floating" style="margin-bottom:14px;">
-                <input type="email" id="loginEmail" placeholder="Email" required style="width: 100%; padding:14px 16px; border-radius:14px; border:2px solid #e8e0d8;">
-            </div>
-            <div class="form-floating" style="margin-bottom:14px;">
-                <input type="password" id="loginPassword" placeholder="Password or access code" required style="width: 100%; padding:14px 16px; border-radius:14px; border:2px solid #e8e0d8;">
-            </div>
-            <p style="font-size:0.75rem;color:#6B5E52;margin-bottom:16px;">If admin created your account, use the access code as your password on first login.</p>
-            <button type="submit" class="nav-btn nav-btn-primary" style="width: 100%; padding: 16px; border-radius: 16px;">Sign In</button>
+        <form id="loginForm" class="auth-form active" onsubmit="return handleLogin(event)">
+            <h2 class="pb-display" style="font-size:1.5rem;margin-bottom:8px;">Welcome back</h2>
+            <p style="color:var(--pb-muted);margin-bottom:20px;font-size:0.9rem;">Report and track animal rescues near you.</p>
+            <input type="email" id="loginEmail" class="pb-field" placeholder="Email" required>
+            <input type="password" id="loginPassword" class="pb-field" placeholder="Password or access code" required>
+            <p style="font-size:0.75rem;color:var(--pb-muted);margin-bottom:16px;">Admin-created accounts: use your access code as the first password.</p>
+            <button type="submit" class="pb-btn pb-btn-primary" style="width:100%;">Sign in</button>
         </form>
 
-        <form id="signupForm" class="auth-form">
-            <h2 style="font-family:Fredoka,sans-serif;margin-bottom:8px;">Join the community</h2>
-            <p style="color: #6B5E52; margin-bottom: 24px;">India's kindest rescue network starts with you.</p>
-            
-            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom:14px;">
-                <input type="text" id="firstName" placeholder="First name" required style="width:100%;padding:14px;border-radius:14px;border:2px solid #e8e0d8;">
-                <input type="text" id="lastName" placeholder="Last name" required style="width:100%;padding:14px;border-radius:14px;border:2px solid #e8e0d8;">
+        <form id="signupForm" class="auth-form" style="display:none;" onsubmit="return handleSignup(event)">
+            <h2 class="pb-display" style="font-size:1.5rem;margin-bottom:8px;">Join the network</h2>
+            <p style="color:var(--pb-muted);margin-bottom:20px;font-size:0.9rem;">Start helping animals in your community.</p>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+                <input type="text" id="firstName" class="pb-field" placeholder="First name" required>
+                <input type="text" id="lastName" class="pb-field" placeholder="Last name" required>
             </div>
-            <input type="email" id="email" placeholder="Email" required style="width:100%;padding:14px;border-radius:14px;border:2px solid #e8e0d8;margin-bottom:14px;">
-            <input type="tel" id="phone" placeholder="Phone" required style="width:100%;padding:14px;border-radius:14px;border:2px solid #e8e0d8;margin-bottom:14px;">
-            <input type="password" id="password" placeholder="Password" required style="width:100%;padding:14px;border-radius:14px;border:2px solid #e8e0d8;margin-bottom:14px;">
-            <button type="submit" class="nav-btn nav-btn-primary" style="width: 100%; padding: 16px; border-radius: 16px;">Create Account</button>
+            <input type="email" id="email" class="pb-field" placeholder="Email" required>
+            <input type="tel" id="phone" class="pb-field" placeholder="Phone" required>
+            <input type="password" id="password" class="pb-field" placeholder="Password" required>
+            <button type="submit" class="pb-btn pb-btn-primary" style="width:100%;">Create account</button>
         </form>
-        
-        <div class="demo-box">
-            <strong>Demo:</strong> john@doe.com / John@123
-        </div>
 
-        <div style="margin-top: 28px; padding-top: 24px; border-top: 1px solid #f0ebe4; text-align:center;">
-            <p style="font-size: 0.9rem; color: #6B5E52;">NGO or vet? <a href="index.html#partner" style="color: #E86B3A; font-weight: 700; text-decoration: none;">Partner with us</a></p>
-        </div>
+        <p style="text-align:center;margin-top:24px;font-size:0.85rem;color:var(--pb-muted);">
+            <a href="index.html#portals" style="color:var(--pb-brand);font-weight:700;">NGO or vet?</a> Partner portals
+        </p>
     </div>
 
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
@@ -73,66 +54,41 @@
         firebase.initializeApp(firebaseConfig);
         const auth = firebase.auth();
 
-        function showTab(type) {
-            document.querySelectorAll('.auth-tab').forEach(t => t.classList.remove('active'));
-            document.querySelectorAll('.auth-form').forEach(f => f.classList.remove('active'));
-            document.getElementById('tab-' + type).classList.add('active');
-            document.getElementById(type + 'Form').classList.add('active');
+        function showAuthTab(t) {
+            document.querySelectorAll('.pb-auth-tab').forEach(el => el.classList.remove('active'));
+            document.getElementById('tab-' + t).classList.add('active');
+            document.getElementById('loginForm').style.display = t === 'login' ? 'block' : 'none';
+            document.getElementById('signupForm').style.display = t === 'signup' ? 'block' : 'none';
         }
 
-        document.getElementById('loginForm').onsubmit = async (e) => {
+        async function handleLogin(e) {
             e.preventDefault();
-            const email = document.getElementById('loginEmail').value.trim();
-            const password = document.getElementById('loginPassword').value;
-
-            if (email === 'john@doe.com' && password === 'John@123') {
-                sessionStorage.setItem('demo_session', 'true');
-                window.location.href = 'dashboard.html';
-                return;
-            }
-
             try {
-                await auth.signInWithEmailAndPassword(email, password);
-                sessionStorage.removeItem('demo_session');
+                await auth.signInWithEmailAndPassword(document.getElementById('loginEmail').value, document.getElementById('loginPassword').value);
                 window.location.href = 'dashboard.html';
-            } catch (err) {
-                const portal = await fetch('/api/customers/portal-login', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ email, accessCode: password })
-                }).then(r => r.json()).catch(() => ({}));
-                if (portal.success) {
-                    sessionStorage.setItem('customer_uid', portal.uid);
-                    sessionStorage.removeItem('demo_session');
-                    alert('Welcome! Use this portal to track all cases linked to your email.');
-                    window.location.href = 'dashboard.html';
-                    return;
-                }
-                alert(err.message || 'Login failed');
-            }
-        };
+            } catch (err) { alert(err.message); }
+            return false;
+        }
 
-        document.getElementById('signupForm').onsubmit = async (e) => {
+        async function handleSignup(e) {
             e.preventDefault();
-            const email = document.getElementById('email').value.trim();
-            const password = document.getElementById('password').value;
             try {
-                const cred = await auth.createUserWithEmailAndPassword(email, password);
-                await fetch('/api/users/register', {
+                const cred = await auth.createUserWithEmailAndPassword(document.getElementById('email').value, document.getElementById('password').value);
+                await fetch(PAW_SITE.api('/api/users/register'), {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
                         uid: cred.user.uid,
-                        email,
                         firstName: document.getElementById('firstName').value,
                         lastName: document.getElementById('lastName').value,
-                        phone: document.getElementById('phone').value,
-                        role: 'customer'
+                        email: document.getElementById('email').value,
+                        phone: document.getElementById('phone').value
                     })
-                }).catch(() => {});
+                });
                 window.location.href = 'dashboard.html';
             } catch (err) { alert(err.message); }
-        };
+            return false;
+        }
     </script>
 </body>
 </html>

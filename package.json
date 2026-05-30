@@ -5,7 +5,8 @@
   "description": "PawBandhan — API + web portals",
   "scripts": {
     "start": "node backend_api/server.js",
-    "build": "cd backend_api && npm install --omit=dev"
+    "build": "cd backend_api && npm install --omit=dev",
+    "vercel-build": "node scripts/vercel-prepare.js"
   },
   "engines": {
     "node": ">=20"
