@@ -249,7 +249,8 @@
             <li><a href="#" onclick="showTab('cms')"><i class="fas fa-browser"></i> Site Control</a></li>
             <li><a href="#" onclick="showTab('settings')"><i class="fas fa-gears"></i> Settings</a></li>
         </ul>
-        <button class="btn-terminate" onclick="logout()">TERMINATE SESSION</button>
+        <p id="adminUserEmail" style="font-size:0.75rem;color:var(--text-dim);padding:0 10px 12px;word-break:break-all;"></p>
+        <button class="btn-terminate" onclick="logout()">Sign out</button>
     </aside>
 
     <main>
@@ -527,14 +528,26 @@
 
     <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCj24WzNBtXKorLO4A4p518ZM3SERcYmQU"></script>
     <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCj24WzNBtXKorLO4A4p518ZM3SERcYmQU"></script>
+    <script src="config.js"></script>
     <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
     <script src="shared-case-form.js?v=6"></script>
     <script src="paw-api.js?v=1"></script>
+    <script src="paw-admin-auth.js"></script>
     <script src="paw-tracker.js?v=4"></script>
     <script src="paw-case-hub.js?v=1"></script>
     <script src="shared-case-portal.js?v=3"></script>
     <script src="shared-entity-profile.js?v=2"></script>
     <script>
+        (async function guardAdminSession() {
+            if (!(await PawAdminAuth.verifySession())) {
+                window.location.href = 'admin_auth.html';
+                return;
+            }
+            const profile = PawAdminAuth.getProfile();
+            const el = document.getElementById('adminUserEmail');
+            if (el && profile && profile.email) el.textContent = profile.email;
+        })();
+
         function showTab(name) {
             document.querySelectorAll('.tab-content').forEach(t => t.style.display = 'none');
             document.getElementById(name + 'Tab').style.display = 'block';
@@ -782,7 +795,7 @@
             loadAllReps();
         }
 
-        function logout() { window.location.href = 'index.html'; }
+        function logout() { PawAdminAuth.logout(); }
 
         async function submitManualReg() {
             const form = document.getElementById('manualRegForm');

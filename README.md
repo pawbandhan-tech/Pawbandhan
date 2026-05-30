@@ -90,6 +90,23 @@ Production URLs (after deploy):
 
 **Do not** commit `.env` or database passwords to GitHub. Rotate Neon credentials if they were ever exposed.
 
+## Admin sign-in
+
+| URL | Path |
+|-----|------|
+| Login | `/admin_auth.html` |
+| Portal | `/admin_portal.html` |
+
+Set on the API host (Render `backend_api/.env`):
+
+| Variable | Required | Description |
+|----------|----------|-------------|
+| `ADMIN_EMAIL` | No | Default `admin@pawbandhan.com` |
+| `ADMIN_PASSWORD` | Yes (prod) | Creates/updates admin password hash on boot |
+| `ADMIN_JWT_SECRET` | Yes (prod) | Long random string for session tokens |
+
+Local dev: if `ADMIN_PASSWORD` is unset, a one-time dev user is seeded (`admin@pawbandhan.com` / `Admin@123`). **Change this before production.**
+
 ## Environment variables
 
 | Variable | Required | Description |

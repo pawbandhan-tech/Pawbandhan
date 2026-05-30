@@ -190,6 +190,9 @@ async function ensureDemoNgo() {
     return ins.rows[0];
 }
 
+const { registerAdminAuth } = require('./admin_auth');
+if (pool) registerAdminAuth(app, pool);
+
 const { registerWorkflowRoutes } = require('./workflow_routes');
 const { registerRepresentativeRoutes } = require('./representative_routes');
 const { registerEntityProfileRoutes } = require('./entity_profile_routes');
