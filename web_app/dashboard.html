@@ -363,12 +363,82 @@
             border: 4px solid var(--primary);
             box-shadow: 0 0 60px rgba(255, 107, 53, 0.25);
         }
+        .cam-viewport { position: relative; width: 100%; line-height: 0; }
         #video {
             width: 100%;
             min-height: 280px;
             display: block;
             object-fit: cover;
             background: #0f172a;
+        }
+        #detectOverlay {
+            position: absolute;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            pointer-events: none;
+            z-index: 2;
+        }
+        .cam-box.cam-detected { border-color: #22c55e; box-shadow: 0 0 50px rgba(34, 197, 94, 0.35); }
+        .live-animal-feed {
+            width: 90%;
+            max-width: 550px;
+            margin-top: 14px;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            justify-content: center;
+            min-height: 36px;
+        }
+        .live-feed-chip {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 8px 14px;
+            border-radius: 999px;
+            background: rgba(255,255,255,0.12);
+            color: #fff;
+            font-size: 0.8rem;
+            font-weight: 700;
+            border: 1px solid rgba(255,255,255,0.2);
+        }
+        .live-feed-chip em { font-style: normal; opacity: 0.85; font-weight: 600; }
+        .live-feed-chip-top {
+            background: rgba(34, 197, 94, 0.25);
+            border-color: #22c55e;
+            color: #bbf7d0;
+        }
+        .live-feed-empty {
+            color: rgba(255,255,255,0.65);
+            font-size: 0.85rem;
+            font-weight: 600;
+        }
+        .btn-report-live {
+            margin-top: 16px;
+            padding: 14px 28px;
+            border-radius: 999px;
+            border: none;
+            background: #22c55e;
+            color: #fff;
+            font-weight: 800;
+            font-size: 0.95rem;
+            cursor: pointer;
+            font-family: inherit;
+            display: none;
+            box-shadow: 0 8px 24px rgba(34, 197, 94, 0.4);
+        }
+        .btn-report-live.visible { display: inline-flex; align-items: center; gap: 10px; }
+        .btn-report-live:disabled { opacity: 0.45; cursor: not-allowed; }
+        .loc-retry-btn {
+            margin-top: 8px;
+            padding: 8px 14px;
+            border-radius: 10px;
+            border: 2px solid var(--primary);
+            background: var(--primary-light);
+            color: var(--primary);
+            font-weight: 700;
+            font-size: 0.8rem;
+            cursor: pointer;
+            font-family: inherit;
         }
         .cam-box.cam-loading #video { opacity: 0.35; }
         .cam-box.cam-ready #video { opacity: 1; }
@@ -515,7 +585,7 @@
             <button type="button" class="cd-action-primary" onclick="openCamera()">
                 <div class="cd-action-icon"><i class="fas fa-camera"></i></div>
                 <h3>Report emergency</h3>
-                <p>AI verifies the animal, captures location, and alerts the nearest NGO instantly.</p>
+                <p>Live camera detects dog, cat, bird, cow & more — then dispatches the nearest NGO.</p>
             </button>
             <button type="button" class="cd-action-secondary" onclick="typeof loadMyCases==='function'&&loadMyCases()">
                 <i class="fas fa-route"></i>
@@ -541,8 +611,21 @@
     <div id="reportModal" class="modal-bg">
         <div class="modal-panel">
             <h2><i class="fas fa-check-circle" style="color:#22c55e;margin-right:10px;"></i>Animal Verified!</h2>
-            <p class="sub-text">AI detected: <strong id="detectedAnimal">DOG</strong>. Fill details to dispatch rescue.</p>
-            <div class="form-group"><label>Incident Location <span style="font-size:.7rem;font-weight:400;text-transform:none;">(auto-detected)</span></label><div id="locationBox" style="padding:14px 18px;border:2px solid #e2e8f0;border-radius:16px;background:#f8fafc;display:flex;align-items:center;gap:10px;"><i class="fas fa-spinner fa-spin" style="color:var(--primary)" id="locSpinner"></i><span id="rptLocationText" style="font-weight:600;">Detecting your location...</span></div><input type="hidden" id="rptLocation"><input type="hidden" id="rptCoords"></div>
+            <p class="sub-text">Live AI: <strong id="detectedAnimal">—</strong> — confirm type and fill details to dispatch rescue.</p>
+            <div class="form-group">
+                <label>Animal type</label>
+                <select id="rptAnimalType">
+                    <option value="Dog">Dog</option>
+                    <option value="Cat">Cat</option>
+                    <option value="Bird">Bird</option>
+                    <option value="Cow">Cow</option>
+                    <option value="Horse">Horse</option>
+                    <option value="Sheep">Sheep</option>
+                    <option value="Elephant">Elephant</option>
+                    <option value="Other">Other / Unknown</option>
+                </select>
+            </div>
+            <div class="form-group"><label>Incident Location <span style="font-size:.7rem;font-weight:400;text-transform:none;">(GPS)</span></label><div id="locationBox" style="padding:14px 18px;border:2px solid #e2e8f0;border-radius:16px;background:#f8fafc;display:flex;align-items:center;gap:10px;flex-wrap:wrap;"><i class="fas fa-spinner fa-spin" style="color:var(--primary)" id="locSpinner"></i><span id="rptLocationText" style="font-weight:600;flex:1;min-width:180px;">Detecting your location...</span><button type="button" class="loc-retry-btn" id="btnRetryLocation" onclick="retryLocation()" style="display:none"><i class="fas fa-location-crosshairs"></i> Enable location</button></div><input type="hidden" id="rptLocation"><input type="hidden" id="rptCoords"></div>
             <div class="form-row">
                 <div class="form-group"><label>Severity</label><select id="rptSeverity"><option>Critical — Needs Immediate Help</option><option>Moderate — Injured but Stable</option><option>Low — Needs Shelter/Food</option></select></div>
                 <div class="form-group"><label>Animal Condition</label><select id="rptCondition"><option>Bleeding / Fracture</option><option>Sick / Weak</option><option>Stuck / Trapped</option><option>Abandoned / Stray</option></select></div>
@@ -636,18 +719,24 @@
 
     <!-- ─── AI CAMERA OVERLAY ─── -->
     <div id="cameraOverlay" class="camera-overlay" aria-hidden="true">
+        <p style="color:rgba(255,255,255,0.9);font-weight:700;margin-bottom:12px;font-size:0.9rem"><i class="fas fa-video"></i> Live animal scan</p>
         <div class="cam-box cam-loading" id="camBox">
             <div class="scan-bar" id="camScanBar"></div>
             <div class="ai-badge" id="aiLabel"><i class="fas fa-spinner fa-spin"></i> Starting camera…</div>
-            <video id="video" autoplay playsinline muted></video>
+            <div class="cam-viewport">
+                <video id="video" autoplay playsinline muted></video>
+                <canvas id="detectOverlay" aria-hidden="true"></canvas>
+            </div>
             <canvas id="canvas" style="display:none;"></canvas>
         </div>
+        <div id="liveAnimalFeed" class="live-animal-feed"></div>
+        <button type="button" class="btn-report-live" id="btnReportLive" onclick="confirmLiveDetection()"><i class="fas fa-check"></i> Report detected animal</button>
         <div class="cam-btns">
             <button type="button" class="btn-cam sub" onclick="closeCamera()" aria-label="Close"><i class="fas fa-xmark"></i></button>
             <button type="button" class="btn-cam main" id="btnCapture" onclick="captureAndVerify()" disabled aria-label="Capture"><i class="fas fa-camera"></i></button>
             <button type="button" class="btn-cam sub" onclick="skipCameraToReport()" title="Report without photo"><i class="fas fa-pen"></i></button>
         </div>
-        <button type="button" class="btn-ghost" style="margin-top:20px;color:rgba(255,255,255,0.85)" onclick="skipCameraToReport()">Skip photo — report manually</button>
+        <button type="button" class="btn-ghost" style="margin-top:12px;color:rgba(255,255,255,0.75);font-size:0.85rem" onclick="skipCameraToReport()">Skip scan — choose animal manually</button>
     </div>
 
     <div id="trackModal" class="modal-bg" onclick="if(event.target===this)closeTrackModal()">
@@ -670,6 +759,7 @@
     <script src="paw-api.js?v=1"></script>
     <script src="paw-tracker.js?v=4"></script>
     <script src="shared-case-portal.js?v=2"></script>
+    <script src="paw-live-detect.js?v=2"></script>
     <script src="customer-app.js?v=8"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
@@ -711,16 +801,13 @@
             document.getElementById('userInitials').innerText = initials;
         }
 
-        let model = null;
         let cameraStream = null;
         let cameraOpening = false;
+        let liveDetectReady = false;
 
-        async function loadModel() {
-            try {
-                model = await cocoSsd.load();
-            } catch (e) { console.warn('AI model unavailable — manual report only'); }
-        }
-        loadModel();
+        PawLiveDetect.ensureModel().catch(function () {
+            console.warn('Live AI will load when camera opens');
+        });
 
         function waitForVideoReady(video, timeoutMs) {
             return new Promise(function (resolve) {
@@ -758,15 +845,53 @@
             throw lastErr || new Error('Camera denied');
         }
 
+        function onLiveDetectUpdate(info) {
+            var aiLabel = document.getElementById('aiLabel');
+            var camBox = document.getElementById('camBox');
+            var btnReportLive = document.getElementById('btnReportLive');
+            if (!aiLabel) return;
+            if (info.locked) {
+                camBox && camBox.classList.add('cam-detected');
+                aiLabel.innerHTML = '<span style="color:#86efac"><i class="fas fa-circle" style="font-size:0.5rem"></i> LIVE: ' +
+                    info.locked.label.toUpperCase() + ' ' + Math.round(info.locked.score * 100) + '%</span>';
+                if (btnReportLive) {
+                    btnReportLive.classList.add('visible');
+                    btnReportLive.disabled = false;
+                    btnReportLive.innerHTML = '<i class="fas fa-check"></i> Report ' + info.locked.label;
+                }
+            } else if (info.animals && info.animals.length) {
+                camBox && camBox.classList.remove('cam-detected');
+                var a = info.animals[0];
+                aiLabel.innerHTML = '<i class="fas fa-crosshairs"></i> Scanning… ' + PawLiveDetect.labelFor(a.class) +
+                    ' ' + Math.round(a.score * 100) + '%';
+                if (btnReportLive) {
+                    btnReportLive.classList.add('visible');
+                    btnReportLive.disabled = true;
+                    btnReportLive.innerHTML = '<i class="fas fa-hourglass-half"></i> Hold steady on animal…';
+                }
+            } else {
+                camBox && camBox.classList.remove('cam-detected');
+                aiLabel.innerHTML = '<i class="fas fa-video"></i> Live feed — point at dog, cat, bird, cow…';
+                if (btnReportLive) {
+                    btnReportLive.classList.remove('visible');
+                    btnReportLive.disabled = true;
+                }
+            }
+        }
+
         async function openCamera() {
             if (cameraOpening) return;
             cameraOpening = true;
+            liveDetectReady = false;
             var overlay = document.getElementById('cameraOverlay');
             var video = document.getElementById('video');
             var camBox = document.getElementById('camBox');
             var aiLabel = document.getElementById('aiLabel');
             var btnCapture = document.getElementById('btnCapture');
             var scanBar = document.getElementById('camScanBar');
+            var feed = document.getElementById('liveAnimalFeed');
+            var detectOverlay = document.getElementById('detectOverlay');
+            var btnReportLive = document.getElementById('btnReportLive');
             closeCamera();
             overlay.style.display = 'flex';
             overlay.setAttribute('aria-hidden', 'false');
@@ -774,33 +899,54 @@
             if (camBox) camBox.className = 'cam-box cam-loading';
             if (scanBar) scanBar.style.display = 'block';
             if (btnCapture) btnCapture.disabled = true;
+            if (btnReportLive) { btnReportLive.classList.remove('visible'); btnReportLive.disabled = true; }
+            if (feed) feed.innerHTML = '';
             aiLabel.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Starting camera…';
             try {
                 cameraStream = await startCameraStream();
                 video.srcObject = cameraStream;
                 video.muted = true;
-                try { await video.play(); } catch (playErr) { /* autoplay policies */ }
+                try { await video.play(); } catch (playErr) { /* autoplay */ }
                 var ready = await waitForVideoReady(video, 6000);
                 if (!ready) throw new Error('Camera preview not ready');
                 if (camBox) camBox.className = 'cam-box cam-ready';
                 if (btnCapture) btnCapture.disabled = false;
-                if (model) {
-                    aiLabel.innerHTML = '<i class="fas fa-crosshairs" style="color:#22c55e"></i> Point at the animal, then tap capture';
-                } else {
-                    aiLabel.innerHTML = '<i class="fas fa-camera"></i> Tap capture or skip to report manually';
+                aiLabel.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Loading live AI…';
+                try {
+                    await PawLiveDetect.ensureModel(function (st) {
+                        if (st === 'loading' && aiLabel) {
+                            aiLabel.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Loading animal AI…';
+                        }
+                    });
+                    liveDetectReady = true;
+                    PawLiveDetect.start({
+                        video: video,
+                        overlay: detectOverlay,
+                        feedEl: feed,
+                        onUpdate: onLiveDetectUpdate
+                    });
+                    aiLabel.innerHTML = '<i class="fas fa-video"></i> Live feed — point at dog, cat, bird, cow…';
+                } catch (aiErr) {
+                    console.warn('AI load failed', aiErr);
+                    liveDetectReady = false;
+                    aiLabel.innerHTML = '<i class="fas fa-camera"></i> Live video on — tap capture (AI offline)';
                 }
             } catch (e) {
                 console.warn('Camera error', e);
                 aiLabel.innerHTML = '<i class="fas fa-info-circle"></i> Camera unavailable — opening report form…';
-                setTimeout(function () { finishVerification('Dog (Manual)'); }, 400);
+                setTimeout(function () { finishVerification(null, true); }, 400);
             } finally {
                 cameraOpening = false;
             }
         }
 
         function closeCamera() {
+            PawLiveDetect.stop();
+            PawLiveDetect.clearOverlay(document.getElementById('detectOverlay'));
             var overlay = document.getElementById('cameraOverlay');
             var video = document.getElementById('video');
+            var camBox = document.getElementById('camBox');
+            if (camBox) camBox.classList.remove('cam-detected');
             if (overlay) {
                 overlay.style.display = 'none';
                 overlay.setAttribute('aria-hidden', 'true');
@@ -813,15 +959,27 @@
             if (video) video.srcObject = null;
             var btnCapture = document.getElementById('btnCapture');
             if (btnCapture) btnCapture.disabled = true;
+            var btnReportLive = document.getElementById('btnReportLive');
+            if (btnReportLive) btnReportLive.classList.remove('visible');
         }
 
-        function finishVerification(animalName) {
+        function confirmLiveDetection() {
+            var locked = PawLiveDetect.getLocked();
+            if (!locked) {
+                var best = PawLiveDetect.bestAnimal(PawLiveDetect.getLastPredictions());
+                if (best) locked = { label: PawLiveDetect.labelFor(best.class), class: best.class, score: best.score };
+            }
+            if (locked) finishVerification(locked.label, false);
+            else captureAndVerify();
+        }
+
+        function finishVerification(animalName, manual) {
             closeCamera();
-            requestAnimationFrame(function () { showReportForm(animalName); });
+            requestAnimationFrame(function () { showReportForm(animalName, manual); });
         }
 
         function skipCameraToReport() {
-            finishVerification('Dog (Manual)');
+            finishVerification(null, true);
         }
 
         // ── Mock case database ──
@@ -917,106 +1075,144 @@
             var canvas = document.getElementById('canvas');
             var aiLabel = document.getElementById('aiLabel');
             var btnCapture = document.getElementById('btnCapture');
+            var locked = PawLiveDetect.getLocked();
+            if (locked) {
+                finishVerification(locked.label, false);
+                return;
+            }
             if (btnCapture) btnCapture.disabled = true;
             var ready = await waitForVideoReady(video, 2500);
             if (!ready || !video.videoWidth) {
-                aiLabel.innerHTML = '<i class="fas fa-info-circle"></i> Camera not ready — use manual report';
-                finishVerification('Dog (Manual)');
+                finishVerification(null, true);
                 return;
             }
-            canvas.width = video.videoWidth;
-            canvas.height = video.videoHeight;
-            canvas.getContext('2d').drawImage(video, 0, 0);
-            if (!model) {
-                detectedAnimalType = 'Dog';
-                finishVerification('Dog (Manual)');
+            PawLiveDetect.snapshotToCanvas(video, canvas);
+            if (!liveDetectReady) {
+                finishVerification(null, true);
                 return;
             }
-            aiLabel.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Checking photo…';
+            if (aiLabel) aiLabel.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Capturing…';
             try {
-                var predictions = await Promise.race([
-                    model.detect(canvas),
-                    new Promise(function (_, reject) {
-                        setTimeout(function () { reject(new Error('timeout')); }, 10000);
-                    })
-                ]);
-                var animal = predictions.find(function (p) {
-                    return ['dog', 'cat', 'cow', 'horse', 'sheep', 'bird'].includes(p.class);
-                });
-                if (animal) {
-                    detectedAnimalType = animal.class.charAt(0).toUpperCase() + animal.class.slice(1);
-                    aiLabel.innerHTML = '<span style="color:#22c55e"><i class="fas fa-check-circle"></i> ' + animal.class.toUpperCase() + ' detected</span>';
-                    finishVerification(detectedAnimalType);
+                var predictions = await PawLiveDetect.detectOn(canvas);
+                var best = PawLiveDetect.bestAnimal(predictions);
+                if (best) {
+                    var label = PawLiveDetect.labelFor(best.class);
+                    detectedAnimalType = label;
+                    finishVerification(label, false);
                 } else {
-                    aiLabel.innerHTML = '<span style="color:#f59e0b"><i class="fas fa-paw"></i> No animal clear — continue manually</span>';
                     if (btnCapture) btnCapture.disabled = false;
-                    setTimeout(function () { finishVerification('Dog (Manual)'); }, 600);
+                    if (aiLabel) aiLabel.innerHTML = '<i class="fas fa-paw"></i> No animal in frame — hold steady or skip';
                 }
             } catch (e) {
-                detectedAnimalType = 'Dog';
-                finishVerification('Dog (Manual)');
+                finishVerification(null, true);
             }
         }
 
-        function showReportForm(animalName) {
+        function setReportAnimalUI(label, manual) {
+            var sel = document.getElementById('rptAnimalType');
+            var detectedEl = document.getElementById('detectedAnimal');
+            var base = (label || '').trim() || 'Other';
+            if (manual) {
+                detectedAnimalType = sel ? sel.value : 'Dog';
+                if (detectedEl) detectedEl.innerHTML = 'not detected — <span style="color:#f59e0b">choose type below</span>';
+                return;
+            }
+            detectedAnimalType = base;
+            if (detectedEl) {
+                var lk = PawLiveDetect.getLocked();
+                var pct = lk && lk.label === base ? Math.round(lk.score * 100) : null;
+                detectedEl.innerHTML = '<span style="color:#22c55e">' + base.toUpperCase() + '</span>' +
+                    (pct ? ' (' + pct + '% live match)' : ' (captured from camera)');
+            }
+            if (sel) {
+                var found = false;
+                for (var i = 0; i < sel.options.length; i++) {
+                    if (sel.options[i].value.toLowerCase() === base.toLowerCase()) {
+                        sel.selectedIndex = i;
+                        found = true;
+                        break;
+                    }
+                }
+                if (!found) sel.value = 'Other';
+            }
+        }
+
+        function showReportForm(animalName, manual) {
             closeCamera();
-            var label = String(animalName || 'Dog');
-            var isManual = /manual/i.test(label);
-            var base = label.replace(/\s*\(manual\)\s*/gi, '').trim() || 'Dog';
-            if (!isManual) detectedAnimalType = base;
-            document.getElementById('detectedAnimal').innerText = base.toUpperCase() + (isManual ? ' (manual)' : '');
+            setReportAnimalUI(animalName, !!manual);
             document.getElementById('reportModal').classList.add('open');
             document.body.classList.remove('pb-camera-open');
             autoDetectLocation();
         }
 
-        function autoDetectLocation() {
-            const locText = document.getElementById('rptLocationText');
-            const locInput = document.getElementById('rptLocation');
-            const coordsInput = document.getElementById('rptCoords');
-            const spinner = document.getElementById('locSpinner');
-            const locBox = document.getElementById('locationBox');
+        function retryLocation() {
+            autoDetectLocation(true);
+        }
+
+        function autoDetectLocation(userTriggered) {
+            var locText = document.getElementById('rptLocationText');
+            var locInput = document.getElementById('rptLocation');
+            var coordsInput = document.getElementById('rptCoords');
+            var spinner = document.getElementById('locSpinner');
+            var locBox = document.getElementById('locationBox');
+            var retryBtn = document.getElementById('btnRetryLocation');
+
+            if (retryBtn) retryBtn.style.display = 'none';
+            locText.innerText = 'Detecting your location…';
+            spinner.className = 'fas fa-spinner fa-spin';
+            spinner.style.color = 'var(--primary)';
+            locBox.style.borderColor = '#e2e8f0';
 
             if (!navigator.geolocation) {
-                locText.innerText = 'Mumbai, Maharashtra (GPS unavailable)';
-                locInput.value = 'Mumbai, Maharashtra';
+                locText.innerText = 'GPS not supported — enter area in description';
+                locInput.value = '';
                 spinner.className = 'fas fa-map-pin';
                 locBox.style.borderColor = '#f59e0b';
                 return;
             }
 
             navigator.geolocation.getCurrentPosition(
-                async (pos) => {
-                    const lat = pos.coords.latitude;
-                    const lng = pos.coords.longitude;
+                async function (pos) {
+                    var lat = pos.coords.latitude;
+                    var lng = pos.coords.longitude;
                     coordsInput.value = lat + ',' + lng;
                     try {
-                        const res = await fetch(`https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lng}&format=json`);
-                        const data = await res.json();
-                        const addr = data.address;
-                        const readable = [addr.road, addr.suburb, addr.city || addr.town || addr.village, addr.state].filter(Boolean).join(', ');
+                        var res = await fetch('https://nominatim.openstreetmap.org/reverse?lat=' + lat + '&lon=' + lng + '&format=json');
+                        var data = await res.json();
+                        var addr = data.address || {};
+                        var readable = [addr.road, addr.suburb, addr.city || addr.town || addr.village, addr.state].filter(Boolean).join(', ');
                         locText.innerText = readable || data.display_name;
                         locInput.value = readable || data.display_name;
-                    } catch(e) {
-                        locText.innerText = `GPS: ${lat.toFixed(4)}, ${lng.toFixed(4)}`;
-                        locInput.value = `GPS: ${lat.toFixed(4)}, ${lng.toFixed(4)}`;
+                    } catch (e) {
+                        locText.innerText = 'GPS: ' + lat.toFixed(4) + ', ' + lng.toFixed(4);
+                        locInput.value = locText.innerText;
                     }
                     spinner.className = 'fas fa-location-dot';
                     spinner.style.color = '#22c55e';
                     locBox.style.borderColor = '#22c55e';
                 },
-                (err) => {
-                    locText.innerText = 'Mumbai, Maharashtra (permission denied)';
-                    locInput.value = 'Mumbai, Maharashtra';
+                function () {
+                    locText.innerText = userTriggered
+                        ? 'Location blocked — allow GPS in browser settings'
+                        : 'Tap “Enable location” to use GPS for dispatch';
+                    locInput.value = '';
+                    coordsInput.value = '';
                     spinner.className = 'fas fa-location-crosshairs';
                     spinner.style.color = '#f59e0b';
                     locBox.style.borderColor = '#f59e0b';
+                    if (retryBtn) retryBtn.style.display = 'inline-flex';
                 },
-                { enableHighAccuracy: true, timeout: 10000 }
+                { enableHighAccuracy: true, timeout: 12000, maximumAge: userTriggered ? 0 : 60000 }
             );
         }
 
+        document.getElementById('rptAnimalType')?.addEventListener('change', function () {
+            detectedAnimalType = this.value;
+        });
+
         async function submitReport() {
+            const animalSel = document.getElementById('rptAnimalType');
+            if (animalSel) detectedAnimalType = animalSel.value;
             const loc = document.getElementById('rptLocation').value || 'Location not specified';
             const sev = document.getElementById('rptSeverity').value;
             const cond = document.getElementById('rptCondition').value;
@@ -1024,7 +1220,20 @@
             const phone = document.getElementById('rptPhone').value || '+91 00000 00000';
             const uid = sessionStorage.getItem('customer_uid') || firebase.auth().currentUser?.uid || 'guest-' + Date.now();
             let lat = 19.076, lng = 72.8777;
-            try { const p = await new Promise((res,rej)=>navigator.geolocation.getCurrentPosition(res,rej)); lat=p.coords.latitude; lng=p.coords.longitude; } catch(e){}
+            const coordsRaw = document.getElementById('rptCoords').value;
+            if (coordsRaw && coordsRaw.indexOf(',') !== -1) {
+                const parts = coordsRaw.split(',');
+                lat = parseFloat(parts[0]);
+                lng = parseFloat(parts[1]);
+            } else {
+                try {
+                    const p = await new Promise(function (res, rej) {
+                        navigator.geolocation.getCurrentPosition(res, rej, { enableHighAccuracy: true, timeout: 8000 });
+                    });
+                    lat = p.coords.latitude;
+                    lng = p.coords.longitude;
+                } catch (e) { /* default Mumbai */ }
+            }
             try {
                 const fd = new FormData();
                 fd.append('userId', uid); fd.append('incidentType', 'emergency'); fd.append('description', desc);
