@@ -363,7 +363,18 @@
             border: 4px solid var(--primary);
             box-shadow: 0 0 60px rgba(255, 107, 53, 0.25);
         }
-        #video { width: 100%; display: block; }
+        #video {
+            width: 100%;
+            min-height: 280px;
+            display: block;
+            object-fit: cover;
+            background: #0f172a;
+        }
+        .cam-box.cam-loading #video { opacity: 0.35; }
+        .cam-box.cam-ready #video { opacity: 1; }
+        body.pb-camera-open { overflow: hidden; }
+        .camera-overlay { z-index: 2500; }
+        #reportModal.modal-bg { z-index: 3000; }
 
         .scan-bar {
             position: absolute;
@@ -624,18 +635,19 @@
     </div>
 
     <!-- ─── AI CAMERA OVERLAY ─── -->
-    <div id="cameraOverlay" class="camera-overlay">
-        <div class="cam-box">
-            <div class="scan-bar"></div>
-            <div class="ai-badge" id="aiLabel"><i class="fas fa-microchip"></i> AI GUARD SCANNING...</div>
-            <video id="video" autoplay playsinline></video>
+    <div id="cameraOverlay" class="camera-overlay" aria-hidden="true">
+        <div class="cam-box cam-loading" id="camBox">
+            <div class="scan-bar" id="camScanBar"></div>
+            <div class="ai-badge" id="aiLabel"><i class="fas fa-spinner fa-spin"></i> Starting camera…</div>
+            <video id="video" autoplay playsinline muted></video>
             <canvas id="canvas" style="display:none;"></canvas>
         </div>
         <div class="cam-btns">
-            <button class="btn-cam sub" onclick="closeCamera()"><i class="fas fa-xmark"></i></button>
-            <button class="btn-cam main" onclick="captureAndVerify()"><i class="fas fa-camera"></i></button>
-            <button class="btn-cam sub" onclick="alert('Flash toggled')"><i class="fas fa-bolt"></i></button>
+            <button type="button" class="btn-cam sub" onclick="closeCamera()" aria-label="Close"><i class="fas fa-xmark"></i></button>
+            <button type="button" class="btn-cam main" id="btnCapture" onclick="captureAndVerify()" disabled aria-label="Capture"><i class="fas fa-camera"></i></button>
+            <button type="button" class="btn-cam sub" onclick="skipCameraToReport()" title="Report without photo"><i class="fas fa-pen"></i></button>
         </div>
+        <button type="button" class="btn-ghost" style="margin-top:20px;color:rgba(255,255,255,0.85)" onclick="skipCameraToReport()">Skip photo — report manually</button>
     </div>
 
     <div id="trackModal" class="modal-bg" onclick="if(event.target===this)closeTrackModal()">
@@ -700,25 +712,116 @@
         }
 
         let model = null;
+        let cameraStream = null;
+        let cameraOpening = false;
+
         async function loadModel() {
             try {
                 model = await cocoSsd.load();
-                document.getElementById('aiLabel').innerHTML = '<i class="fas fa-shield-check" style="color: #22c55e;"></i> AI GUARD READY';
-            } catch(e) { console.warn("AI model fallback"); }
+            } catch (e) { console.warn('AI model unavailable — manual report only'); }
         }
         loadModel();
 
-        function openCamera() {
-            document.getElementById('cameraOverlay').style.display = 'flex';
-            navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } })
-                .then(stream => { document.getElementById('video').srcObject = stream; })
-                .catch(() => alert('Camera access denied.'));
+        function waitForVideoReady(video, timeoutMs) {
+            return new Promise(function (resolve) {
+                if (!video) return resolve(false);
+                if (video.readyState >= 2 && video.videoWidth > 0) return resolve(true);
+                var done = false;
+                var finish = function (ok) {
+                    if (done) return;
+                    done = true;
+                    video.removeEventListener('loadedmetadata', onMeta);
+                    clearTimeout(timer);
+                    resolve(ok && video.videoWidth > 0);
+                };
+                var onMeta = function () { finish(true); };
+                var timer = setTimeout(function () { finish(false); }, timeoutMs || 5000);
+                video.addEventListener('loadedmetadata', onMeta);
+            });
+        }
+
+        async function startCameraStream() {
+            if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+                throw new Error('Camera not supported');
+            }
+            var tries = [
+                { video: { facingMode: { ideal: 'environment' }, width: { ideal: 1280 }, height: { ideal: 720 } } },
+                { video: { facingMode: 'user', width: { ideal: 1280 }, height: { ideal: 720 } } },
+                { video: true }
+            ];
+            var lastErr = null;
+            for (var i = 0; i < tries.length; i++) {
+                try {
+                    return await navigator.mediaDevices.getUserMedia(tries[i]);
+                } catch (e) { lastErr = e; }
+            }
+            throw lastErr || new Error('Camera denied');
+        }
+
+        async function openCamera() {
+            if (cameraOpening) return;
+            cameraOpening = true;
+            var overlay = document.getElementById('cameraOverlay');
+            var video = document.getElementById('video');
+            var camBox = document.getElementById('camBox');
+            var aiLabel = document.getElementById('aiLabel');
+            var btnCapture = document.getElementById('btnCapture');
+            var scanBar = document.getElementById('camScanBar');
+            closeCamera();
+            overlay.style.display = 'flex';
+            overlay.setAttribute('aria-hidden', 'false');
+            document.body.classList.add('pb-camera-open');
+            if (camBox) camBox.className = 'cam-box cam-loading';
+            if (scanBar) scanBar.style.display = 'block';
+            if (btnCapture) btnCapture.disabled = true;
+            aiLabel.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Starting camera…';
+            try {
+                cameraStream = await startCameraStream();
+                video.srcObject = cameraStream;
+                video.muted = true;
+                try { await video.play(); } catch (playErr) { /* autoplay policies */ }
+                var ready = await waitForVideoReady(video, 6000);
+                if (!ready) throw new Error('Camera preview not ready');
+                if (camBox) camBox.className = 'cam-box cam-ready';
+                if (btnCapture) btnCapture.disabled = false;
+                if (model) {
+                    aiLabel.innerHTML = '<i class="fas fa-crosshairs" style="color:#22c55e"></i> Point at the animal, then tap capture';
+                } else {
+                    aiLabel.innerHTML = '<i class="fas fa-camera"></i> Tap capture or skip to report manually';
+                }
+            } catch (e) {
+                console.warn('Camera error', e);
+                aiLabel.innerHTML = '<i class="fas fa-info-circle"></i> Camera unavailable — opening report form…';
+                setTimeout(function () { finishVerification('Dog (Manual)'); }, 400);
+            } finally {
+                cameraOpening = false;
+            }
         }
 
         function closeCamera() {
-            document.getElementById('cameraOverlay').style.display = 'none';
-            const stream = document.getElementById('video').srcObject;
-            if (stream) stream.getTracks().forEach(t => t.stop());
+            var overlay = document.getElementById('cameraOverlay');
+            var video = document.getElementById('video');
+            if (overlay) {
+                overlay.style.display = 'none';
+                overlay.setAttribute('aria-hidden', 'true');
+            }
+            document.body.classList.remove('pb-camera-open');
+            if (cameraStream) {
+                cameraStream.getTracks().forEach(function (t) { t.stop(); });
+                cameraStream = null;
+            }
+            if (video) video.srcObject = null;
+            var btnCapture = document.getElementById('btnCapture');
+            if (btnCapture) btnCapture.disabled = true;
+        }
+
+        function finishVerification(animalName) {
+            closeCamera();
+            requestAnimationFrame(function () { showReportForm(animalName); });
+        }
+
+        function skipCameraToReport() {
+            finishVerification('Dog (Manual)');
         }
 
         // ── Mock case database ──
@@ -810,33 +913,60 @@
         let detectedAnimalType = 'Dog';
 
         async function captureAndVerify() {
-            const video = document.getElementById('video');
-            const canvas = document.getElementById('canvas');
-            const aiLabel = document.getElementById('aiLabel');
+            var video = document.getElementById('video');
+            var canvas = document.getElementById('canvas');
+            var aiLabel = document.getElementById('aiLabel');
+            var btnCapture = document.getElementById('btnCapture');
+            if (btnCapture) btnCapture.disabled = true;
+            var ready = await waitForVideoReady(video, 2500);
+            if (!ready || !video.videoWidth) {
+                aiLabel.innerHTML = '<i class="fas fa-info-circle"></i> Camera not ready — use manual report';
+                finishVerification('Dog (Manual)');
+                return;
+            }
             canvas.width = video.videoWidth;
             canvas.height = video.videoHeight;
             canvas.getContext('2d').drawImage(video, 0, 0);
-            aiLabel.innerHTML = '<i class="fas fa-spinner fa-spin"></i> VERIFYING ANIMAL...';
+            if (!model) {
+                detectedAnimalType = 'Dog';
+                finishVerification('Dog (Manual)');
+                return;
+            }
+            aiLabel.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Checking photo…';
             try {
-                const predictions = await model.detect(canvas);
-                const animal = predictions.find(p => ['dog','cat','cow','horse','sheep','bird'].includes(p.class));
+                var predictions = await Promise.race([
+                    model.detect(canvas),
+                    new Promise(function (_, reject) {
+                        setTimeout(function () { reject(new Error('timeout')); }, 10000);
+                    })
+                ]);
+                var animal = predictions.find(function (p) {
+                    return ['dog', 'cat', 'cow', 'horse', 'sheep', 'bird'].includes(p.class);
+                });
                 if (animal) {
                     detectedAnimalType = animal.class.charAt(0).toUpperCase() + animal.class.slice(1);
-                    aiLabel.innerHTML = `<span style="color:#22c55e"><i class="fas fa-check-circle"></i> ${animal.class.toUpperCase()} DETECTED!</span>`;
-                    setTimeout(() => { closeCamera(); showReportForm(detectedAnimalType); }, 1200);
+                    aiLabel.innerHTML = '<span style="color:#22c55e"><i class="fas fa-check-circle"></i> ' + animal.class.toUpperCase() + ' detected</span>';
+                    finishVerification(detectedAnimalType);
                 } else {
-                    aiLabel.innerHTML = '<span style="color:#ef4444"><i class="fas fa-triangle-exclamation"></i> NO ANIMAL FOUND</span>';
+                    aiLabel.innerHTML = '<span style="color:#f59e0b"><i class="fas fa-paw"></i> No animal clear — continue manually</span>';
+                    if (btnCapture) btnCapture.disabled = false;
+                    setTimeout(function () { finishVerification('Dog (Manual)'); }, 600);
                 }
-            } catch(e) {
+            } catch (e) {
                 detectedAnimalType = 'Dog';
-                aiLabel.innerHTML = '<span style="color:#22c55e"><i class="fas fa-check-circle"></i> MANUAL MODE</span>';
-                setTimeout(() => { closeCamera(); showReportForm('Dog (Manual)'); }, 1000);
+                finishVerification('Dog (Manual)');
             }
         }
 
         function showReportForm(animalName) {
-            document.getElementById('detectedAnimal').innerText = animalName.toUpperCase();
+            closeCamera();
+            var label = String(animalName || 'Dog');
+            var isManual = /manual/i.test(label);
+            var base = label.replace(/\s*\(manual\)\s*/gi, '').trim() || 'Dog';
+            if (!isManual) detectedAnimalType = base;
+            document.getElementById('detectedAnimal').innerText = base.toUpperCase() + (isManual ? ' (manual)' : '');
             document.getElementById('reportModal').classList.add('open');
+            document.body.classList.remove('pb-camera-open');
             autoDetectLocation();
         }
 
