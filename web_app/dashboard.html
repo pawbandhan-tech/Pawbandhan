@@ -1,0 +1,1364 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard | PawBandhan</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="shared-portal.css">
+    <link rel="stylesheet" href="customer-dashboard.css">
+    <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/coco-ssd"></script>
+    <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCj24WzNBtXKorLO4A4p518ZM3SERcYmQU&libraries=places,geometry"></script>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        :root {
+            --primary: #FF6B35;
+            --primary-light: #fff5f2;
+            --primary-dark: #e65a2b;
+            --secondary: #1e293b;
+            --text-gray: #64748b;
+            --bg: #f8fafc;
+            --white: #ffffff;
+            --shadow: 0 8px 30px rgba(0,0,0,0.04);
+        }
+
+        body {
+            font-family: 'Outfit', sans-serif;
+            background: var(--bg);
+            color: var(--secondary);
+            min-height: 100vh;
+        }
+
+        /* ─── TOP NAV BAR ─── */
+        .topbar {
+            background: var(--white);
+            border-bottom: 1px solid #f1f5f9;
+            padding: 16px 50px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+        }
+
+        .topbar-logo {
+            font-size: 1.5rem;
+            font-weight: 800;
+            color: var(--primary);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            text-decoration: none;
+        }
+
+        .topbar-right {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+        }
+
+        .user-chip {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            background: var(--bg);
+            padding: 8px 18px 8px 8px;
+            border-radius: 50px;
+            cursor: pointer;
+            transition: 0.3s;
+        }
+        .user-chip:hover { background: #e2e8f0; }
+
+        .user-avatar {
+            width: 38px; height: 38px;
+            border-radius: 50%;
+            background: var(--primary);
+            color: var(--white);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 800;
+            font-size: 0.9rem;
+        }
+
+        .points-badge {
+            background: #fff7ed;
+            padding: 8px 18px;
+            border-radius: 50px;
+            border: 1px solid #ffedd5;
+            font-weight: 700;
+            font-size: 0.85rem;
+            color: #b45309;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            cursor: pointer;
+            transition: 0.3s;
+        }
+        .points-badge:hover { transform: scale(1.05); }
+        .points-badge i { color: #f59e0b; }
+
+        .btn-logout {
+            background: #fff1f2;
+            color: #e11d48;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 12px;
+            font-weight: 700;
+            cursor: pointer;
+            font-family: inherit;
+            font-size: 0.85rem;
+            transition: 0.3s;
+        }
+        .btn-logout:hover { background: #ffe4e6; }
+
+        /* ─── MAIN LAYOUT ─── */
+        .page-wrap { max-width: 1300px; margin: 0 auto; padding: 50px; }
+
+        .greeting {
+            margin-bottom: 50px;
+        }
+        .greeting h1 {
+            font-size: 2.8rem;
+            font-weight: 800;
+            letter-spacing: -1.5px;
+            line-height: 1.2;
+        }
+        .greeting h1 span { color: var(--primary); }
+        .greeting p { color: var(--text-gray); font-size: 1.15rem; margin-top: 8px; }
+
+        /* ─── QUICK ACTION GRID ─── */
+        .quick-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 24px;
+            margin-bottom: 60px;
+        }
+
+        .q-card {
+            background: var(--white);
+            padding: 30px 25px;
+            border-radius: 24px;
+            box-shadow: var(--shadow);
+            cursor: pointer;
+            transition: all 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+            border: 2px solid transparent;
+            text-align: center;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 18px;
+        }
+
+        .q-card:hover {
+            transform: translateY(-8px);
+            border-color: var(--primary);
+            box-shadow: 0 20px 50px rgba(255, 107, 53, 0.12);
+        }
+
+        .q-card.hero-card {
+            background: var(--primary);
+            color: var(--white);
+            grid-column: span 2;
+            text-align: left;
+            flex-direction: row;
+            gap: 30px;
+            padding: 40px;
+        }
+        .q-card.hero-card:hover { border-color: var(--primary-dark); }
+
+        .q-icon {
+            width: 65px; height: 65px;
+            border-radius: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.6rem;
+            flex-shrink: 0;
+        }
+
+        .q-card:not(.hero-card) .q-icon {
+            background: var(--primary-light);
+            color: var(--primary);
+        }
+        .q-card.hero-card .q-icon {
+            background: rgba(255,255,255,0.2);
+            color: var(--white);
+        }
+
+        .q-card h3 { font-size: 1.15rem; font-weight: 800; margin: 0; }
+        .q-card.hero-card h3 { font-size: 1.6rem; }
+        .q-card p { font-size: 0.85rem; opacity: 0.75; margin: 0; }
+
+        /* ─── SECTION DIVIDER ─── */
+        .section-head {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 28px;
+        }
+        .section-head h2 { font-size: 1.5rem; font-weight: 800; }
+        .section-head a { color: var(--primary); text-decoration: none; font-weight: 700; font-size: 0.9rem; }
+
+        /* ─── TWO-COLUMN LAYOUT ─── */
+        .two-col {
+            display: grid;
+            grid-template-columns: 1.5fr 1fr;
+            gap: 35px;
+            margin-bottom: 50px;
+        }
+
+        /* ─── CASE CARDS ─── */
+        .case-card {
+            background: var(--white);
+            border-radius: 22px;
+            padding: 24px;
+            box-shadow: var(--shadow);
+            display: flex;
+            align-items: center;
+            gap: 22px;
+            margin-bottom: 18px;
+            border: 1px solid #f1f5f9;
+            transition: 0.3s;
+        }
+        .case-card:hover { border-color: var(--primary); transform: translateX(6px); }
+
+        .case-icon {
+            width: 70px; height: 70px;
+            background: var(--primary-light);
+            border-radius: 18px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            color: var(--primary);
+            flex-shrink: 0;
+        }
+
+        .case-body { flex: 1; }
+        .case-body h4 { font-size: 1rem; margin-bottom: 4px; }
+        .case-body p { color: var(--text-gray); font-size: 0.85rem; margin: 0; }
+        .case-body .sub { display: flex; align-items: center; gap: 8px; margin-top: 8px; font-size: 0.8rem; font-weight: 600; color: var(--secondary); }
+
+        .pill {
+            padding: 7px 14px;
+            border-radius: 50px;
+            font-size: 0.7rem;
+            font-weight: 800;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            flex-shrink: 0;
+        }
+        .pill-green { background: #dcfce7; color: #15803d; }
+        .pill-blue { background: #dbeafe; color: #1d4ed8; }
+        .pill-amber { background: #fef3c7; color: #92400e; }
+
+        /* ─── COMMUNITY CARD ─── */
+        .community-card {
+            background: var(--white);
+            border-radius: 24px;
+            padding: 35px;
+            box-shadow: var(--shadow);
+        }
+
+        .community-card h3 { font-size: 1.2rem; font-weight: 800; margin-bottom: 25px; }
+
+        .stat-row {
+            display: flex;
+            align-items: center;
+            gap: 18px;
+            padding: 18px 0;
+            border-bottom: 1px solid #f1f5f9;
+        }
+        .stat-row:last-child { border-bottom: none; }
+
+        .stat-icon {
+            width: 48px; height: 48px;
+            border-radius: 14px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.1rem;
+            flex-shrink: 0;
+        }
+
+        .stat-info { flex: 1; }
+        .stat-info h4 { font-size: 0.9rem; font-weight: 700; margin-bottom: 2px; }
+        .stat-info p { font-size: 0.78rem; color: var(--text-gray); }
+        .stat-val { font-size: 1.4rem; font-weight: 800; }
+
+        /* ─── LEADERBOARD BANNER ─── */
+        .leader-banner {
+            background: linear-gradient(135deg, #1e293b, #334155);
+            color: var(--white);
+            border-radius: 28px;
+            padding: 40px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 50px;
+        }
+        .leader-banner h3 { font-size: 1.4rem; font-weight: 800; margin: 0; }
+        .leader-banner p { opacity: 0.65; margin-top: 6px; }
+        .leader-banner button {
+            padding: 14px 28px;
+            border-radius: 14px;
+            border: 1px solid rgba(255,255,255,0.15);
+            background: rgba(255,255,255,0.08);
+            color: var(--white);
+            font-weight: 700;
+            cursor: pointer;
+            font-family: inherit;
+            font-size: 0.9rem;
+            transition: 0.3s;
+        }
+        .leader-banner button:hover { background: rgba(255,255,255,0.15); }
+
+        /* ─── XP BAR ─── */
+        .xp-bar-wrap {
+            background: var(--white);
+            border-radius: 20px;
+            padding: 24px 30px;
+            box-shadow: var(--shadow);
+            display: flex;
+            align-items: center;
+            gap: 20px;
+            margin-bottom: 50px;
+        }
+
+        .xp-bar-wrap .xp-info { flex: 1; }
+        .xp-bar-wrap .xp-info h4 { font-weight: 700; margin-bottom: 8px; }
+
+        .xp-track {
+            height: 10px;
+            background: #f1f5f9;
+            border-radius: 10px;
+            overflow: hidden;
+            flex: 1;
+        }
+        .xp-fill { height: 100%; background: linear-gradient(90deg, var(--primary), #f59e0b); border-radius: 10px; transition: 1s; }
+
+        /* ─── AI CAMERA OVERLAY ─── */
+        .camera-overlay {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(15, 23, 42, 0.95);
+            backdrop-filter: blur(12px);
+            z-index: 2000;
+            display: none;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .cam-box {
+            width: 90%; max-width: 550px;
+            background: #000;
+            border-radius: 36px;
+            overflow: hidden;
+            position: relative;
+            border: 4px solid var(--primary);
+            box-shadow: 0 0 60px rgba(255, 107, 53, 0.25);
+        }
+        #video { width: 100%; display: block; }
+
+        .scan-bar {
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 4px;
+            background: var(--primary);
+            box-shadow: 0 0 20px var(--primary);
+            animation: scanAnim 2s linear infinite;
+        }
+        @keyframes scanAnim { 0% { top: 0; } 100% { top: 100%; } }
+
+        .ai-badge {
+            position: absolute;
+            bottom: 25px; left: 50%;
+            transform: translateX(-50%);
+            background: rgba(0,0,0,0.65);
+            padding: 10px 22px;
+            border-radius: 50px;
+            color: var(--white);
+            font-weight: 700;
+            font-size: 0.85rem;
+            display: flex;
+            align-items: center; gap: 10px;
+            white-space: nowrap;
+        }
+
+        .cam-btns { margin-top: 35px; display: flex; gap: 20px; align-items: center; }
+        .btn-cam {
+            width: 65px; height: 65px; border-radius: 50%;
+            border: none; cursor: pointer; display: flex;
+            align-items: center; justify-content: center;
+            font-size: 1.4rem; transition: 0.3s;
+            color: var(--white);
+        }
+        .btn-cam.main { width: 90px; height: 90px; font-size: 1.8rem; background: var(--primary); }
+        .btn-cam.sub { background: #334155; }
+
+        /* ─── MODALS ─── */
+        .modal-bg { position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(15,23,42,0.85);backdrop-filter:blur(12px);z-index:3000;display:none;align-items:center;justify-content:center;padding:30px; }
+        .modal-bg.open { display:flex; }
+        .modal-panel { background:var(--white);border-radius:32px;width:100%;max-width:600px;max-height:90vh;overflow-y:auto;padding:45px;box-shadow:0 40px 100px rgba(0,0,0,0.3);animation:slideUp .4s ease; }
+        @keyframes slideUp { from{opacity:0;transform:translateY(40px)} to{opacity:1;transform:translateY(0)} }
+        .modal-panel h2 { font-size:1.6rem;font-weight:800;margin-bottom:8px; }
+        .modal-panel .sub-text { color:var(--text-gray);margin-bottom:30px; }
+        .form-group { margin-bottom:22px; }
+        .form-group label { display:block;font-weight:700;margin-bottom:8px;font-size:0.85rem;color:var(--text-gray);text-transform:uppercase;letter-spacing:.5px; }
+        .form-group input,.form-group select,.form-group textarea { width:100%;padding:14px 18px;border:2px solid #e2e8f0;border-radius:16px;font-family:inherit;font-size:0.95rem;transition:.3s;background:#f8fafc; }
+        .form-group input:focus,.form-group select:focus,.form-group textarea:focus { border-color:var(--primary);outline:none;background:var(--white); }
+        .form-group textarea { resize:vertical;min-height:80px; }
+        .form-row { display:grid;grid-template-columns:1fr 1fr;gap:16px; }
+        .btn-submit { width:100%;padding:16px;background:var(--primary);color:var(--white);border:none;border-radius:18px;font-weight:800;font-size:1rem;cursor:pointer;font-family:inherit;transition:.3s; }
+        .btn-submit:hover { background:var(--primary-dark); }
+        .btn-ghost { background:none;border:none;color:var(--text-gray);font-weight:700;cursor:pointer;font-family:inherit;margin-top:15px;font-size:.9rem; }
+
+        /* Case detail modal */
+        .modal-panel.wide { max-width:750px; }
+        .detail-id { background:var(--primary-light);color:var(--primary);padding:6px 16px;border-radius:10px;font-weight:800;font-size:.8rem;display:inline-block;margin-bottom:20px; }
+        .detail-grid { display:grid;grid-template-columns:1fr 1fr;gap:12px 24px;margin-bottom:30px; }
+        .detail-grid .dg-label { font-size:.75rem;font-weight:700;color:var(--text-gray);text-transform:uppercase;letter-spacing:.5px; }
+        .detail-grid .dg-val { font-weight:700;margin-top:2px; }
+        .timeline { position:relative;padding-left:32px; }
+        .timeline::before { content:'';position:absolute;left:11px;top:8px;bottom:8px;width:3px;background:#e2e8f0;border-radius:4px; }
+        .tl-item { position:relative;padding-bottom:24px; }
+        .tl-item:last-child { padding-bottom:0; }
+        .tl-dot { position:absolute;left:-32px;top:2px;width:24px;height:24px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:.65rem;color:var(--white); }
+        .tl-dot.done { background:#22c55e; }
+        .tl-dot.active { background:var(--primary);animation:pulse 1.5s infinite; }
+        .tl-dot.pending { background:#cbd5e1; }
+        @keyframes pulse { 0%,100%{box-shadow:0 0 0 0 rgba(255,107,53,.4)} 50%{box-shadow:0 0 0 8px rgba(255,107,53,0)} }
+        .tl-title { font-weight:700;font-size:.95rem; }
+        .tl-time { font-size:.8rem;color:var(--text-gray); }
+    </style>
+</head>
+<body class="pb-portal pb-customer">
+
+    <!-- ─── TOP NAVIGATION BAR ─── -->
+    <nav class="topbar">
+        <a href="index.html" class="topbar-logo">
+            <i class="fas fa-paw"></i> PawBandhan
+        </a>
+        <div class="topbar-right">
+            <button type="button" class="pb-notif-btn" onclick="toggleNotifDrawer()"><i class="fas fa-bell"></i><span class="pb-notif-badge" id="notifBadge">0</span></button>
+            <div class="points-badge" onclick="alert('You have 840 Rescue Points!')"><i class="fas fa-coins"></i> Points</div>
+            <div class="user-chip" onclick="openProfileModal()">
+                <div class="user-avatar" id="userInitials">JD</div>
+                <span style="font-weight: 700;" id="userName">John Doe</span>
+                <i class="fas fa-chevron-down" style="font-size: 0.7rem; color: var(--text-gray); margin-left: 5px;"></i>
+            </div>
+            <button class="btn-logout" onclick="logout()"><i class="fas fa-power-off"></i> Logout</button>
+        </div>
+    </nav>
+
+    <!-- ─── MAIN PAGE ─── -->
+    <div id="notifDrawer" class="pb-notif-drawer">
+        <header>
+            <h3><i class="fas fa-bell"></i> Notifications</h3>
+            <button type="button" onclick="toggleNotifDrawer()" style="border:none;background:none;font-size:1.25rem;cursor:pointer;">&times;</button>
+        </header>
+        <div class="pb-notif-list" id="notifList"></div>
+    </div>
+
+    <div class="page-wrap">
+
+        <div id="liveHero" class="pb-live-hero">
+            <div class="pb-live-status" id="liveHeroStatus"><span class="pulse-dot"></span> Tracking live</div>
+            <h2 id="liveHeroTitle">Active rescue</h2>
+            <p style="opacity:0.9;font-size:0.9rem;margin-bottom:8px;">ID: <span id="liveHeroCode">—</span></p>
+            <div id="liveHeroProgress" class="fk-live-progress"></div>
+            <div class="pb-map-placeholder" id="liveMapHint">Matching nearest rescue hero…</div>
+            <div id="liveRepSection" style="display:none;">
+                <div class="pb-rep-card">
+                    <div class="pb-rep-avatar"><i class="fas fa-paw"></i></div>
+                    <div>
+                        <strong id="liveRepName">Field rep</strong>
+                        <p id="liveRepMeta" style="font-size:0.8rem;margin:4px 0 0;opacity:0.9;">On the way</p>
+                        <p style="font-size:0.85rem;margin:0;">ETA: <strong id="liveEta">—</strong></p>
+                    </div>
+                </div>
+            </div>
+            <button type="button" class="pb-btn-track-live" onclick="activeCaseCode&&openCaseTracking(activeCaseCode)">View full tracking</button>
+        </div>
+
+        <!-- Greeting -->
+        <div class="greeting">
+            <h1>Welcome back, <span id="userGreet">John</span> 👋</h1>
+            <p>Every report saves a life. Thank you for being alert.</p>
+        </div>
+
+        <!-- XP Progress -->
+        <div class="xp-bar-wrap">
+            <div style="width: 48px; height: 48px; background: var(--primary-light); border-radius: 14px; display: flex; align-items: center; justify-content: center; color: var(--primary); font-size: 1.2rem;"><i class="fas fa-trophy"></i></div>
+            <div class="xp-info">
+                <h4>Level 4 Rescuer — 650 / 1000 XP</h4>
+            </div>
+            <div class="xp-track" style="max-width: 350px;">
+                <div class="xp-fill" style="width: 65%;"></div>
+            </div>
+        </div>
+
+        <!-- Quick Actions (4 Tiles) -->
+        <div class="quick-grid">
+            <div class="q-card hero-card" onclick="openCamera()">
+                <div class="q-icon"><i class="fas fa-bolt"></i></div>
+                <div>
+                    <h3>Report Emergency</h3>
+                    <p>Found an injured animal? AI will verify & dispatch help instantly.</p>
+                </div>
+            </div>
+            <div class="q-card" onclick="alert('Redirecting to secure donation gateway...')">
+                <div class="q-icon"><i class="fas fa-heart"></i></div>
+                <h3>Support NGOs</h3>
+                <p>Fund verified rescue orgs</p>
+            </div>
+            <div class="q-card" onclick="openNearestNgoModal()">
+                <div class="q-icon"><i class="fas fa-map-location-dot"></i></div>
+                <h3>Near Me</h3>
+                <p>Shelters, Vets, Riders</p>
+            </div>
+        </div>
+
+        <!-- Two-Column: Cases + Community -->
+        <div class="two-col">
+            <div>
+                <div class="section-head">
+                    <h2>Your rescue cases</h2>
+                    <a href="javascript:void(0)" onclick="typeof loadMyCases==='function'&&loadMyCases()"><i class="fas fa-rotate"></i> Refresh</a>
+                </div>
+
+                <div id="caseListArea">
+                    <!-- Dynamic rendering -->
+                </div>
+            </div>
+
+            <!-- Community Stats -->
+            <div class="community-card">
+                <h3>Community Impact</h3>
+
+                <div class="stat-row">
+                    <div class="stat-icon" style="background: var(--primary-light); color: var(--primary);"><i class="fas fa-heart-pulse"></i></div>
+                    <div class="stat-info">
+                        <h4>Rescues This Year</h4>
+                        <p>Nationwide total</p>
+                    </div>
+                    <span class="stat-val" style="color: var(--primary);">15,842</span>
+                </div>
+
+                <div class="stat-row">
+                    <div class="stat-icon" style="background: #dcfce7; color: #16a34a;"><i class="fas fa-building-ngo"></i></div>
+                    <div class="stat-info">
+                        <h4>Verified NGOs</h4>
+                        <p>Active partners</p>
+                    </div>
+                    <span class="stat-val" style="color: #16a34a;">842</span>
+                </div>
+
+                <div class="stat-row">
+                    <div class="stat-icon" style="background: #dbeafe; color: #2563eb;"><i class="fas fa-indian-rupee-sign"></i></div>
+                    <div class="stat-info">
+                        <h4>Donations Distributed</h4>
+                        <p>Transparent funding</p>
+                    </div>
+                    <span class="stat-val" style="color: #2563eb;">₹24L</span>
+                </div>
+
+                <div class="stat-row">
+                    <div class="stat-icon" style="background: #fef3c7; color: #d97706;"><i class="fas fa-stethoscope"></i></div>
+                    <div class="stat-info">
+                        <h4>Vet Consultations</h4>
+                        <p>Free teleconsults given</p>
+                    </div>
+                    <span class="stat-val" style="color: #d97706;">3,210</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Leaderboard Banner -->
+        <div class="leader-banner">
+            <div>
+                <h3><i class="fas fa-ranking-star" style="margin-right: 10px; color: #f59e0b;"></i> Rescue Points Leaderboard</h3>
+                <p>You are in the Top 5% of rescuers in Mumbai!</p>
+            </div>
+            <button onclick="alert('Leaderboard:\n1. Priya Sharma — 1,240 pts\n2. Rahul Mehta — 1,100 pts\n3. You — 840 pts\n4. Sneha Iyer — 780 pts\n5. Amit Patel — 720 pts')">View Rankings</button>
+        </div>
+
+    </div>
+
+    <!-- ─── REPORT FORM MODAL ─── -->
+    <div id="reportModal" class="modal-bg">
+        <div class="modal-panel">
+            <h2><i class="fas fa-check-circle" style="color:#22c55e;margin-right:10px;"></i>Animal Verified!</h2>
+            <p class="sub-text">AI detected: <strong id="detectedAnimal">DOG</strong>. Fill details to dispatch rescue.</p>
+            <div class="form-group"><label>Incident Location <span style="font-size:.7rem;font-weight:400;text-transform:none;">(auto-detected)</span></label><div id="locationBox" style="padding:14px 18px;border:2px solid #e2e8f0;border-radius:16px;background:#f8fafc;display:flex;align-items:center;gap:10px;"><i class="fas fa-spinner fa-spin" style="color:var(--primary)" id="locSpinner"></i><span id="rptLocationText" style="font-weight:600;">Detecting your location...</span></div><input type="hidden" id="rptLocation"><input type="hidden" id="rptCoords"></div>
+            <div class="form-row">
+                <div class="form-group"><label>Severity</label><select id="rptSeverity"><option>Critical — Needs Immediate Help</option><option>Moderate — Injured but Stable</option><option>Low — Needs Shelter/Food</option></select></div>
+                <div class="form-group"><label>Animal Condition</label><select id="rptCondition"><option>Bleeding / Fracture</option><option>Sick / Weak</option><option>Stuck / Trapped</option><option>Abandoned / Stray</option></select></div>
+            </div>
+            <div class="form-group"><label>Description</label><textarea id="rptDesc" placeholder="Describe what you see — injuries, surroundings, landmarks..."></textarea></div>
+            <div class="form-group"><label>Your Phone (for updates)</label><input type="tel" id="rptPhone" placeholder="+91 98765 43210"></div>
+            <button class="btn-submit" onclick="submitReport()"><i class="fas fa-paper-plane"></i> Submit & Dispatch Help</button>
+            <center><button class="btn-ghost" onclick="closeModal('reportModal')">Cancel</button></center>
+        </div>
+    </div>
+
+    <!-- ─── CASE TRACKING DETAIL MODAL ─── -->
+    <div id="caseModal" class="modal-bg">
+        <div class="modal-panel wide">
+            <div style="display:flex;justify-content:space-between;align-items:flex-start;">
+                <div>
+                    <span class="detail-id" id="caseModalId">PB-48291</span>
+                    <h2 id="caseModalTitle" style="margin-top:10px;">Injured Indie</h2>
+                </div>
+                <button onclick="closeModal('caseModal')" style="background:none;border:none;font-size:1.5rem;cursor:pointer;color:var(--text-gray);">&times;</button>
+            </div>
+            <div class="detail-grid" id="caseDetailGrid"></div>
+            
+            <!-- LIVE TRACKING MAP -->
+            <div id="liveTrackingMap" style="display:none; margin-bottom: 25px; border-radius: 20px; overflow: hidden; border: 2px solid #e2e8f0;">
+                <div style="background: var(--primary-light); padding: 12px 20px; display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #e2e8f0;">
+                    <span style="font-weight: 800; color: var(--primary);"><i class="fas fa-motorcycle"></i> Live Rider Tracking</span>
+                    <span id="trackingEta" class="pill pill-blue" style="font-size: 0.8rem; display: none;"></span>
+                </div>
+                <div id="mapView" style="width: 100%; height: 250px;"></div>
+            </div>
+
+            <h3 style="font-size:1.1rem;font-weight:800;margin-bottom:20px;"><i class="fas fa-signal" style="color:var(--primary);margin-right:8px;"></i>Live Tracking Timeline</h3>
+            <div class="timeline" id="caseTimeline"></div>
+        </div>
+    </div>
+
+    <!-- ─── ALL CASES MODAL ─── -->
+    <div id="allCasesModal" class="modal-bg">
+        <div class="modal-panel wide">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:30px;">
+                <div style="display:flex; align-items:center; gap:20px;">
+                    <h2>All Rescue Cases</h2>
+                    <div style="display:flex; gap:10px; background:#f1f5f9; padding:5px; border-radius:12px;">
+                        <button class="pill pill-blue" id="btnFilterActive" onclick="renderAllCases('active')" style="cursor:pointer; border:2px solid var(--primary); background:white; color:var(--primary);">Active</button>
+                        <button class="pill" id="btnFilterPast" onclick="renderAllCases('past')" style="cursor:pointer; background:transparent; color:var(--text-gray); border:2px solid transparent;">Past / Resolved</button>
+                    </div>
+                </div>
+                <button onclick="closeModal('allCasesModal')" style="background:none;border:none;font-size:1.5rem;cursor:pointer;color:var(--text-gray);">&times;</button>
+            </div>
+            <div id="allCasesListArea" style="display:grid;gap:15px; max-height:400px; overflow-y:auto; padding-right:10px;"></div>
+        </div>
+    </div>
+
+    <!-- ─── NEAREST NGO MODAL ─── -->
+    <div id="nearestNgoModal" class="modal-bg">
+        <div class="modal-panel wide">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;">
+                <h2>Nearest Active NGOs</h2>
+                <button onclick="closeModal('nearestNgoModal')" style="background:none;border:none;font-size:1.5rem;cursor:pointer;color:var(--text-gray);">&times;</button>
+            </div>
+            <div id="ngoMapContainer" style="width:100%;height:300px;border-radius:16px;border:2px solid #e2e8f0;margin-bottom:20px;display:flex;align-items:center;justify-content:center;background:#f8fafc;overflow:hidden;">
+                <i class="fas fa-spinner fa-spin" style="font-size:2rem;color:var(--primary);"></i>
+            </div>
+            <div id="ngoListArea" style="display:grid;gap:15px;max-height:300px;overflow-y:auto;padding-right:10px;"></div>
+        </div>
+    </div>
+
+    <!-- ─── PROFILE MODAL ─── -->
+    <div id="profileModal" class="modal-bg">
+        <div class="modal-panel">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:30px;">
+                <h2>Edit Profile</h2>
+                <button onclick="closeModal('profileModal')" style="background:none;border:none;font-size:1.5rem;cursor:pointer;color:var(--text-gray);">&times;</button>
+            </div>
+            <div class="form-group">
+                <label>Full Name</label>
+                <input type="text" id="editName" placeholder="Your Name">
+            </div>
+            <div class="form-group">
+                <label>Email Address</label>
+                <input type="email" id="editEmail" placeholder="your@email.com" readonly style="opacity: 0.6; cursor: not-allowed;">
+            </div>
+            <div class="form-group">
+                <label>Phone Number</label>
+                <input type="tel" id="editPhone" placeholder="+91 00000 00000">
+            </div>
+            <button class="btn-submit" onclick="saveProfile()"><i class="fas fa-save"></i> Save Changes</button>
+        </div>
+    </div>
+
+    <!-- ─── AI CAMERA OVERLAY ─── -->
+    <div id="cameraOverlay" class="camera-overlay">
+        <div class="cam-box">
+            <div class="scan-bar"></div>
+            <div class="ai-badge" id="aiLabel"><i class="fas fa-microchip"></i> AI GUARD SCANNING...</div>
+            <video id="video" autoplay playsinline></video>
+            <canvas id="canvas" style="display:none;"></canvas>
+        </div>
+        <div class="cam-btns">
+            <button class="btn-cam sub" onclick="closeCamera()"><i class="fas fa-xmark"></i></button>
+            <button class="btn-cam main" onclick="captureAndVerify()"><i class="fas fa-camera"></i></button>
+            <button class="btn-cam sub" onclick="alert('Flash toggled')"><i class="fas fa-bolt"></i></button>
+        </div>
+    </div>
+
+    <div id="trackModal" class="modal-bg" onclick="if(event.target===this)closeTrackModal()">
+        <div class="track-panel" onclick="event.stopPropagation()">
+            <button class="track-close" type="button" onclick="closeTrackModal()" aria-label="Close">&times;</button>
+            <div id="trackModalBody"></div>
+        </div>
+    </div>
+
+    <!-- ─── SCRIPTS ─── -->
+    <nav class="pb-bottom-nav" aria-label="Main">
+        <button type="button" class="active" onclick="window.scrollTo({top:0,behavior:'smooth'})"><i class="fas fa-home"></i> Home</button>
+        <button type="button" onclick="typeof openCamera==='function'&&openCamera()"><i class="fas fa-bolt"></i> Report</button>
+        <button type="button" onclick="typeof loadMyCases==='function'&&loadMyCases()"><i class="fas fa-route"></i> Track</button>
+        <button type="button" onclick="toggleNotifDrawer()"><i class="fas fa-bell"></i> Alerts</button>
+    </nav>
+
+    <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
+    <script src="paw-api.js?v=1"></script>
+    <script src="paw-tracker.js?v=3"></script>
+    <script src="shared-case-portal.js?v=2"></script>
+    <script src="customer-app.js?v=7"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+    <script>
+        const firebaseConfig = { apiKey: 'AIzaSyDRuOTikCSLCdb73oYSnrnhoEiKbv-6Ozc', authDomain: 'pawbandhan-29f84.firebaseapp.com', projectId: 'pawbandhan-29f84', storageBucket: 'pawbandhan-29f84.firebasestorage.app', messagingSenderId: '378867729624', appId: '1:378867729624:web:2371a816457fdcfe2303ad' };
+        firebase.initializeApp(firebaseConfig);
+        const auth = firebase.auth();
+
+        function bootCustomerApp(uid) {
+            if (typeof initCustomerPortal === 'function') initCustomerPortal(uid);
+        }
+
+        const portalUid = sessionStorage.getItem('customer_uid');
+        if (sessionStorage.getItem('demo_session') === 'true' && !portalUid) {
+            setUserName('John Doe');
+            bootCustomerApp('demo');
+        } else if (portalUid) {
+            bootCustomerApp(portalUid);
+            fetch('/api/customers/' + portalUid + '/profile').then(r => r.json()).then(p => setUserName(p.name || 'Customer')).catch(() => setUserName('Customer'));
+        } else {
+            auth.onAuthStateChanged(user => {
+                if (user) {
+                    sessionStorage.setItem('customer_uid', user.uid);
+                    const name = user.displayName || user.email?.split('@')[0] || 'Friend';
+                    setUserName(name);
+                    bootCustomerApp(user.uid);
+                } else {
+                    window.location.href = 'customer_auth.html';
+                }
+            });
+        }
+
+        function setUserName(name) {
+            document.getElementById('userName').innerText = name;
+            document.getElementById('userGreet').innerText = name.split(' ')[0];
+            const initials = name.split(' ').map(n => n[0]).join('').toUpperCase().substring(0, 2);
+            document.getElementById('userInitials').innerText = initials;
+        }
+
+        let model = null;
+        async function loadModel() {
+            try {
+                model = await cocoSsd.load();
+                document.getElementById('aiLabel').innerHTML = '<i class="fas fa-shield-check" style="color: #22c55e;"></i> AI GUARD READY';
+            } catch(e) { console.warn("AI model fallback"); }
+        }
+        loadModel();
+
+        function openCamera() {
+            document.getElementById('cameraOverlay').style.display = 'flex';
+            navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } })
+                .then(stream => { document.getElementById('video').srcObject = stream; })
+                .catch(() => alert('Camera access denied.'));
+        }
+
+        function closeCamera() {
+            document.getElementById('cameraOverlay').style.display = 'none';
+            const stream = document.getElementById('video').srcObject;
+            if (stream) stream.getTracks().forEach(t => t.stop());
+        }
+
+        // ── Mock case database ──
+        let casesDB = JSON.parse(localStorage.getItem('paw_cases')) || [
+            { id:'PB-48291', title:'Injured Indie', animal:'Dog', location:'Andheri West, Mumbai', severity:'Critical', condition:'Bleeding / Fracture', reporter:'John Doe', phone:'+91 98765 43210', status:'dispatched', time:'12 mins ago',
+              timeline:[
+                {t:'11:42 AM',label:'Case Reported',detail:'AI verified: Dog detected. Report submitted.',done:true},
+                {t:'11:43 AM',label:'NGO Notified',detail:'Rescue Foundation (Andheri) accepted the case.',done:true},
+                {t:'11:45 AM',label:'Rider Dispatched',detail:'Rider Sameer assigned. ETA: 8 mins.',done:true},
+                {t:'11:50 AM',label:'Rider En Route',detail:'Sameer is 2.4 km away from location.',active:true},
+                {t:'—',label:'Animal Picked Up',detail:'Awaiting rider confirmation.',pending:true},
+                {t:'—',label:'Delivered to Vet',detail:'Awaiting delivery.',pending:true}
+              ]},
+            { id:'PB-48285', title:'Sick Kitten', animal:'Cat', location:'Versova Beach, Mumbai', severity:'Moderate', condition:'Sick / Weak', reporter:'Priya S.', phone:'+91 91234 56789', status:'ngo_accepted', time:'45 mins ago',
+              timeline:[
+                {t:'11:10 AM',label:'Case Reported',detail:'AI verified: Cat detected.',done:true},
+                {t:'11:12 AM',label:'NGO Notified',detail:'Animal Hospital, Juhu accepted.',done:true},
+                {t:'11:15 AM',label:'Rider Dispatched',detail:'Rider Amit assigned.',done:true},
+                {t:'11:30 AM',label:'Animal Picked Up',detail:'Kitten collected from beach.',done:true},
+                {t:'11:48 AM',label:'At Vet Clinic',detail:'Admitted for treatment. Dehydration + fever.',active:true},
+                {t:'—',label:'Treatment Complete',detail:'Awaiting medical update.',pending:true}
+              ]},
+            { id:'PB-48279', title:'Injured Pigeon', animal:'Bird', location:'Bandra Bandstand, Mumbai', severity:'Low', condition:'Stuck / Trapped', reporter:'Amit P.', phone:'+91 90000 12345', status:'under_care', time:'1 hr ago',
+              timeline:[
+                {t:'10:45 AM',label:'Case Reported',detail:'Manual report filed.',done:true},
+                {t:'10:48 AM',label:'Volunteer Responded',detail:'Local volunteer Sneha reached the spot.',done:true},
+                {t:'10:55 AM',label:'Bird Rescued',detail:'Pigeon freed from netting.',done:true},
+                {t:'11:10 AM',label:'Vet Consulted',detail:'Dr. Ananya on video call — wing sprain.',done:true},
+                {t:'11:20 AM',label:'Under Care',detail:'Pigeon resting at foster. Medication started.',active:true},
+                {t:'—',label:'Released / Rehomed',detail:'Pending recovery.',pending:true}
+              ]}
+        ];
+        if (!localStorage.getItem('paw_cases')) localStorage.setItem('paw_cases', JSON.stringify(casesDB));
+
+        function renderCases() {
+            const listArea = document.getElementById('caseListArea');
+            let html = '';
+            casesDB.slice(0, 5).forEach((c, i) => {
+                const icons = {Dog:'fa-dog',Cat:'fa-cat',Bird:'fa-dove',Cow:'fa-cow'};
+                const icon = icons[c.animal] || 'fa-paw';
+                
+                let pillClass = 'pill-amber'; let pillText = 'Pending';
+                let subHTML = `<i class="fas fa-spinner fa-spin" style="color:var(--primary)"></i> Matching rescue team...`;
+                let iconColor = 'color:var(--primary);'; let iconBg = 'background:var(--primary-light);';
+
+                if (c.status === 'dispatched') {
+                    pillClass = 'pill-green'; pillText = 'Dispatched';
+                    subHTML = `<i class="fas fa-motorcycle" style="color: var(--primary);"></i> Rider en route`;
+                } else if (c.status === 'ngo_accepted' || c.status === 'ngo_received') {
+                    pillClass = 'pill-blue'; pillText = 'NGO Accepted';
+                    subHTML = `<i class="fas fa-hospital" style="color: #0369a1;"></i> Animal Hospital assigned`;
+                    iconColor = 'color:#3b82f6;'; iconBg = 'background:#eff6ff;';
+                } else if (c.status === 'under_care') {
+                    pillClass = 'pill-amber'; pillText = 'Under Care';
+                    subHTML = `<i class="fas fa-user-nurse" style="color: #059669;"></i> Treating on-site`;
+                    iconColor = 'color:#d97706;'; iconBg = 'background:#fef3c7;';
+                } else if (c.status === 'self_transport') {
+                    pillClass = 'pill-red'; pillText = 'Self Transport';
+                    subHTML = `<i class="fas fa-exclamation-triangle" style="color:#ef4444"></i> No riders available`;
+                }
+
+                html += `<div class="case-card" style="cursor:pointer" onclick="openCaseDetail(${i})">
+                    <div class="case-icon" style="${iconBg} ${iconColor}"><i class="fas ${icon}"></i></div>
+                    <div class="case-body">
+                        <h4>Case #${c.id} • ${c.title}</h4>
+                        <p>${c.location} • ${c.time}</p>
+                        <div class="sub">${subHTML}</div>
+                    </div>
+                    <span class="pill ${pillClass}" ${pillClass==='pill-red' ? 'style="background:#fee2e2;color:#ef4444;"' : ''}>${pillText}</span>
+                </div>`;
+            });
+            listArea.innerHTML = html;
+        }
+
+        /* Mock case list disabled — real tracking via customer-app.js */
+        // window.addEventListener('load', renderCases);
+        window.addEventListener('storage', (e) => {
+            if (e.key === 'paw_cases') {
+                casesDB = JSON.parse(e.newValue);
+                renderCases();
+                if (document.getElementById('caseModal').classList.contains('open')) {
+                    const openId = document.getElementById('caseModalId').innerText;
+                    const idx = casesDB.findIndex(c => c.id === openId);
+                    if (idx !== -1) openCaseDetail(idx);
+                }
+            }
+        });
+
+        let detectedAnimalType = 'Dog';
+
+        async function captureAndVerify() {
+            const video = document.getElementById('video');
+            const canvas = document.getElementById('canvas');
+            const aiLabel = document.getElementById('aiLabel');
+            canvas.width = video.videoWidth;
+            canvas.height = video.videoHeight;
+            canvas.getContext('2d').drawImage(video, 0, 0);
+            aiLabel.innerHTML = '<i class="fas fa-spinner fa-spin"></i> VERIFYING ANIMAL...';
+            try {
+                const predictions = await model.detect(canvas);
+                const animal = predictions.find(p => ['dog','cat','cow','horse','sheep','bird'].includes(p.class));
+                if (animal) {
+                    detectedAnimalType = animal.class.charAt(0).toUpperCase() + animal.class.slice(1);
+                    aiLabel.innerHTML = `<span style="color:#22c55e"><i class="fas fa-check-circle"></i> ${animal.class.toUpperCase()} DETECTED!</span>`;
+                    setTimeout(() => { closeCamera(); showReportForm(detectedAnimalType); }, 1200);
+                } else {
+                    aiLabel.innerHTML = '<span style="color:#ef4444"><i class="fas fa-triangle-exclamation"></i> NO ANIMAL FOUND</span>';
+                }
+            } catch(e) {
+                detectedAnimalType = 'Dog';
+                aiLabel.innerHTML = '<span style="color:#22c55e"><i class="fas fa-check-circle"></i> MANUAL MODE</span>';
+                setTimeout(() => { closeCamera(); showReportForm('Dog (Manual)'); }, 1000);
+            }
+        }
+
+        function showReportForm(animalName) {
+            document.getElementById('detectedAnimal').innerText = animalName.toUpperCase();
+            document.getElementById('reportModal').classList.add('open');
+            autoDetectLocation();
+        }
+
+        function autoDetectLocation() {
+            const locText = document.getElementById('rptLocationText');
+            const locInput = document.getElementById('rptLocation');
+            const coordsInput = document.getElementById('rptCoords');
+            const spinner = document.getElementById('locSpinner');
+            const locBox = document.getElementById('locationBox');
+
+            if (!navigator.geolocation) {
+                locText.innerText = 'Mumbai, Maharashtra (GPS unavailable)';
+                locInput.value = 'Mumbai, Maharashtra';
+                spinner.className = 'fas fa-map-pin';
+                locBox.style.borderColor = '#f59e0b';
+                return;
+            }
+
+            navigator.geolocation.getCurrentPosition(
+                async (pos) => {
+                    const lat = pos.coords.latitude;
+                    const lng = pos.coords.longitude;
+                    coordsInput.value = lat + ',' + lng;
+                    try {
+                        const res = await fetch(`https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lng}&format=json`);
+                        const data = await res.json();
+                        const addr = data.address;
+                        const readable = [addr.road, addr.suburb, addr.city || addr.town || addr.village, addr.state].filter(Boolean).join(', ');
+                        locText.innerText = readable || data.display_name;
+                        locInput.value = readable || data.display_name;
+                    } catch(e) {
+                        locText.innerText = `GPS: ${lat.toFixed(4)}, ${lng.toFixed(4)}`;
+                        locInput.value = `GPS: ${lat.toFixed(4)}, ${lng.toFixed(4)}`;
+                    }
+                    spinner.className = 'fas fa-location-dot';
+                    spinner.style.color = '#22c55e';
+                    locBox.style.borderColor = '#22c55e';
+                },
+                (err) => {
+                    locText.innerText = 'Mumbai, Maharashtra (permission denied)';
+                    locInput.value = 'Mumbai, Maharashtra';
+                    spinner.className = 'fas fa-location-crosshairs';
+                    spinner.style.color = '#f59e0b';
+                    locBox.style.borderColor = '#f59e0b';
+                },
+                { enableHighAccuracy: true, timeout: 10000 }
+            );
+        }
+
+        async function submitReport() {
+            const loc = document.getElementById('rptLocation').value || 'Location not specified';
+            const sev = document.getElementById('rptSeverity').value;
+            const cond = document.getElementById('rptCondition').value;
+            const desc = document.getElementById('rptDesc').value || 'No description';
+            const phone = document.getElementById('rptPhone').value || '+91 00000 00000';
+            const uid = sessionStorage.getItem('customer_uid') || firebase.auth().currentUser?.uid || 'guest-' + Date.now();
+            let lat = 19.076, lng = 72.8777;
+            try { const p = await new Promise((res,rej)=>navigator.geolocation.getCurrentPosition(res,rej)); lat=p.coords.latitude; lng=p.coords.longitude; } catch(e){}
+            try {
+                const fd = new FormData();
+                fd.append('userId', uid); fd.append('incidentType', 'emergency'); fd.append('description', desc);
+                fd.append('latitude', lat); fd.append('longitude', lng); fd.append('animalType', detectedAnimalType);
+                fd.append('phoneNo', phone); fd.append('email', firebase.auth().currentUser?.email || '');
+                const apiRes = await fetch('/api/incidents/report', { method: 'POST', body: fd });
+                const apiData = await apiRes.json();
+                if (apiData.success) {
+                    closeModal('reportModal');
+                    alert('Case reported: ' + apiData.incident.incident_code + '. Track it below.');
+                    try { await fetch('/api/workflow/auto-assign-ngo/' + apiData.incident.incident_code, { method: 'POST' }); } catch (e) {}
+                    if (typeof loadMyCases === 'function') loadMyCases();
+                    if (typeof openCaseTracking === 'function') setTimeout(() => openCaseTracking(apiData.incident.incident_code), 400);
+                    return;
+                }
+            } catch(e) { console.warn('API report fallback', e); }
+            const newId = 'PB-' + (50000 + Math.floor(Math.random() * 9999));
+            const now = new Date();
+            const timeStr = now.toLocaleTimeString('en-IN', {hour:'2-digit',minute:'2-digit'});
+
+            const newCase = {
+                id: newId, title: detectedAnimalType + ' Rescue', animal: detectedAnimalType, location: loc,
+                severity: sev.split('—')[0].trim(), condition: cond, reporter:'You', phone: phone,
+                status:'pending', time:'Just now',
+                timeline:[
+                    {t:timeStr, label:'Case Reported', detail:'AI verified: '+detectedAnimalType+'. '+desc, done:true},
+                    {t:timeStr, label:'System Processing', detail:'Matching nearest NGO & rider...', active:true},
+                    {t:'—', label:'NGO Notified', detail:'Awaiting NGO acceptance.', pending:true},
+                    {t:'—', label:'Rider Dispatched', detail:'Awaiting dispatch.', pending:true},
+                    {t:'—', label:'Animal Picked Up', detail:'Pending.', pending:true},
+                    {t:'—', label:'Delivered to Vet', detail:'Pending.', pending:true}
+                ]
+            };
+            casesDB.unshift(newCase);
+            localStorage.setItem('paw_cases', JSON.stringify(casesDB));
+            renderCases();
+
+            closeModal('reportModal');
+            // Reset form
+            document.getElementById('rptLocation').value = '';
+            document.getElementById('rptDesc').value = '';
+            document.getElementById('rptPhone').value = '';
+            
+            // Timeout logic
+            setTimeout(() => {
+                const caseIndex = casesDB.findIndex(c => c.id === newId);
+                if (caseIndex !== -1 && casesDB[caseIndex].status === 'pending') {
+                    casesDB[caseIndex].status = 'self_transport';
+                    const now = new Date();
+                    const tStr = now.toLocaleTimeString('en-IN', {hour:'2-digit',minute:'2-digit'});
+                    casesDB[caseIndex].timeline[1].active = false;
+                    casesDB[caseIndex].timeline[1].done = true;
+                    casesDB[caseIndex].timeline[2] = { t: tStr, label: 'Timeout Reached', detail: 'No teams available. Please transport the animal.', active: true };
+                    
+                    localStorage.setItem('paw_cases', JSON.stringify(casesDB));
+                    renderCases();
+                    
+                    if (document.getElementById('caseModal').classList.contains('open') && document.getElementById('caseModalId').innerText === newId) {
+                        openCaseDetail(caseIndex);
+                    }
+                }
+            }, 10000);
+
+            // Show confirmation
+            setTimeout(() => openCaseDetail(0), 600);
+        }
+
+        function openCaseDetail(idx) {
+            const c = casesDB[idx];
+            if(!c) return;
+            document.getElementById('caseModalId').innerText = c.id;
+            document.getElementById('caseModalTitle').innerText = c.title;
+            document.getElementById('caseDetailGrid').innerHTML = `
+                <div><div class="dg-label">Animal</div><div class="dg-val">${c.animal}</div></div>
+                <div><div class="dg-label">Severity</div><div class="dg-val">${c.severity}</div></div>
+                <div><div class="dg-label">Location</div><div class="dg-val">${c.location}</div></div>
+                <div><div class="dg-label">Condition</div><div class="dg-val">${c.condition}</div></div>
+                <div><div class="dg-label">Reported By</div><div class="dg-val">${c.reporter}</div></div>
+                <div><div class="dg-label">Contact</div><div class="dg-val">${c.phone}</div></div>
+                <div><div class="dg-label">Reported</div><div class="dg-val">${c.time}</div></div>
+                <div><div class="dg-label">Case ID</div><div class="dg-val">${c.id}</div></div>`;
+            let tlHTML = '';
+            c.timeline.forEach(s => {
+                const cls = s.done ? 'done' : s.active ? 'active' : 'pending';
+                const ico = s.done ? 'fa-check' : s.active ? 'fa-circle' : 'fa-ellipsis';
+                tlHTML += `<div class="tl-item"><div class="tl-dot ${cls}"><i class="fas ${ico}"></i></div><div class="tl-title">${s.label}</div><div class="tl-time">${s.t} — ${s.detail}</div></div>`;
+            });
+            
+            if (c.status === 'self_transport') {
+                tlHTML += `<div style="margin-top: 20px; text-align: center; background: #fff5f2; padding: 15px; border-radius: 12px; border: 1px dashed var(--primary);">
+                    <p style="font-size: 0.85rem; font-weight: 700; color: var(--primary); margin-bottom: 10px;">Please take the animal to the nearest NGO.</p>
+                    <button class="btn-submit" style="padding: 10px 20px; font-size: 0.9rem;" onclick="closeModal('caseModal'); openNearestNgoModal();">
+                        <i class="fas fa-map-marker-alt"></i> View Nearest NGOs
+                    </button>
+                </div>`;
+            }
+            
+            document.getElementById('caseTimeline').innerHTML = tlHTML;
+            
+            if (c.status === 'dispatched') {
+                initLiveMap(c.location);
+            } else {
+                clearLiveMap();
+            }
+            
+            document.getElementById('caseModal').classList.add('open');
+        }
+
+        function closeModal(id) { 
+            document.getElementById(id).classList.remove('open'); 
+            if (id === 'caseModal') clearLiveMap();
+        }
+
+        let liveMap = null;
+        let directionsService = null;
+        let directionsRenderer = null;
+        let riderMarker = null;
+        let destinationMarker = null;
+        let animationInterval = null;
+
+        function initLiveMap(locationString) {
+            const mapContainer = document.getElementById('liveTrackingMap');
+            const etaBadge = document.getElementById('trackingEta');
+            mapContainer.style.display = 'block';
+            etaBadge.style.display = 'inline-block';
+            etaBadge.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Calculating Route...';
+
+            if (!directionsService) directionsService = new google.maps.DirectionsService();
+            if (!directionsRenderer) {
+                directionsRenderer = new google.maps.DirectionsRenderer({
+                    suppressMarkers: true,
+                    polylineOptions: { strokeColor: '#FF6B35', strokeWeight: 5 }
+                });
+            }
+
+            const geocoder = new google.maps.Geocoder();
+            geocoder.geocode({ address: locationString }, (results, status) => {
+                if (status === 'OK' && results[0]) {
+                    const destination = results[0].geometry.location;
+                    
+                    if (!liveMap) {
+                        liveMap = new google.maps.Map(document.getElementById('mapView'), {
+                            zoom: 14,
+                            center: destination,
+                            mapTypeControl: false,
+                            streetViewControl: false,
+                            fullscreenControl: false
+                        });
+                        directionsRenderer.setMap(liveMap);
+                    } else {
+                        liveMap.setCenter(destination);
+                    }
+
+                    // Simulate rider starting point slightly away from destination
+                    const startLat = destination.lat() + (Math.random() > 0.5 ? 0.015 : -0.015);
+                    const startLng = destination.lng() + (Math.random() > 0.5 ? 0.015 : -0.015);
+                    const origin = new google.maps.LatLng(startLat, startLng);
+
+                    directionsService.route({
+                        origin: origin,
+                        destination: destination,
+                        travelMode: google.maps.TravelMode.DRIVING
+                    }, (response, status) => {
+                        if (status === 'OK') {
+                            directionsRenderer.setDirections(response);
+                            const leg = response.routes[0].legs[0];
+                            etaBadge.innerHTML = `<i class="fas fa-clock"></i> Rider ETA: ${leg.duration.text} (${leg.distance.text})`;
+
+                            // Setup Marker
+                            if (!riderMarker) {
+                                riderMarker = new google.maps.Marker({
+                                    map: liveMap,
+                                    icon: {
+                                        path: google.maps.SymbolPath.CIRCLE,
+                                        scale: 8,
+                                        fillColor: '#2563eb',
+                                        fillOpacity: 1,
+                                        strokeColor: '#ffffff',
+                                        strokeWeight: 2
+                                    },
+                                    zIndex: 999
+                                });
+                            }
+                            
+                            // Destination Marker
+                            if (!destinationMarker) {
+                                destinationMarker = new google.maps.Marker({
+                                    map: liveMap,
+                                    icon: {
+                                        path: google.maps.SymbolPath.CIRCLE,
+                                        scale: 6,
+                                        fillColor: '#ef4444',
+                                        fillOpacity: 1,
+                                        strokeColor: '#ffffff',
+                                        strokeWeight: 2
+                                    }
+                                });
+                            }
+                            destinationMarker.setPosition(destination);
+                            
+                            // Animate Marker along route
+                            let routePath = response.routes[0].overview_path;
+                            let i = 0;
+                            if (animationInterval) clearInterval(animationInterval);
+                            riderMarker.setPosition(routePath[0]);
+                            
+                            animationInterval = setInterval(() => {
+                                i++;
+                                if (i >= routePath.length) i = 0; // loop for demo
+                                riderMarker.setPosition(routePath[i]);
+                            }, 500);
+
+                        } else {
+                            etaBadge.innerHTML = '<i class="fas fa-exclamation-triangle"></i> Route Error';
+                        }
+                    });
+                } else {
+                    etaBadge.innerHTML = '<i class="fas fa-exclamation-triangle"></i> Location not found';
+                    mapContainer.style.display = 'none';
+                }
+            });
+        }
+
+        function clearLiveMap() {
+            if (animationInterval) clearInterval(animationInterval);
+            const mapContainer = document.getElementById('liveTrackingMap');
+            if (mapContainer) mapContainer.style.display = 'none';
+            const etaBadge = document.getElementById('trackingEta');
+            if (etaBadge) etaBadge.style.display = 'none';
+        }
+
+        function openAllCasesModal() {
+            document.getElementById('allCasesModal').classList.add('open');
+            renderAllCases('active');
+        }
+
+        function renderAllCases(filter) {
+            const listArea = document.getElementById('allCasesListArea');
+            const btnActive = document.getElementById('btnFilterActive');
+            const btnPast = document.getElementById('btnFilterPast');
+            
+            if (filter === 'active') {
+                btnActive.style.background = 'white'; btnActive.style.color = 'var(--primary)'; btnActive.style.borderColor = 'var(--primary)';
+                btnPast.style.background = 'transparent'; btnPast.style.color = 'var(--text-gray)'; btnPast.style.borderColor = 'transparent';
+            } else {
+                btnPast.style.background = 'white'; btnPast.style.color = 'var(--primary)'; btnPast.style.borderColor = 'var(--primary)';
+                btnActive.style.background = 'transparent'; btnActive.style.color = 'var(--text-gray)'; btnActive.style.borderColor = 'transparent';
+            }
+
+            listArea.innerHTML = '';
+            let count = 0;
+            casesDB.forEach((c, idx) => {
+                const isActive = c.status !== 'resolved';
+                if ((filter === 'active' && !isActive) || (filter === 'past' && isActive)) return;
+                
+                count++;
+                const icons = {Dog:'fa-dog',Cat:'fa-cat',Bird:'fa-dove',Cow:'fa-cow'};
+                const icon = icons[c.animal] || 'fa-paw';
+                let statusCls = 'pill-amber';
+                if(c.status === 'dispatched') statusCls = 'pill-green';
+                else if(c.status === 'ngo_accepted' || c.status === 'ngo_received') statusCls = 'pill-blue';
+                else if(c.status === 'self_transport') statusCls = 'pill-red';
+                else if(c.status === 'resolved') statusCls = 'pill-green';
+                
+                const statusTxt = c.status.replace('_', ' ').toUpperCase();
+                
+                const card = `
+                    <div class="case-card" style="cursor:pointer;margin-bottom:0;" onclick="closeModal('allCasesModal'); openCaseDetail(${idx})">
+                        <div class="case-icon"><i class="fas ${icon}"></i></div>
+                        <div class="case-body">
+                            <h4>Case #${c.id} • ${c.title}</h4>
+                            <p>${c.location} • ${c.time}</p>
+                        </div>
+                        <span class="pill ${statusCls}" ${statusCls==='pill-red' ? 'style="background:#fee2e2;color:#ef4444;"' : ''}>${statusTxt}</span>
+                    </div>
+                `;
+                listArea.insertAdjacentHTML('beforeend', card);
+            });
+            
+            if(count === 0) {
+                listArea.innerHTML = `<div style="text-align:center; padding:40px; color:var(--text-gray);">No ${filter} cases found.</div>`;
+            }
+        }
+
+        function openProfileModal() {
+            document.getElementById('editName').value = document.getElementById('userName').innerText;
+            document.getElementById('editPhone').value = sessionStorage.getItem('user_phone') || '+91 98765 43210';
+            document.getElementById('editEmail').value = auth.currentUser ? auth.currentUser.email : 'demo@pawbandhan.org';
+            document.getElementById('profileModal').classList.add('open');
+        }
+
+        function saveProfile() {
+            const newName = document.getElementById('editName').value;
+            const newPhone = document.getElementById('editPhone').value;
+            if(!newName.trim()) return alert('Name cannot be empty');
+            
+            setUserName(newName);
+            sessionStorage.setItem('user_phone', newPhone);
+            closeModal('profileModal');
+            alert('Profile updated successfully!');
+        }
+
+        function logout() {
+            sessionStorage.removeItem('demo_session');
+            window.location.href = 'index.html';
+        }
+
+        // ─── NEAREST NGOS LOGIC ───
+        const activeNgosDB = [
+            { name: "Rescue Foundation (Andheri)", lat: 19.1136, lng: 72.8697, phone: "+91 98200 12345", specialty: "Trauma Care" },
+            { name: "Animal Hospital (Juhu)", lat: 19.1048, lng: 72.8267, phone: "+91 98200 54321", specialty: "General & Surgery" },
+            { name: "Save The Paws (Bandra)", lat: 19.0596, lng: 72.8295, phone: "+91 98200 67890", specialty: "Stray Dogs & Cats" },
+            { name: "Avian Rescue (Dadar)", lat: 19.0178, lng: 72.8478, phone: "+91 98200 09876", specialty: "Birds & Reptiles" },
+            { name: "Karuna Animal Shelter (Borivali)", lat: 19.2307, lng: 72.8567, phone: "+91 98200 11111", specialty: "Large Animals" }
+        ];
+
+        let ngoMap = null;
+        
+        function openNearestNgoModal() {
+            document.getElementById('nearestNgoModal').classList.add('open');
+            document.getElementById('ngoListArea').innerHTML = '';
+            document.getElementById('ngoMapContainer').innerHTML = '<i class="fas fa-spinner fa-spin" style="font-size:2rem;color:var(--primary);"></i>';
+            
+            if (navigator.geolocation) {
+                navigator.geolocation.getCurrentPosition(pos => {
+                    renderNgoMap(pos.coords.latitude, pos.coords.longitude);
+                }, err => {
+                    // Fallback to Mumbai center
+                    renderNgoMap(19.0760, 72.8777);
+                });
+            } else {
+                renderNgoMap(19.0760, 72.8777);
+            }
+        }
+
+        function renderNgoMap(userLat, userLng) {
+            const userLoc = new google.maps.LatLng(userLat, userLng);
+            const mapDiv = document.getElementById('ngoMapContainer');
+            
+            ngoMap = new google.maps.Map(mapDiv, {
+                zoom: 11,
+                center: userLoc,
+                mapTypeControl: false,
+                streetViewControl: false
+            });
+
+            // User marker
+            new google.maps.Marker({
+                position: userLoc,
+                map: ngoMap,
+                title: "Your Location",
+                icon: {
+                    path: google.maps.SymbolPath.CIRCLE,
+                    scale: 8,
+                    fillColor: '#3b82f6',
+                    fillOpacity: 1,
+                    strokeColor: '#ffffff',
+                    strokeWeight: 2
+                }
+            });
+
+            // Calculate distance and sort NGOs
+            let ngosWithDistance = activeNgosDB.map(ngo => {
+                const ngoLoc = new google.maps.LatLng(ngo.lat, ngo.lng);
+                const distanceMeters = google.maps.geometry.spherical.computeDistanceBetween(userLoc, ngoLoc);
+                return { ...ngo, loc: ngoLoc, distance: distanceMeters };
+            });
+
+            ngosWithDistance.sort((a, b) => a.distance - b.distance);
+
+            const listArea = document.getElementById('ngoListArea');
+            listArea.innerHTML = '';
+
+            ngosWithDistance.forEach(ngo => {
+                // NGO Marker
+                new google.maps.Marker({
+                    position: ngo.loc,
+                    map: ngoMap,
+                    title: ngo.name,
+                    icon: {
+                        path: google.maps.SymbolPath.CIRCLE,
+                        scale: 6,
+                        fillColor: '#22c55e',
+                        fillOpacity: 1,
+                        strokeColor: '#ffffff',
+                        strokeWeight: 2
+                    }
+                });
+
+                // List item
+                const distKm = (ngo.distance / 1000).toFixed(1);
+                const card = `
+                    <div class="case-card" style="margin-bottom:0; cursor:pointer;" onclick="ngoMap.setCenter(new google.maps.LatLng(${ngo.lat}, ${ngo.lng})); ngoMap.setZoom(14);">
+                        <div class="case-icon" style="background:#dcfce7;color:#16a34a;"><i class="fas fa-hospital"></i></div>
+                        <div class="case-body">
+                            <h4>${ngo.name}</h4>
+                            <p>${ngo.specialty} • <i class="fas fa-phone" style="font-size:0.8rem;margin-right:4px;"></i>${ngo.phone}</p>
+                        </div>
+                        <span class="pill pill-green"><i class="fas fa-location-dot"></i> ${distKm} km</span>
+                    </div>
+                `;
+                listArea.insertAdjacentHTML('beforeend', card);
+            });
+        }
+    </script>
+</body>
+</html>

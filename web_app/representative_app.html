@@ -1,0 +1,426 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Rep App | PawBandhan</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Nunito:wght@600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="rep-app.css">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
+    <style>
+        :root { --p: #E86B3A; --g: #5BA87C; --bg: #0f172a; --card: rgba(30,41,59,0.9); --text: #f8fafc; --dim: #94a3b8; }
+        * { margin:0; padding:0; box-sizing:border-box; }
+        body { font-family: Nunito, sans-serif; background: var(--bg); color: var(--text); max-width:500px; margin:0 auto; min-height:100vh; padding-bottom:90px; }
+        header { padding:16px 20px; display:flex; justify-content:space-between; align-items:center; background:rgba(15,23,42,0.95); position:sticky; top:0; z-index:100; border-bottom:1px solid rgba(255,255,255,0.08); }
+        .online { background:var(--g); padding:6px 14px; border-radius:999px; font-size:0.7rem; font-weight:800; }
+        #map { height:220px; margin:16px 20px; border-radius:20px; border:1px solid rgba(255,255,255,0.1); }
+        .ring-overlay { display:none; position:fixed; inset:0; background:rgba(0,0,0,0.85); z-index:2000; flex-direction:column; align-items:center; justify-content:center; padding:24px; }
+        .ring-overlay.show { display:flex; animation: pulseBg 1s infinite; }
+        @keyframes pulseBg { 0%,100%{background:rgba(232,107,58,0.9)} 50%{background:rgba(91,168,124,0.9)} }
+        .ring-card { background:#fff; color:#1e293b; border-radius:28px; padding:32px; width:100%; max-width:360px; text-align:center; }
+        .ring-card h2 { font-size:1.4rem; margin:12px 0; }
+        .btn { border:none; padding:14px 24px; border-radius:14px; font-weight:800; font-family:inherit; cursor:pointer; width:100%; margin-top:10px; font-size:1rem; }
+        .btn-p { background:var(--p); color:#fff; }
+        .btn-g { background:var(--g); color:#fff; }
+        .btn-o { background:transparent; border:2px solid #e2e8f0; color:#64748b; }
+        .panel { margin:0 20px 16px; background:var(--card); border-radius:20px; padding:18px; border:1px solid rgba(255,255,255,0.08); }
+        .panel h3 { font-size:0.95rem; margin-bottom:12px; }
+        .steps { display:flex; flex-wrap:wrap; gap:8px; }
+        .steps button { flex:1 1 45%; min-width:120px; padding:12px; border-radius:12px; border:1px solid rgba(255,255,255,0.15); background:rgba(255,255,255,0.05); color:var(--text); font-size:0.75rem; font-weight:700; cursor:pointer; }
+        .steps button:disabled { opacity:0.35; }
+        .meta { font-size:0.8rem; color:var(--dim); line-height:1.6; }
+        .call-btn { display:inline-flex; align-items:center; gap:8px; color:var(--g); font-weight:800; text-decoration:none; margin-top:8px; }
+        input[type=file] { display:none; }
+        .photo-row { display:flex; gap:8px; flex-wrap:wrap; margin-top:10px; }
+        .photo-row img { width:64px; height:64px; object-fit:cover; border-radius:10px; }
+        #activeCase { display:none; }
+        #activeCase.active { display:block; }
+    </style>
+</head>
+<body class="rep-app">
+    <header class="rep-header">
+        <div class="rep-header-top">
+            <h1><i class="fas fa-paw"></i> Rescue Hero</h1>
+            <span class="rep-online on" id="onlineBadge">ONLINE</span>
+        </div>
+        <div class="rep-stats">
+            <div class="rep-stat"><strong id="statToday">0</strong><span>Today</span></div>
+            <div class="rep-stat"><strong id="statRating">5.0</strong><span>Rating</span></div>
+            <div class="rep-stat"><strong id="statEarn">₹0</strong><span>Earnings</span></div>
+        </div>
+    </header>
+    <div class="rep-content">
+
+    <div id="kycBlock" class="rep-card" style="display:none;background:#422006;color:#fcd34d;border:none;">
+        <p><i class="fas fa-lock"></i> Complete KYC and wait for admin approval to receive dispatches.</p>
+        <button class="rep-btn rep-btn-primary" onclick="location.href='representative_onboarding.html'">Complete KYC</button>
+    </div>
+
+    <div class="rep-card" style="padding:0;overflow:hidden;"><div id="map"></div></div>
+
+    <div id="ringOverlay" class="ring-overlay">
+        <div class="ring-card">
+            <div class="ring-icon"><i class="fas fa-bell"></i></div>
+            <h2>New Rescue Dispatch!</h2>
+            <p id="ringText" class="meta" style="color:#64748b">Animal needs help nearby</p>
+            <button class="rep-btn rep-btn-primary" onclick="acceptDispatch()"><i class="fas fa-check"></i> Accept Case</button>
+            <button class="rep-btn rep-btn-outline" onclick="dismissRing()">Dismiss</button>
+        </div>
+    </div>
+
+    <div id="activeCase" class="rep-card">
+        <h3 id="caseTitle">Active case</h3>
+        <p class="meta" id="caseMeta"></p>
+        <a class="call-btn" id="callReporter" href="#"><i class="fas fa-phone"></i> Call reporter</a>
+        <p class="meta" style="margin-top:12px;" id="statusLabel"></p>
+        <div class="rep-steps" id="actionSteps"></div>
+        <label class="rep-btn rep-btn-outline" style="display:block;text-align:center;margin-top:12px;cursor:pointer">
+            <i class="fas fa-camera"></i> Upload photo
+            <input type="file" id="photoInput" accept="image/*" capture="environment">
+        </label>
+        <div class="photo-row" id="photoList"></div>
+        <select id="injurySelect" style="width:100%;margin-top:12px;padding:12px;border-radius:12px;display:none">
+            <option value="">Select injury type</option>
+            <option>Minor wound</option>
+            <option>Fracture / limb injury</option>
+            <option>Traffic accident</option>
+            <option>Respiratory distress</option>
+            <option>Severe bleeding</option>
+            <option>Other emergency</option>
+        </select>
+        <button class="rep-btn rep-btn-green" id="injuryBtn" style="display:none" onclick="submitInjury()">Request nearest vet</button>
+        <input type="text" id="otpInput" placeholder="Doctor OTP" style="width:100%;padding:12px;border-radius:12px;margin-top:10px;display:none;border:none">
+        <button class="rep-btn rep-btn-primary" id="otpBtn" style="display:none" onclick="verifyOtp()">Verify handover OTP</button>
+        <a id="mapsLink" class="rep-btn rep-btn-green" style="display:none;text-align:center;text-decoration:none;margin-top:10px" target="_blank"><i class="fas fa-map"></i> Open in Google Maps</a>
+    </div>
+
+    <div class="rep-card" id="checkinPanel">
+        <h3><i class="fas fa-camera"></i> Daily check-in</h3>
+        <button class="rep-btn rep-btn-green" onclick="doCheckin()">Check in with selfie</button>
+    </div>
+    <div class="rep-card" id="schedulePanel" style="display:none">
+        <h3>Weekly timeslots</h3>
+        <div id="slotEditor"></div>
+        <button class="rep-btn rep-btn-primary" onclick="saveSlots()">Save</button>
+    </div>
+    <div class="rep-card" id="reviewsPanel" style="display:none"><h3>Reviews</h3><div id="reviewsList"></div></div>
+    <div class="rep-earnings" id="earningsPanel">
+        <p class="meta" style="margin:0 0 6px">This week</p>
+        <strong id="statEarnDetail">₹0</strong>
+        <p class="meta" style="margin:8px 0 0">Completed rescues</p>
+    </div>
+    <div class="rep-card" id="emptyState">
+        <p class="meta">Waiting for dispatch… Stay online. New cases ring with sound and vibration.</p>
+    </div>
+    </div>
+    <nav class="rep-nav">
+        <button type="button" class="active" onclick="showRepTab('home')"><i class="fas fa-home"></i> Home</button>
+        <button type="button" onclick="showRepTab('checkin')"><i class="fas fa-camera"></i> Check-in</button>
+        <button type="button" onclick="showRepTab('schedule')"><i class="fas fa-clock"></i> Slots</button>
+        <button type="button" onclick="showRepTab('reviews')"><i class="fas fa-star"></i> Reviews</button>
+    </nav>
+
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+    <script>
+        const uid = sessionStorage.getItem('rep_uid');
+        if (!uid) location.href = 'representative_auth.html';
+        const isDemoRep = sessionStorage.getItem('demo_session') === 'true' && uid === 'demo-rep-uid';
+
+        let map, repMarker, destMarker, activeCode = null, activeCase = null, repProfile = null;
+        let socket = null;
+        try {
+            socket = io({ transports: ['websocket', 'polling'], reconnection: true });
+            socket.on('connect', () => socket.emit('join-rep', uid));
+        } catch (e) { console.warn('Socket unavailable'); }
+
+        const STATUS_FLOW = {
+            rep_accepted: [{ a: 'arrived', l: 'Arrived at incident' }],
+            rep_arrived_incident: [{ a: 'photo', l: 'Realtime animal photo' }],
+            photo_incident_verified: [{ a: 'injury', l: 'Select injury & call vet' }],
+            doctor_approved: [{ a: 'picked', l: 'Animal picked up' }],
+            en_route_doctor: [{ a: 'arr_doc', l: 'Arrived at clinic' }],
+            handover_otp_pending: [{ a: 'otp', l: 'Enter doctor OTP' }],
+            pickup_requested: [{ a: 'pickup', l: 'Start pickup run' }],
+            pickup_en_route: [{ a: 'pickup_arr', l: 'Arrived at NGO' }]
+        };
+
+        function initMap(lat = 19.076, lng = 72.8777) {
+            if (!map) {
+                map = L.map('map').setView([lat, lng], 14);
+                L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
+                repMarker = L.marker([lat, lng]).addTo(map).bindPopup('You');
+            }
+        }
+
+        navigator.geolocation.watchPosition(pos => {
+            const { latitude, longitude } = pos.coords;
+            initMap(latitude, longitude);
+            if (repMarker) repMarker.setLatLng([latitude, longitude]);
+        }, () => initMap());
+
+        async function loadProfile() {
+            if (isDemoRep) {
+                repProfile = { status: 'active', name: 'Demo Representative', rep_id: 'PB-REP-DEMO' };
+                document.getElementById('emptyState').style.display = 'block';
+                document.getElementById('emptyState').querySelector('.meta').textContent =
+                    'Demo mode — you are online. Assign a case from NGO dispatch to see alerts here.';
+                return;
+            }
+            const r = await fetch('/api/representatives/' + uid + '/profile');
+            if (!r.ok) { location.href = 'representative_auth.html'; return; }
+            repProfile = await r.json();
+            if (repProfile.status !== 'active') {
+                document.getElementById('kycBlock').style.display = 'block';
+                document.getElementById('emptyState').style.display = 'none';
+                return;
+            }
+            loadDispatches();
+        }
+
+        async function loadDispatches() {
+            const r = await fetch('/api/representatives/' + uid + '/dispatches');
+            const list = await r.json();
+            const ringing = list.find(c => c.workflow_status === 'ringing_rep');
+            const active = list.find(c => !['ringing_rep', 'reported', 'resolved'].includes(c.workflow_status));
+            if (ringing) showRing(ringing);
+            else if (active) showActive(active);
+            else {
+                document.getElementById('emptyState').style.display = 'block';
+                document.getElementById('activeCase').classList.remove('active');
+            }
+        }
+
+        function showRing(c) {
+            activeCode = c.incident_code;
+            activeCase = c;
+            document.getElementById('ringText').textContent = `${c.animal_type || 'Animal'} at incident — ${c.description || ''}`.slice(0, 80);
+            document.getElementById('ringOverlay').classList.add('show');
+            playRing();
+            if (c.latitude && c.longitude) {
+                if (!destMarker) destMarker = L.marker([c.latitude, c.longitude], { icon: L.divIcon({ className: '', html: '<div style="background:#ef4444;width:14px;height:14px;border-radius:50%;border:3px solid #fff"></div>' }) }).addTo(map);
+                else destMarker.setLatLng([c.latitude, c.longitude]);
+                map.fitBounds(L.latLngBounds([repMarker.getLatLng(), destMarker.getLatLng()]), { padding: [40, 40] });
+            }
+        }
+
+        function playRing() {
+            try {
+                const ctx = new (window.AudioContext || window.webkitAudioContext)();
+                const o = ctx.createOscillator();
+                const g = ctx.createGain();
+                o.connect(g); g.connect(ctx.destination);
+                o.frequency.value = 880;
+                g.gain.value = 0.15;
+                o.start();
+                setTimeout(() => o.stop(), 200);
+            } catch (e) {}
+        }
+
+        function dismissRing() { document.getElementById('ringOverlay').classList.remove('show'); }
+
+        async function acceptDispatch() {
+            dismissRing();
+            await fetch('/api/workflow/' + activeCode + '/rep-accept', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ repUid: uid }) });
+            const r = await fetch('/api/workflow/case/' + activeCode);
+            showActive(await r.json());
+        }
+
+        function showActive(c) {
+            activeCode = c.incident_code;
+            activeCase = c;
+            document.getElementById('emptyState').style.display = 'none';
+            document.getElementById('activeCase').classList.add('active');
+            document.getElementById('caseTitle').textContent = c.animal_type + ' — ' + c.incident_code;
+            document.getElementById('caseMeta').innerHTML = (c.reporter ? `Reporter: ${c.reporter.name} • ${c.reporter.phone || ''}<br>` : '') + (c.description || '');
+            document.getElementById('statusLabel').textContent = c.status_label || c.workflow_status;
+            if (c.reporter?.phone) document.getElementById('callReporter').href = 'tel:' + c.reporter.phone;
+            renderActions(c.workflow_status);
+            renderPhotos(c.photos || []);
+            if (c.latitude && c.longitude && destMarker) {
+                destMarker.setLatLng([c.latitude, c.longitude]);
+                document.getElementById('mapsLink').href = `https://www.google.com/maps/dir/?api=1&destination=${c.latitude},${c.longitude}`;
+                document.getElementById('mapsLink').style.display = 'block';
+            }
+            if (c.doctor && ['doctor_approved','en_route_doctor','handover_otp_pending'].includes(c.workflow_status)) {
+                const kyc = typeof c.doctor.kyc_data === 'object' ? c.doctor.kyc_data : {};
+                const dlat = kyc.latitude || kyc.lat || 19.08;
+                const dlng = kyc.longitude || kyc.lng || 72.88;
+                document.getElementById('mapsLink').href = `https://www.google.com/maps/dir/?api=1&destination=${dlat},${dlng}`;
+                document.getElementById('mapsLink').innerHTML = '<i class="fas fa-hospital"></i> Navigate to ' + (c.doctor.hospital_name || 'clinic');
+            }
+        }
+
+        function renderActions(status) {
+            const box = document.getElementById('actionSteps');
+            box.innerHTML = '';
+            document.getElementById('injurySelect').style.display = 'none';
+            document.getElementById('injuryBtn').style.display = 'none';
+            document.getElementById('otpInput').style.display = 'none';
+            document.getElementById('otpBtn').style.display = 'none';
+            const steps = STATUS_FLOW[status] || [];
+            if (status === 'photo_incident_verified' || status === 'rep_arrived_incident') {
+                document.getElementById('injurySelect').style.display = 'block';
+                document.getElementById('injuryBtn').style.display = 'block';
+            }
+            if (status === 'handover_otp_pending') {
+                document.getElementById('otpInput').style.display = 'block';
+                document.getElementById('otpBtn').style.display = 'block';
+            }
+            steps.forEach(s => {
+                const b = document.createElement('button');
+                b.textContent = s.l;
+                b.onclick = () => doAction(s.a);
+                box.appendChild(b);
+            });
+            if (status === 'rep_accepted') {
+                const b = document.createElement('button');
+                b.textContent = 'Arrived at incident';
+                b.onclick = () => doAction('arrived');
+                box.appendChild(b);
+            }
+        }
+
+        async function doAction(a) {
+            const code = activeCode;
+            if (a === 'arrived') await fetch('/api/workflow/' + code + '/rep-arrived-incident', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ repUid: uid }) });
+            if (a === 'photo') document.getElementById('photoInput').click();
+            if (a === 'picked') await fetch('/api/workflow/' + code + '/animal-picked-up', { method: 'POST' });
+            if (a === 'arr_doc') await fetch('/api/workflow/' + code + '/rep-arrived-doctor', { method: 'POST' });
+            if (a === 'pickup') {
+                await fetch('/api/workflow/' + code + '/request-pickup', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ repId: repProfile.id }) });
+            }
+            if (a === 'pickup_arr') await fetch('/api/workflow/' + code + '/ngo-receive', { method: 'POST' });
+            refreshCase();
+        }
+
+        document.getElementById('photoInput').onchange = async e => {
+            const fd = new FormData();
+            fd.append('photo', e.target.files[0]);
+            fd.append('photoType', activeCase?.workflow_status === 'rep_arrived_incident' ? 'incident_verify' : 'pickup');
+            fd.append('uploaderType', 'representative');
+            fd.append('uploaderUid', uid);
+            await fetch('/api/workflow/' + activeCode + '/photo', { method: 'POST', body: fd });
+            refreshCase();
+        };
+
+        async function submitInjury() {
+            const injury = document.getElementById('injurySelect').value;
+            if (!injury) return alert('Select injury type');
+            await fetch('/api/workflow/' + activeCode + '/select-injury', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ injuryType: injury, animalType: activeCase.animal_type }) });
+            refreshCase();
+        }
+
+        async function verifyOtp() {
+            const otp = document.getElementById('otpInput').value;
+            const r = await fetch('/api/workflow/' + activeCode + '/verify-handover-otp', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ otp }) });
+            const d = await r.json();
+            if (d.success) refreshCase(); else alert(d.error || 'Invalid OTP');
+        }
+
+        async function refreshCase() {
+            const r = await fetch('/api/workflow/case/' + activeCode);
+            showActive(await r.json());
+        }
+
+        function renderPhotos(photos) {
+            document.getElementById('photoList').innerHTML = photos.map(p => `<img src="${p.file_url}" alt="">`).join('');
+        }
+
+        if (socket) {
+            socket.on('new-dispatch', d => { if (d.repUid === uid || d.incident?.representative?.uid === uid) { activeCode = d.incidentCode; loadDispatches(); } });
+            socket.on('status-changed', () => refreshCase());
+            socket.on('pickup-dispatch', d => { if (d.repUid === uid) { playRing(); loadDispatches(); } });
+        }
+
+        function showRepTab(tab) {
+            document.querySelectorAll('.rep-nav button').forEach((b, i) => {
+                const tabs = ['home', 'checkin', 'schedule', 'reviews'];
+                b.classList.toggle('active', tabs[i] === tab);
+            });
+            ['emptyState', 'earningsPanel', 'activeCase', 'checkinPanel', 'schedulePanel', 'reviewsPanel'].forEach(id => {
+                const el = document.getElementById(id);
+                if (el) el.style.display = 'none';
+            });
+            const mapWrap = document.getElementById('map')?.parentElement;
+            if (mapWrap) mapWrap.style.display = tab === 'home' ? 'block' : 'none';
+            if (tab === 'home') {
+                document.getElementById('emptyState').style.display = 'block';
+                document.getElementById('earningsPanel').style.display = 'block';
+                loadDispatches();
+            }
+            if (tab === 'checkin') document.getElementById('checkinPanel').style.display = 'block';
+            if (tab === 'schedule') { document.getElementById('schedulePanel').style.display = 'block'; initSlots(); }
+            if (tab === 'reviews') { document.getElementById('reviewsPanel').style.display = 'block'; loadReviews(); }
+        }
+
+        async function updateRepStats() {
+            const set = (id, v) => { const el = document.getElementById(id); if (el) el.textContent = v; };
+            if (isDemoRep) {
+                set('statToday', '2');
+                set('statRating', '4.9');
+                set('statEarn', '₹800');
+                set('statEarnDetail', '₹800');
+                return;
+            }
+            try {
+                const p = await (await fetch('/api/representatives/' + uid + '/profile')).json();
+                set('statRating', (p.rating_avg || 5).toFixed(1));
+                const earn = p.earnings_total || 0;
+                set('statEarn', '₹' + earn);
+                set('statEarnDetail', '₹' + earn);
+            } catch (e) { /* ignore */ }
+            try {
+                const list = await (await fetch('/api/representatives/' + uid + '/dispatches')).json();
+                const todayStr = new Date().toDateString();
+                const today = list.filter(c => (c.workflow_status === 'resolved') && c.updated_at && new Date(c.updated_at).toDateString() === todayStr).length;
+                set('statToday', String(today));
+            } catch (e) { /* ignore */ }
+        }
+        async function doCheckin() {
+            const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'user' } });
+            const v = document.createElement('video'); v.srcObject = stream; await v.play();
+            await new Promise(r => setTimeout(r, 800));
+            const c = document.createElement('canvas'); c.width = v.videoWidth; c.height = v.videoHeight;
+            c.getContext('2d').drawImage(v, 0, 0);
+            stream.getTracks().forEach(t => t.stop());
+            const blob = await new Promise(res => c.toBlob(res, 'image/jpeg', 0.9));
+            const fd = new FormData(); fd.append('selfie', blob, 'checkin.jpg');
+            let lat, lng;
+            try { const p = await new Promise((ok,no)=>navigator.geolocation.getCurrentPosition(ok,no)); lat=p.coords.latitude; lng=p.coords.longitude; } catch(e){}
+            fd.append('lat', lat||''); fd.append('lng', lng||'');
+            await fetch('/api/representatives/' + uid + '/checkin', { method: 'POST', body: fd });
+            alert('Checked in!');
+        }
+        const DAYS = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+        function initSlots() {
+            const el = document.getElementById('slotEditor');
+            el.innerHTML = DAYS.map((d,i) => `<div style="margin:8px 0"><label>${d}</label><input type="time" id="s${i}a"> - <input type="time" id="s${i}b"></div>`).join('');
+        }
+        async function saveSlots() {
+            const slots = DAYS.map((_,i) => ({ day: i, start: document.getElementById('s'+i+'a').value, end: document.getElementById('s'+i+'b').value })).filter(s => s.start && s.end);
+            await fetch('/api/representatives/' + uid + '/timeslots', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ slots }) });
+            alert('Timeslots saved');
+        }
+        async function loadReviews() {
+            const r = await (await fetch('/api/representatives/' + uid + '/reviews')).json();
+            document.getElementById('reviewsList').innerHTML = r.length ? r.map(x => `<p>★${x.rating} ${x.comment||''}</p>`).join('') : '<p>No reviews yet</p>';
+        }
+        function pingLocation() {
+            navigator.geolocation.getCurrentPosition(pos => {
+                fetch('/api/representatives/' + uid + '/location', { method: 'POST', headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ lat: pos.coords.latitude, lng: pos.coords.longitude, online: true }) });
+            });
+        }
+        loadProfile();
+        updateRepStats();
+        setInterval(loadDispatches, 15000);
+        setInterval(updateRepStats, 60000);
+        setInterval(pingLocation, 30000);
+        pingLocation();
+    </script>
+</body>
+</html>

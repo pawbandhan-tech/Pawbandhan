@@ -1,0 +1,107 @@
+.paw-entity-profile-modal .paw-entity-panel {
+    max-width: 720px;
+    max-height: 90vh;
+    overflow-y: auto;
+}
+
+.paw-entity-body {
+    padding: 0 4px 24px;
+}
+
+.paw-stat-row {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+    gap: 12px;
+    margin-bottom: 20px;
+}
+
+.paw-stat-card {
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 14px;
+    padding: 14px;
+    text-align: center;
+}
+
+.paw-stat-card strong {
+    display: block;
+    font-size: 1.35rem;
+    color: #1a3328;
+}
+
+.paw-stat-card span {
+    font-size: 0.72rem;
+    color: #64748b;
+    font-weight: 700;
+    text-transform: uppercase;
+}
+
+.paw-entity-section {
+    margin-bottom: 22px;
+    padding-bottom: 18px;
+    border-bottom: 1px solid #f1f5f9;
+}
+
+.paw-entity-section h4 {
+    margin: 0 0 10px;
+    font-size: 0.85rem;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: #64748b;
+}
+
+.paw-activity-list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+}
+
+.paw-activity-list li {
+    padding: 10px 0;
+    border-bottom: 1px solid #f8fafc;
+    font-size: 0.88rem;
+}
+
+.paw-activity-list li span {
+    display: block;
+    color: #64748b;
+    margin-top: 2px;
+}
+
+.paw-activity-list li small {
+    color: #94a3b8;
+    font-size: 0.75rem;
+}
+
+.paw-doc-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+    gap: 10px;
+}
+
+.paw-doc-grid a {
+    display: block;
+    border-radius: 12px;
+    overflow: hidden;
+    border: 1px solid #e2e8f0;
+    text-decoration: none;
+}
+
+.paw-doc-grid img {
+    width: 100%;
+    height: 80px;
+    object-fit: cover;
+}
+
+.paw-doc-grid span {
+    display: block;
+    padding: 6px;
+    font-size: 0.7rem;
+    text-align: center;
+    color: #475569;
+}
+
+.paw-muted {
+    color: #94a3b8;
+    font-size: 0.85rem;
+}

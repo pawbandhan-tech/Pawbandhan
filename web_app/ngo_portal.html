@@ -1,0 +1,422 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NGO Portal - PawBandhan</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Inter', sans-serif; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); min-height: 100vh; }
+        .portal-container { max-width: 1200px; margin: 0 auto; padding: 40px 20px; }
+        .login-card, .dashboard-card { background: white; border-radius: 20px; padding: 30px; box-shadow: 0 20px 60px rgba(0,0,0,0.3); }
+        .status-badge { padding: 5px 12px; border-radius: 20px; font-size: 12px; font-weight: 600; }
+        .status-pending { background: #ffc107; color: #000; }
+        .status-approved { background: #28a745; color: white; }
+        .status-rejected { background: #dc3545; color: white; }
+        .status-reviewing { background: #17a2b8; color: white; }
+        .timeline { position: relative; padding-left: 30px; }
+        .timeline-item { position: relative; padding-bottom: 30px; border-left: 2px solid #ddd; padding-left: 20px; margin-left: 10px; }
+        .timeline-item:last-child { border-left: none; }
+        .timeline-dot { position: absolute; left: -9px; top: 0; width: 16px; height: 16px; border-radius: 50%; background: #FF6B35; border: 2px solid white; }
+        .timeline-dot.completed { background: #28a745; }
+        .timeline-dot.current { background: #FF6B35; animation: pulse 1s infinite; }
+        @keyframes pulse { 0% { transform: scale(1); } 50% { transform: scale(1.2); } 100% { transform: scale(1); } }
+        .btn-primary-custom { background: linear-gradient(135deg, #FF6B35, #FF8C42); border: none; border-radius: 50px; padding: 12px 30px; color: white; font-weight: 600; width: 100%; }
+        .nav-tabs .nav-link { color: #666; font-weight: 500; }
+        .nav-tabs .nav-link.active { color: #FF6B35; border-bottom-color: #FF6B35; }
+    </style>
+</head>
+<body>
+    <div class="portal-container">
+        <!-- Login Section -->
+        <div id="loginSection" class="login-card" style="max-width: 500px; margin: 0 auto;">
+            <div class="text-center mb-4">
+                <i class="fas fa-paw fa-3x" style="color: #FF6B35;"></i>
+                <h2 class="mt-2">NGO Portal</h2>
+                <p class="text-muted">Login to manage your NGO account</p>
+            </div>
+            <ul class="nav nav-tabs mb-3">
+                <li class="nav-item"><a class="nav-link active" data-bs-toggle="tab" href="#loginTab">Login</a></li>
+                <li class="nav-item"><a class="nav-link" data-bs-toggle="tab" href="#signupTab">Sign Up</a></li>
+            </ul>
+            <div class="tab-content">
+                <div class="tab-pane active" id="loginTab">
+                    <form id="loginForm">
+                        <div class="mb-3"><input type="email" class="form-control" id="loginEmail" placeholder="Email Address" required></div>
+                        <div class="mb-3"><input type="password" class="form-control" id="loginPassword" placeholder="Password" required></div>
+                        <button type="submit" class="btn-primary-custom">Login to Portal</button>
+                    </form>
+                </div>
+                <div class="tab-pane" id="signupTab">
+                    <form id="signupForm">
+                        <div class="mb-3"><input type="text" class="form-control" id="signupNGOId" placeholder="Application ID (if you have one)" readonly></div>
+                        <div class="mb-3"><input type="email" class="form-control" id="signupEmail" placeholder="Email Address" required></div>
+                        <div class="mb-3"><input type="password" class="form-control" id="signupPassword" placeholder="Password" required></div>
+                        <div class="mb-3"><input type="password" class="form-control" id="signupConfirmPassword" placeholder="Confirm Password" required></div>
+                        <button type="submit" class="btn-primary-custom">Register NGO</button>
+                    </form>
+                    <hr>
+                    <p class="text-center text-muted small">New NGO? <a href="/ngo_onboarding.html" target="_blank">Click here to start onboarding</a></p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Dashboard Section (shown after login) -->
+        <div id="dashboardSection" style="display:none;">
+            <div class="dashboard-card">
+                <div class="d-flex justify-content-between align-items-center mb-4">
+                    <h2><i class="fas fa-tachometer-alt"></i> NGO Dashboard</h2>
+                    <div><span id="ngoName" class="fw-bold"></span> <button class="btn btn-sm btn-outline-danger ms-2" onclick="logout()"><i class="fas fa-sign-out-alt"></i> Logout</button></div>
+                </div>
+                
+                <!-- Status Overview -->
+                <div class="row mb-4">
+                    <div class="col-md-3 mb-3">
+                        <div class="card text-center border-0 shadow-sm">
+                            <div class="card-body"><i class="fas fa-file-alt fa-2x" style="color: #ffc107;"></i><h3 id="pendingCases">0</h3><p>Pending Cases</p></div>
+                        </div>
+                    </div>
+                    <div class="col-md-3 mb-3">
+                        <div class="card text-center border-0 shadow-sm">
+                            <div class="card-body"><i class="fas fa-check-circle fa-2x" style="color: #28a745;"></i><h3 id="resolvedCases">0</h3><p>Resolved Cases</p></div>
+                        </div>
+                    </div>
+                    <div class="col-md-3 mb-3">
+                        <div class="card text-center border-0 shadow-sm">
+                            <div class="card-body"><i class="fas fa-users fa-2x" style="color: #17a2b8;"></i><h3 id="activeRiders">0</h3><p>Active Riders</p></div>
+                        </div>
+                    </div>
+                    <div class="col-md-3 mb-3">
+                        <div class="card text-center border-0 shadow-sm">
+                            <div class="card-body"><i class="fas fa-star fa-2x" style="color: #ffc107;"></i><h3 id="ngoRating">0</h3><p>Rating</p></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Application Status Timeline -->
+                <div class="card mb-4">
+                    <div class="card-header bg-white fw-bold"><i class="fas fa-chart-line"></i> Application Status</div>
+                    <div class="card-body">
+                        <div id="applicationStatus" class="timeline"></div>
+                    </div>
+                </div>
+
+                <!-- Tabs for different sections -->
+                <ul class="nav nav-tabs mb-3">
+                    <li class="nav-item"><a class="nav-link active" data-bs-toggle="tab" href="#casesTab">Rescue Cases</a></li>
+                    <li class="nav-item"><a class="nav-link" data-bs-toggle="tab" href="#ridersTab">Riders Management</a></li>
+                    <li class="nav-item"><a class="nav-link" data-bs-toggle="tab" href="#doctorsTab">Doctors Network</a></li>
+                    <li class="nav-item"><a class="nav-link" data-bs-toggle="tab" href="#profileTab">Profile Settings</a></li>
+                </ul>
+
+                <div class="tab-content">
+                    <!-- Cases Tab -->
+                    <div class="tab-pane active" id="casesTab">
+                        <div class="table-responsive">
+                            <table class="table table-hover">
+                                <thead><tr><th>Case ID</th><th>Type</th><th>Animal</th><th>Location</th><th>Status</th><th>Action</th></tr></thead>
+                                <tbody id="casesList"></tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <!-- Riders Tab -->
+                    <div class="tab-pane" id="ridersTab">
+                        <button class="btn btn-primary mb-3" onclick="showAddRiderModal()"><i class="fas fa-plus"></i> Add Rider</button>
+                        <div class="table-responsive">
+                            <table class="table table-hover">
+                                <thead><tr><th>Rider ID</th><th>Name</th><th>Phone</th><th>Status</th><th>Rescues</th><th>Action</th></tr></thead>
+                                <tbody id="ridersList"></tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <!-- Doctors Tab -->
+                    <div class="tab-pane" id="doctorsTab">
+                        <button class="btn btn-primary mb-3" onclick="showAddDoctorModal()"><i class="fas fa-plus"></i> Add Doctor</button>
+                        <div class="table-responsive">
+                            <table class="table table-hover">
+                                <thead><tr><th>Doctor ID</th><th>Name</th><th>Specialization</th><th>Phone</th><th>Status</th><th>Action</th></tr></thead>
+                                <tbody id="doctorsList"></tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <!-- Profile Tab -->
+                    <div class="tab-pane" id="profileTab">
+                        <form id="profileForm">
+                            <div class="row">
+                                <div class="col-md-6 mb-3"><label>NGO Name</label><input type="text" class="form-control" id="profileName" readonly></div>
+                                <div class="col-md-6 mb-3"><label>NGO ID</label><input type="text" class="form-control" id="profileNGOId" readonly></div>
+                            </div>
+                            <div class="row">
+                                <div class="col-md-6 mb-3"><label>Email</label><input type="email" class="form-control" id="profileEmail" readonly></div>
+                                <div class="col-md-6 mb-3"><label>Phone</label><input type="tel" class="form-control" id="profilePhone"></div>
+                            </div>
+                            <div class="mb-3"><label>Address</label><textarea class="form-control" id="profileAddress" rows="2"></textarea></div>
+                            <div class="mb-3"><label>Service Area</label><input type="text" class="form-control" id="profileServiceArea"></div>
+                            <button type="submit" class="btn-primary-custom">Update Profile</button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Add Rider Modal -->
+    <div class="modal fade" id="addRiderModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header"><h5 class="modal-title">Add New Rider</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
+                <div class="modal-body">
+                    <form id="addRiderForm">
+                        <div class="mb-3"><label>Full Name</label><input type="text" class="form-control" id="riderName" required></div>
+                        <div class="mb-3"><label>Phone Number</label><input type="tel" class="form-control" id="riderPhone" required></div>
+                        <div class="mb-3"><label>Email</label><input type="email" class="form-control" id="riderEmail" required></div>
+                        <div class="mb-3"><label>Vehicle Type</label><select class="form-control" id="riderVehicle"><option>Bike</option><option>Scooter</option><option>Cycle</option></select></div>
+                    </form>
+                </div>
+                <div class="modal-footer"><button class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button><button class="btn-primary-custom" onclick="addRider()">Add Rider</button></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Add Doctor Modal -->
+    <div class="modal fade" id="addDoctorModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header"><h5 class="modal-title">Add Doctor/Veterinarian</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
+                <div class="modal-body">
+                    <form id="addDoctorForm">
+                        <div class="mb-3"><label>Full Name</label><input type="text" class="form-control" id="doctorName" required></div>
+                        <div class="mb-3"><label>Specialization</label><input type="text" class="form-control" id="doctorSpecialization" required></div>
+                        <div class="mb-3"><label>Phone Number</label><input type="tel" class="form-control" id="doctorPhone" required></div>
+                        <div class="mb-3"><label>Email</label><input type="email" class="form-control" id="doctorEmail" required></div>
+                        <div class="mb-3"><label>Clinic Name</label><input type="text" class="form-control" id="doctorClinic"></div>
+                    </form>
+                </div>
+                <div class="modal-footer"><button class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button><button class="btn-primary-custom" onclick="addDoctor()">Add Doctor</button></div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // NGO Portal Logic
+        let currentNGO = null;
+        let ngos = JSON.parse(localStorage.getItem('admin_ngos') || '[]');
+        let ngoApplications = JSON.parse(localStorage.getItem('ngo_applications') || '[]');
+        
+        // Login handler
+        document.getElementById('loginForm').addEventListener('submit', (e) => {
+            e.preventDefault();
+            const email = document.getElementById('loginEmail').value;
+            const password = document.getElementById('loginPassword').value;
+            
+            // Find NGO from approved list
+            const approvedNGO = ngos.find(n => n.email === email && n.password === password);
+            const pendingApp = ngoApplications.find(a => a.officialEmail === email);
+            
+            if (approvedNGO) {
+                currentNGO = approvedNGO;
+                localStorage.setItem('currentNGO', JSON.stringify(currentNGO));
+                loadDashboard();
+            } else if (pendingApp && pendingApp.status === 'PENDING_REVIEW') {
+                alert('Your application is under review. Please wait for admin approval.\nStatus: ' + pendingApp.status);
+                document.getElementById('loginSection').style.display = 'block';
+                document.getElementById('dashboardSection').style.display = 'none';
+            } else {
+                alert('Invalid credentials or NGO not approved yet');
+            }
+        });
+        
+        // Signup handler
+        document.getElementById('signupForm').addEventListener('submit', (e) => {
+            e.preventDefault();
+            const email = document.getElementById('signupEmail').value;
+            const password = document.getElementById('signupPassword').value;
+            const confirm = document.getElementById('signupConfirmPassword').value;
+            
+            if (password !== confirm) { alert('Passwords do not match'); return; }
+            
+            // Check if application exists
+            const existingApp = ngoApplications.find(a => a.officialEmail === email);
+            
+            if (existingApp) {
+                if (existingApp.status === 'APPROVED') {
+                    alert('You are already approved! Please login.');
+                } else {
+                    alert(`Your application is ${existingApp.status}. Please wait for admin review.`);
+                }
+            } else {
+                alert('Please complete the onboarding form first.\nRedirecting to onboarding page...');
+                window.location.href = '/ngo_onboarding.html';
+            }
+        });
+        
+        function loadDashboard() {
+            document.getElementById('loginSection').style.display = 'none';
+            document.getElementById('dashboardSection').style.display = 'block';
+            
+            document.getElementById('ngoName').innerHTML = currentNGO.name;
+            document.getElementById('profileName').value = currentNGO.name;
+            document.getElementById('profileNGOId').value = currentNGO.id;
+            document.getElementById('profileEmail').value = currentNGO.email;
+            document.getElementById('profilePhone').value = currentNGO.phone || '';
+            document.getElementById('profileAddress').value = currentNGO.address || '';
+            document.getElementById('profileServiceArea').value = currentNGO.serviceArea || '';
+            
+            // Load application status timeline
+            loadApplicationStatus();
+            loadCases();
+            loadRiders();
+            loadDoctors();
+        }
+        
+        function loadApplicationStatus() {
+            const application = ngoApplications.find(a => a.officialEmail === currentNGO.email);
+            
+            if (application) {
+                const timeline = `
+                    <div class="timeline-item"><div class="timeline-dot completed"></div><div><strong>Step 1: Application Submitted</strong><br>${new Date(application.submittedAt).toLocaleString()}</div></div>
+                    <div class="timeline-item"><div class="timeline-dot ${application.status === 'PENDING_REVIEW' ? 'current' : 'completed'}"></div><div><strong>Step 2: Under Review</strong><br>${application.status === 'PENDING_REVIEW' ? 'Admin is reviewing your application' : 'Completed'}</div></div>
+                    <div class="timeline-item"><div class="timeline-dot ${application.status === 'APPROVED' ? 'completed' : ''}"></div><div><strong>Step 3: Approval</strong><br>${application.status === 'APPROVED' ? 'Application Approved! NGO ID: ' + currentNGO.id : 'Pending approval'}</div></div>
+                    <div class="timeline-item"><div class="timeline-dot ${application.status === 'APPROVED' ? 'completed' : ''}"></div><div><strong>Step 4: Modules Activated</strong><br>${application.status === 'APPROVED' ? 'All modules are now active' : 'Awaiting approval'}</div></div>
+                `;
+                document.getElementById('applicationStatus').innerHTML = timeline;
+            }
+        }
+        
+        function loadCases() {
+            const incidents = JSON.parse(localStorage.getItem('app_incidents') || '[]');
+            const ngoIncidents = incidents.filter(i => i.ngo_id === currentNGO.id);
+            
+            document.getElementById('casesList').innerHTML = ngoIncidents.map(c => `
+                <tr><td>${c.incident_code}</td><td>${c.incident_type}</td><td>${c.animal_type}</td><td>${c.latitude}, ${c.longitude}</td><td><span class="status-badge status-${c.status}">${c.status}</span></td><td><button class="btn btn-sm btn-primary" onclick="viewCase('${c.incident_code}')">View</button></td></tr>
+            `).join('');
+            
+            document.getElementById('pendingCases').textContent = ngoIncidents.filter(i => i.status === 'pending').length;
+            document.getElementById('resolvedCases').textContent = ngoIncidents.filter(i => i.status === 'resolved').length;
+        }
+        
+        function loadRiders() {
+            let riders = JSON.parse(localStorage.getItem('ngo_riders') || '[]');
+            riders = riders.filter(r => r.ngo_id === currentNGO.id);
+            
+            document.getElementById('ridersList').innerHTML = riders.map(r => `
+                <tr><td>${r.id || 'RDR' + Date.now()}</td><td>${r.name}</td><td>${r.phone}</td><td><span class="badge bg-success">Active</span></td><td>${r.rescues || 0}</td><td><button class="btn btn-sm btn-danger" onclick="removeRider('${r.id}')">Remove</button></td></tr>
+            `).join('');
+            document.getElementById('activeRiders').textContent = riders.length;
+        }
+        
+        function loadDoctors() {
+            let doctors = JSON.parse(localStorage.getItem('ngo_doctors') || '[]');
+            doctors = doctors.filter(d => d.ngo_id === currentNGO.id);
+            
+            document.getElementById('doctorsList').innerHTML = doctors.map(d => `
+                <tr><td>${d.id || 'DOC' + Date.now()}</td><td>${d.name}</td><td>${d.specialization}</td><td>${d.phone}</td><td><span class="badge bg-success">Active</span></td><td><button class="btn btn-sm btn-danger" onclick="removeDoctor('${d.id}')">Remove</button></td></tr>
+            `).join('');
+        }
+        
+        function showAddRiderModal() { $('#addRiderModal').modal('show'); }
+        function showAddDoctorModal() { $('#addDoctorModal').modal('show'); }
+        
+        function addRider() {
+            const rider = {
+                id: 'RDR' + Date.now().toString().slice(-8),
+                ngo_id: currentNGO.id,
+                name: document.getElementById('riderName').value,
+                phone: document.getElementById('riderPhone').value,
+                email: document.getElementById('riderEmail').value,
+                vehicle: document.getElementById('riderVehicle').value,
+                rescues: 0,
+                createdAt: new Date().toISOString()
+            };
+            
+            let riders = JSON.parse(localStorage.getItem('ngo_riders') || '[]');
+            riders.push(rider);
+            localStorage.setItem('ngo_riders', JSON.stringify(riders));
+            
+            $('#addRiderModal').modal('hide');
+            loadRiders();
+            alert('Rider added successfully!');
+        }
+        
+        function addDoctor() {
+            const doctor = {
+                id: 'DOC' + Date.now().toString().slice(-8),
+                ngo_id: currentNGO.id,
+                name: document.getElementById('doctorName').value,
+                specialization: document.getElementById('doctorSpecialization').value,
+                phone: document.getElementById('doctorPhone').value,
+                email: document.getElementById('doctorEmail').value,
+                clinic: document.getElementById('doctorClinic').value,
+                createdAt: new Date().toISOString()
+            };
+            
+            let doctors = JSON.parse(localStorage.getItem('ngo_doctors') || '[]');
+            doctors.push(doctor);
+            localStorage.setItem('ngo_doctors', JSON.stringify(doctors));
+            
+            $('#addDoctorModal').modal('hide');
+            loadDoctors();
+            alert('Doctor added successfully!');
+        }
+        
+        function removeRider(riderId) {
+            let riders = JSON.parse(localStorage.getItem('ngo_riders') || '[]');
+            riders = riders.filter(r => r.id !== riderId);
+            localStorage.setItem('ngo_riders', JSON.stringify(riders));
+            loadRiders();
+        }
+        
+        function removeDoctor(doctorId) {
+            let doctors = JSON.parse(localStorage.getItem('ngo_doctors') || '[]');
+            doctors = doctors.filter(d => d.id !== doctorId);
+            localStorage.setItem('ngo_doctors', JSON.stringify(doctors));
+            loadDoctors();
+        }
+        
+        function viewCase(caseId) {
+            alert('Case details: ' + caseId + '\nFull tracking coming soon');
+        }
+        
+        document.getElementById('profileForm').addEventListener('submit', (e) => {
+            e.preventDefault();
+            currentNGO.phone = document.getElementById('profilePhone').value;
+            currentNGO.address = document.getElementById('profileAddress').value;
+            currentNGO.serviceArea = document.getElementById('profileServiceArea').value;
+            
+            let ngosList = JSON.parse(localStorage.getItem('admin_ngos') || '[]');
+            const index = ngosList.findIndex(n => n.id === currentNGO.id);
+            if (index !== -1) ngosList[index] = currentNGO;
+            localStorage.setItem('admin_ngos', JSON.stringify(ngosList));
+            localStorage.setItem('currentNGO', JSON.stringify(currentNGO));
+            alert('Profile updated successfully!');
+        });
+        
+        function logout() {
+            localStorage.removeItem('currentNGO');
+            location.reload();
+        }
+        
+        // Check for saved session
+        const savedNGO = localStorage.getItem('currentNGO');
+        if (savedNGO) {
+            currentNGO = JSON.parse(savedNGO);
+            loadDashboard();
+        }
+        
+        window.showAddRiderModal = showAddRiderModal;
+        window.showAddDoctorModal = showAddDoctorModal;
+        window.addRider = addRider;
+        window.addDoctor = addDoctor;
+        window.removeRider = removeRider;
+        window.removeDoctor = removeDoctor;
+        window.viewCase = viewCase;
+        window.logout = logout;
+    </script>
+</body>
+</html>

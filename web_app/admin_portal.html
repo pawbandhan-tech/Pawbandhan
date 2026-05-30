@@ -1,0 +1,974 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Global Command | PawBandhan</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="shared-portal.css">
+    <link rel="stylesheet" href="shared-case-form.css?v=6">
+    <link rel="stylesheet" href="shared-case-portal.css?v=1">
+    <link rel="stylesheet" href="customer-dashboard.css?v=1">
+    <link rel="stylesheet" href="paw-tracker.css?v=3">
+    <link rel="stylesheet" href="paw-case-hub.css?v=1">
+    <link rel="stylesheet" href="shared-entity-profile.css?v=1">
+    <style>
+        :root {
+            --primary: #4F46E5;
+            --primary-glow: rgba(79, 70, 229, 0.1);
+            --bg-dark: #F8FAFC;
+            --card-bg: #FFFFFF;
+            --sidebar-bg: #FFFFFF;
+            --text-main: #1E293B;
+            --text-dim: #64748B;
+            --glass-border: #E2E8F0;
+            --accent-green: #10B981;
+            --accent-orange: #F59E0B;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        
+        body {
+            font-family: 'Outfit', sans-serif;
+            background: var(--bg-dark);
+            color: var(--text-main);
+            display: flex;
+            min-height: 100vh;
+            overflow: hidden;
+        }
+
+        /* ─── SIDEBAR ─── */
+        aside {
+            width: 280px;
+            background: var(--sidebar-bg);
+            border-right: 1px solid var(--glass-border);
+            display: flex;
+            flex-direction: column;
+            padding: 40px 20px;
+            z-index: 1000;
+        }
+
+        .logo-box {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 50px;
+            padding-left: 10px;
+        }
+        .logo-box i { font-size: 2rem; color: var(--primary); }
+        .logo-box h1 { font-size: 1.4rem; font-weight: 900; letter-spacing: -0.5px; }
+
+        .nav-group { list-style: none; flex: 1; }
+        .nav-group li { margin-bottom: 8px; }
+        .nav-group a {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            padding: 14px 18px;
+            color: var(--text-dim);
+            text-decoration: none;
+            border-radius: 14px;
+            font-weight: 600;
+            transition: 0.3s;
+        }
+        .nav-group a:hover, .nav-group a.active {
+            background: var(--card-bg);
+            color: var(--text-main);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        }
+        .nav-group a i { font-size: 1.1rem; width: 24px; text-align: center; }
+        .nav-group a.active i { color: var(--primary); text-shadow: none; }
+
+        .btn-terminate {
+            background: rgba(239, 68, 68, 0.1);
+            color: #EF4444;
+            border: 1px solid rgba(239, 68, 68, 0.2);
+            padding: 16px;
+            border-radius: 14px;
+            font-weight: 800;
+            cursor: pointer;
+            transition: 0.3s;
+            text-align: center;
+            font-size: 0.85rem;
+            margin-top: 20px;
+        }
+        .btn-terminate:hover { background: #EF4444; color: white; }
+
+        /* ─── MAIN CONTENT ─── */
+        main {
+            flex: 1;
+            overflow-y: auto;
+            padding: 50px;
+            background: var(--bg-dark);
+        }
+
+        .page-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-end;
+            margin-bottom: 50px;
+        }
+        .page-header h2 { font-size: 2.2rem; font-weight: 900; margin-bottom: 5px; }
+        .page-header p { color: var(--text-dim); font-size: 1.1rem; }
+
+        /* ─── STATS GRID ─── */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 24px;
+            margin-bottom: 40px;
+        }
+        .stat-card {
+            background: var(--card-bg);
+            border: 1px solid var(--glass-border);
+            padding: 30px;
+            border-radius: 24px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.02);
+            transition: 0.3s;
+        }
+        .stat-card:hover { border-color: var(--primary); transform: translateY(-5px); }
+        .stat-card .label { color: var(--text-dim); font-size: 0.75rem; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; }
+        .stat-card .val { font-size: 2rem; font-weight: 800; margin: 10px 0; display: block; }
+        .stat-card .trend { font-size: 0.8rem; font-weight: 700; }
+        .trend-up { color: var(--accent-green); }
+
+        /* ─── DASHBOARD GRID ─── */
+        .db-grid {
+            display: grid;
+            grid-template-columns: 2fr 1fr;
+            gap: 30px;
+        }
+
+        .card {
+            background: var(--card-bg);
+            border: 1px solid var(--glass-border);
+            border-radius: 28px;
+            padding: 35px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.02);
+        }
+        .card-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px; }
+        .card-header h3 { font-size: 1.2rem; font-weight: 800; }
+
+        /* ─── TABLES ─── */
+        table { width: 100%; border-collapse: collapse; }
+        th { text-align: left; padding: 15px; color: var(--text-dim); font-size: 0.7rem; text-transform: uppercase; letter-spacing: 1px; font-weight: 800; }
+        td { padding: 18px 15px; border-top: 1px solid var(--glass-border); font-size: 0.9rem; }
+        tr:hover td { background: #F1F5F9; }
+
+        .badge {
+            padding: 6px 12px;
+            border-radius: 8px;
+            font-size: 0.65rem;
+            font-weight: 800;
+            text-transform: uppercase;
+        }
+        .badge-green { background: rgba(16, 185, 129, 0.1); color: var(--accent-green); }
+        .badge-blue { background: rgba(59, 130, 246, 0.1); color: #3B82F6; }
+        .badge-orange { background: rgba(245, 158, 11, 0.1); color: var(--accent-orange); }
+
+        /* ─── ACTION BUTTONS ─── */
+        .btn-pill {
+            background: var(--primary);
+            color: white;
+            border: none;
+            padding: 10px 22px;
+            border-radius: 50px;
+            font-weight: 700;
+            font-size: 0.85rem;
+            cursor: pointer;
+            transition: 0.3s;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .btn-pill:hover { transform: translateY(-2px); box-shadow: 0 10px 20px var(--primary-glow); }
+        .btn-ghost { background: rgba(255,255,255,0.05); color: var(--text-main); border: 1px solid var(--glass-border); }
+
+        /* ─── MODAL ─── */
+        .modal-bg {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(15, 23, 42, 0.4); backdrop-filter: blur(8px);
+            z-index: 2000; display: none; align-items: center; justify-content: center;
+            padding: 40px;
+        }
+        .modal-bg.open { display: flex; }
+        .modal-panel {
+            background: var(--sidebar-bg);
+            width: 100%;
+            max-width: 800px;
+            max-height: 90vh;
+            border-radius: 32px;
+            padding: 40px;
+            border: 1px solid var(--glass-border);
+            overflow-y: auto;
+            position: relative;
+        }
+        .close-modal { position: absolute; right: 30px; top: 30px; background: none; border: none; color: var(--text-dim); font-size: 1.5rem; cursor: pointer; }
+
+        /* ─── CMS FORM ─── */
+        .form-group { margin-bottom: 20px; }
+        .form-group label { display: block; font-size: 0.75rem; font-weight: 700; color: var(--text-dim); margin-bottom: 8px; text-transform: uppercase; }
+        .form-group input, .form-group textarea {
+            width: 100%;
+            background: rgba(255,255,255,0.03);
+            border: 1px solid var(--glass-border);
+            border-radius: 14px;
+            padding: 14px;
+            color: var(--text-main);
+            font-family: inherit;
+            transition: 0.3s;
+        }
+        .form-group input:focus { border-color: var(--primary); outline: none; }
+
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-thumb { background: var(--glass-border); border-radius: 10px; }
+    </style>
+    <link rel="stylesheet" href="shared-case-form.css?v=6">
+    <link rel="stylesheet" href="shared-case-portal.css?v=1">
+    <link rel="stylesheet" href="customer-dashboard.css?v=1">
+    <link rel="stylesheet" href="paw-tracker.css?v=3">
+    <link rel="stylesheet" href="paw-case-hub.css?v=1">
+    <link rel="stylesheet" href="shared-entity-profile.css?v=1">
+</head>
+<body class="pb-portal">
+
+    <aside>
+        <div class="logo-box">
+            <i class="fas fa-shield-halved"></i>
+            <h1>COMMAND</h1>
+        </div>
+        <ul class="nav-group">
+            <li><a href="#" class="active" onclick="showTab('dash')"><i class="fas fa-grid-2"></i> Dashboard</a></li>
+            <li><a href="#" onclick="showTab('verify')"><i class="fas fa-user-check"></i> Verification</a></li>
+            <li><a href="#" onclick="showTab('entities')"><i class="fas fa-building-circle-check"></i> Network Entities</a></li>
+            <li><a href="#" onclick="showTab('reps')"><i class="fas fa-user-shield"></i> Representatives</a></li>
+            <li><a href="#" onclick="showTab('cases')"><i class="fas fa-truck-medical"></i> Case Mgmt</a></li>
+            <li><a href="#" onclick="showTab('customers')"><i class="fas fa-users"></i> Customers</a></li>
+            <li><a href="#" onclick="showTab('cms')"><i class="fas fa-browser"></i> Site Control</a></li>
+            <li><a href="#" onclick="showTab('settings')"><i class="fas fa-gears"></i> Settings</a></li>
+        </ul>
+        <button class="btn-terminate" onclick="logout()">TERMINATE SESSION</button>
+    </aside>
+
+    <main>
+        
+        <!-- DASHBOARD TAB -->
+        <div id="dashTab" class="tab-content">
+            <div class="page-header">
+                <div>
+                    <h2>System Overview</h2>
+                    <p>Real-time monitor for global rescue nodes.</p>
+                </div>
+                <div id="sysClock" style="font-weight: 800; font-size: 1.2rem; color: var(--primary);">12:45:08</div>
+            </div>
+
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <span class="label">Total Rescues</span>
+                    <span class="val" id="totalRescues">24,812</span>
+                    <span class="trend trend-up"><i class="fas fa-caret-up"></i> 12.4%</span>
+                </div>
+                <div class="stat-card">
+                    <span class="label">Active NGOs</span>
+                    <span class="val" id="totalNGOs">542</span>
+                    <span class="trend" style="color: #3B82F6;">Across 28 Cities</span>
+                </div>
+                <div class="stat-card">
+                    <span class="label">Total Riders</span>
+                    <span class="val" id="totalRiders">1,240</span>
+                    <span class="trend trend-up"><i class="fas fa-caret-up"></i> 8.1%</span>
+                </div>
+                <div class="stat-card">
+                    <span class="label">Response Time</span>
+                    <span class="val">14:20</span>
+                    <span class="trend" style="color: var(--accent-orange);">-2m from target</span>
+                </div>
+            </div>
+
+            <div class="db-grid">
+                <div class="card">
+                    <div class="card-header">
+                        <h3>National Impact Trends</h3>
+                        <div class="btn-pill btn-ghost">Monthly View</div>
+                    </div>
+                    <canvas id="mainChart" height="280"></canvas>
+                </div>
+                <div class="card">
+                    <div class="card-header">
+                        <h3>Global Node Health</h3>
+                    </div>
+                    <div style="display: flex; flex-direction: column; gap: 20px;">
+                        <div style="display:flex; justify-content:space-between; align-items:center;">
+                            <span style="font-size:0.85rem; font-weight:600;">Mumbai Node</span>
+                            <span class="badge badge-green">OPTIMAL</span>
+                        </div>
+                        <div style="display:flex; justify-content:space-between; align-items:center;">
+                            <span style="font-size:0.85rem; font-weight:600;">Delhi Node</span>
+                            <span class="badge badge-green">OPTIMAL</span>
+                        </div>
+                        <div style="display:flex; justify-content:space-between; align-items:center;">
+                            <span style="font-size:0.85rem; font-weight:600;">Bangalore Node</span>
+                            <span class="badge badge-orange">CONGESTED</span>
+                        </div>
+                        <div style="display:flex; justify-content:space-between; align-items:center;">
+                            <span style="font-size:0.85rem; font-weight:600;">Pune Node</span>
+                            <span class="badge badge-green">OPTIMAL</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div id="repsTab" class="tab-content" style="display:none;">
+            <div class="page-header"><div><h2>Representatives</h2><p>Create, allot NGO, approve or reject.</p></div><button class="btn-pill" onclick="openCreateRepModal()">+ Create Representative</button></div>
+            <div class="card"><div class="card-header"><h3>All reps</h3><button class="btn-pill btn-ghost" onclick="loadAllReps()">Refresh</button></div>
+            <table><thead><tr><th>Name</th><th>Email</th><th>NGO</th><th>Status</th><th>Tracking</th><th>Actions</th></tr></thead><tbody id="allRepsList"></tbody></table></div>
+        </div>
+        <!-- VERIFICATION TAB -->
+        <div id="verifyTab" class="tab-content" style="display:none;">
+            <div class="page-header">
+                <div>
+                    <h2>Verification Desk</h2>
+                    <p>Reviewing professional credentials and KYC.</p>
+                </div>
+                <button class="btn-pill" onclick="loadPendingApplications()"><i class="fas fa-rotate"></i> Sync Queue</button>
+            </div>
+
+            <div class="card" style="margin-bottom:30px;">
+                <div class="card-header"><h3>NGO Applications</h3></div>
+                <table>
+                    <thead><tr><th>Ref ID</th><th>Organization</th><th>Type</th><th>Registration</th><th>Action</th></tr></thead>
+                    <tbody id="pendingNgosList"></tbody>
+                </table>
+            </div>
+
+            <div class="card" id="pendingRepsCard" style="margin-bottom:30px; display:none;">
+                <div class="card-header"><h3>Field Representatives</h3></div>
+                <table>
+                    <thead><tr><th>Name</th><th>NGO</th><th>Email</th><th>Status</th><th>Action</th></tr></thead>
+                    <tbody id="pendingRepsList"></tbody>
+                </table>
+            </div>
+
+            <div class="card">
+                <div class="card-header"><h3>Doctor Board</h3></div>
+                <table>
+                    <thead><tr><th>Ref ID</th><th>Name</th><th>Specialization</th><th>Action</th></tr></thead>
+                    <tbody id="pendingDoctorsList"></tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- CMS TAB -->
+        <div id="cmsTab" class="tab-content" style="display:none;">
+            <div class="page-header">
+                <div>
+                    <h2>Site Control (CMS)</h2>
+                    <p>Manage public portal content and live statistics.</p>
+                </div>
+            </div>
+
+            <div class="db-grid">
+                <div class="card">
+                    <form id="cmsForm">
+                        <div class="form-group"><label>Hero Section Title</label><input type="text" name="hero_title" placeholder="Saving India's Indie Dogs"></div>
+                        <div class="form-group"><label>Hero Subtitle</label><textarea name="hero_subtitle" rows="3"></textarea></div>
+                        <div class="form-group"><label>Banner Image URL</label><input type="text" name="hero_banner" placeholder="https://example.com/banner.jpg"></div>
+                        <div class="form-group"><label>Footer Copyright Text</label><input type="text" name="footer_copyright" placeholder="© 2026 PawBandhan. All rights reserved."></div>
+                        <div style="display:grid; grid-template-columns:1fr 1fr; gap:20px;">
+                            <div class="form-group"><label>Rescue Stats (Display)</label><input type="number" name="stat_rescues_override"></div>
+                            <div class="form-group"><label>NGO Count (Display)</label><input type="number" name="stat_ngos_override"></div>
+                        </div>
+                        <button type="button" class="btn-pill" onclick="saveSiteConfig()">PUBLISH CHANGES</button>
+                    </form>
+                </div>
+                <div class="card">
+                    <div class="card-header"><h3>Customer Reviews</h3><button class="btn-pill btn-ghost" onclick="addReview()">+ Add</button></div>
+                    <div id="reviewsList" style="display:flex; flex-direction:column; gap:15px; margin-bottom: 30px;"></div>
+
+                    <div class="card-header"><h3>Success Stories</h3><button class="btn-pill btn-ghost" onclick="showStoryModal()">+ Add</button></div>
+                    <div id="storiesList" style="display:flex; flex-direction:column; gap:15px;"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- SETTINGS TAB -->
+        <div id="settingsTab" class="tab-content" style="display:none;">
+            <div class="page-header"><div><h2>Global Settings</h2><p>System configurations and integrations.</p></div></div>
+            <div class="card" style="max-width: 600px;">
+                <div class="card-header"><h3>Razorpay Payment Gateway</h3></div>
+                <form id="razorpayForm">
+                    <div class="form-group"><label>Key ID</label><input type="text" id="rzp_key_id" name="rzp_key_id" placeholder="rzp_live_XXXXX"></div>
+                    <div class="form-group"><label>Key Secret</label><input type="password" id="rzp_key_secret" name="rzp_key_secret" placeholder="••••••••••••••••"></div>
+                    <button type="button" class="btn-pill" onclick="saveRazorpaySettings()">Save Credentials</button>
+                </form>
+            </div>
+        </div>
+
+        <!-- ENTITIES TAB -->
+        <div id="entitiesTab" class="tab-content" style="display:none;">
+            <div class="page-header">
+                <div><h2>Network Entities</h2><p>Manage active NGOs, Riders, and Doctors.</p></div>
+                <button class="btn-pill" onclick="document.getElementById('manualRegModal').classList.add('open')">+ Manual Registration</button>
+            </div>
+            <div class="card">
+                <div class="card-header"><h3>Verified NGOs</h3></div>
+                <table>
+                    <thead><tr><th>PRN</th><th>Organization Name</th><th>Email</th><th>Status</th><th>Action</th></tr></thead>
+                    <tbody id="verifiedNgosList"></tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- CASES TAB -->
+        <div id="casesTab" class="tab-content" style="display:none;">
+            <div class="page-header">
+                <div><h2>Rescue command center</h2><p>View and update every case — assign NGOs, track live, manage workflow.</p></div>
+                <button class="btn-pill" onclick="openAdminCaseModal()">+ New Emergency Case</button>
+            </div>
+            <div class="card" style="padding:24px;">
+                <div id="pchAdminRoot"></div>
+            </div>
+        </div>
+
+        <!-- CUSTOMERS TAB -->
+        <div id="customersTab" class="tab-content" style="display:none;">
+            <div class="page-header"><div><h2>Customer Database</h2><p>Create customers and issue portal login access.</p></div><button class="btn-pill" onclick="openCreateCustomerModal()">+ Create Customer</button></div>
+            <div class="card">
+                <table>
+                    <thead><tr><th>ID</th><th>Name</th><th>Email</th><th>Phone</th><th>Access code</th><th>Joined</th></tr></thead>
+                    <tbody id="customersList"></tbody>
+                </table>
+            </div>
+        </div>
+
+    </main>
+
+    <!-- DETAILS MODAL -->
+    <div id="detailsModal" class="modal-bg">
+        <div class="modal-panel">
+            <button class="close-modal" onclick="closeModal('detailsModal')">&times;</button>
+            <h2 id="modalTitle" style="margin-bottom:30px;">Dossier Details</h2>
+            <div id="modalContent" style="display:grid; grid-template-columns:1fr 1fr; gap:30px; margin-bottom:40px;"></div>
+            <div style="background:rgba(255,255,255,0.03); padding:30px; border-radius:24px; border:1px solid var(--glass-border);">
+                <h4 style="font-size:0.9rem; font-weight:800; color:var(--primary); margin-bottom:20px; text-transform:uppercase;">Biometric Verification (DIDIT)</h4>
+                <div id="kycContent" style="display:grid; grid-template-columns:1fr 1fr; gap:20px;"></div>
+            </div>
+            <div style="margin-top:40px; text-align:right; display:flex; gap:15px; justify-content:flex-end;">
+                <button class="btn-pill btn-ghost" onclick="closeModal('detailsModal')">Close</button>
+                <button id="modalApproveBtn" class="btn-pill">Approve Application</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MANUAL REGISTRATION MODAL -->
+    <div id="manualRegModal" class="modal-bg">
+        <div class="modal-panel" style="max-width: 500px;">
+            <button class="close-modal" onclick="closeModal('manualRegModal')">&times;</button>
+            <h2 style="margin-bottom:20px;">Manual Registration</h2>
+            <form id="manualRegForm">
+                <div class="form-group"><label>Role</label>
+                    <select name="type" style="width:100%; padding:14px; border-radius:14px; background:rgba(255,255,255,0.03); border:1px solid var(--glass-border); color:var(--text-main);">
+                        <option value="ngo">NGO</option><option value="doctor">Doctor</option><option value="rider">Rider</option>
+                    </select>
+                </div>
+                <div class="form-group"><label>Full Name / Organization</label><input type="text" name="name" required></div>
+                <div class="form-group"><label>Email</label><input type="email" name="email" required></div>
+                <div class="form-group"><label>Phone</label><input type="tel" name="phone" required></div>
+                <div class="form-group"><label>Details (Address/Vehicle/Spec)</label><textarea name="details" rows="2"></textarea></div>
+                <button type="button" class="btn-pill" style="width:100%" onclick="submitManualReg()">Register & Activate</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- ADD CASE MODAL -->
+    <div id="addCaseModal" class="modal-bg">
+        <div class="modal-panel" style="max-width: 820px;">
+            <button class="close-modal" onclick="closeModal('addCaseModal')">&times;</button>
+            <h2 style="margin-bottom:20px;">New Emergency Case</h2>
+            <p style="font-size:0.85rem;color:var(--text-dim);margin-bottom:12px;">Leave NGO blank to auto-assign the nearest active NGO by GPS. Change NGO anytime from case details.</p>
+            <div id="adminCaseFormMount"></div>
+                <button type="button" class="btn-pill" style="width:100%;margin-top:16px;" onclick="submitNewCase()">Create case & notify customer</button>
+        </div>
+    </div>
+
+    <div id="createRepModal" class="modal-bg">
+        <div class="modal-panel" style="max-width:520px;">
+            <button class="close-modal" onclick="closeModal('createRepModal')">&times;</button>
+            <h2 style="margin-bottom:16px;">Create Representative</h2>
+            <form id="createRepForm" onsubmit="event.preventDefault(); submitCreateRep();">
+                <div class="form-group"><label>Full name</label><input type="text" name="name" required></div>
+                <div class="form-group"><label>Email</label><input type="email" name="email" required></div>
+                <div class="form-group"><label>Phone</label><input type="tel" name="phone"></div>
+                <div class="form-group"><label>Allot NGO</label><select name="ngoId" id="createRepNgoSelect"><option value="">Select NGO</option></select></div>
+                <div class="form-group"><label>Vehicle type</label><input type="text" name="vehicleType" value="Two Wheeler"></div>
+                <div class="form-group"><label>Vehicle number</label><input type="text" name="vehicleNumber"></div>
+                <button type="submit" class="btn-pill" style="width:100%">Create & invite</button>
+            </form>
+        </div>
+    </div>
+
+    <div id="createCustomerModal" class="modal-bg">
+        <div class="modal-panel" style="max-width:520px;">
+            <button class="close-modal" onclick="closeModal('createCustomerModal')">&times;</button>
+            <h2 style="margin-bottom:16px;">Create Customer</h2>
+            <form id="createCustomerForm" onsubmit="event.preventDefault(); submitCreateCustomer();">
+                <div class="form-group"><label>Full name</label><input type="text" name="name" required></div>
+                <div class="form-group"><label>Email</label><input type="email" name="email"></div>
+                <div class="form-group"><label>Phone</label><input type="tel" name="phone"></div>
+                <p style="font-size:0.8rem;color:var(--text-dim);margin-bottom:12px;">At least email or phone is required. If customer exists, you will be notified.</p>
+                <button type="submit" class="btn-pill" style="width:100%">Create & issue access</button>
+            </form>
+            <pre id="customerAccessResult" style="display:none;margin-top:16px;padding:14px;background:rgba(255,255,255,0.05);border-radius:12px;font-size:0.8rem;white-space:pre-wrap;"></pre>
+        </div>
+    </div>
+
+    <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCj24WzNBtXKorLO4A4p518ZM3SERcYmQU"></script>
+    <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCj24WzNBtXKorLO4A4p518ZM3SERcYmQU"></script>
+    <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
+    <script src="shared-case-form.js?v=6"></script>
+    <script src="paw-api.js?v=1"></script>
+    <script src="paw-tracker.js?v=4"></script>
+    <script src="paw-case-hub.js?v=1"></script>
+    <script src="shared-case-portal.js?v=3"></script>
+    <script src="shared-entity-profile.js?v=2"></script>
+    <script>
+        function showTab(name) {
+            document.querySelectorAll('.tab-content').forEach(t => t.style.display = 'none');
+            document.getElementById(name + 'Tab').style.display = 'block';
+            document.querySelectorAll('.nav-group a').forEach(a => a.classList.remove('active'));
+            event.currentTarget.classList.add('active');
+            if(name === 'verify') loadPendingApplications();
+            if(name === 'cms') loadSiteConfig();
+            if(name === 'settings') loadSettings();
+            if(name === 'entities') loadEntities();
+            if(name === 'reps') loadAllReps();
+            if(name === 'cases') loadCases();
+            if(name === 'customers') loadCustomers();
+        }
+
+        // ── Real-time Clock ──
+        setInterval(() => {
+            const now = new Date();
+            document.getElementById('sysClock').innerText = now.toLocaleTimeString('en-IN', { hour12: false });
+        }, 1000);
+
+        // ── Mock Logic Integration ──
+        async function loadStats() {
+            try {
+                const res = await fetch('/api/stats');
+                const stats = await res.json();
+                document.getElementById('totalRescues').innerText = stats.totalRescues.toLocaleString();
+                document.getElementById('totalNGOs').innerText = stats.totalNGOs;
+                document.getElementById('totalRiders').innerText = stats.totalRiders;
+            } catch(e) {}
+        }
+        loadStats();
+
+        async function loadPendingApplications() {
+            try {
+                const res = await fetch('/api/admin/pending-applications');
+                const data = await res.json();
+                const render = (list, elId, type) => {
+                    const el = document.getElementById(elId);
+                    el.innerHTML = list.map(item => `
+                        <tr>
+                            <td><span style="color:var(--primary); font-weight:800;">${item.ack_no || 'ACK-'+item.id}</span></td>
+                            <td>${item.name}</td>
+                            <td>${item.ngo_type || item.vehicle_type || item.specialization || '-'}</td>
+                            <td>${item.reg_number || item.license_number || '-'}</td>
+                            <td><button class="btn-pill btn-ghost" style="padding:6px 12px; font-size:0.7rem;" onclick="viewApplicationDetails('${type}', ${item.id})">Review</button></td>
+                        </tr>
+                    `).join('');
+                };
+                render(data.ngos, 'pendingNgosList', 'ngo');
+                render(data.doctors, 'pendingDoctorsList', 'doctor');
+                const repsCard = document.getElementById('pendingRepsCard');
+                const repsEl = document.getElementById('pendingRepsList');
+                if (repsEl && data.representatives?.length) {
+                    if (repsCard) repsCard.style.display = '';
+                    repsEl.innerHTML = data.representatives.map(item => `
+                        <tr><td>${item.name}</td><td>${item.ngo_name || '-'}</td><td>${item.email}</td><td>${item.status}</td>
+                        <td><button class="btn-pill btn-ghost" style="padding:6px 12px;font-size:0.7rem;" onclick="approveRepresentative(${item.id}, '${item.uid || ''}')">Approve App Access</button></td></tr>
+                    `).join('');
+                }
+            } catch(e) {}
+        }
+
+        async function viewApplicationDetails(type, id) {
+            if (type === 'representative' && typeof PawEntityProfile !== 'undefined') return PawEntityProfile.openRep(id);
+            if (type === 'doctor' && typeof PawEntityProfile !== 'undefined') return PawEntityProfile.openDoctor(id);
+            if (type === 'ngo' && typeof PawEntityProfile !== 'undefined') return PawEntityProfile.openNgo(id);
+            try {
+                const res = await fetch(`/api/admin/application-details/${type}/${id}`);
+                const item = await res.json();
+                document.getElementById('modalTitle').innerText = `${type.toUpperCase()} Dossier: ${item.name || item.first_name}`;
+                
+                let kyc = {};
+                try { kyc = typeof item.kyc_data === 'string' ? JSON.parse(item.kyc_data) : (item.kyc_data || {}); } catch(e) {}
+
+                let html = '';
+                // Standard details
+                const stdFields = { 'Email': item.email, 'Phone': item.phone, 'Status': item.status };
+                for(let [k, v] of Object.entries(stdFields)) {
+                    if(v) html += `<div><span style="color:var(--text-dim); font-size:0.7rem; font-weight:800; text-transform:uppercase;">${k}</span><p style="font-weight:600; margin-top:5px;">${v}</p></div>`;
+                }
+                
+                // Form data (from KYC JSON)
+                for(let [k, v] of Object.entries(kyc)) {
+                    if(k === 'registry_photos' || k === 'document_uploads' || k === 'ai_verification' || !v || typeof v === 'object') continue;
+                    let label = k.replace(/_/g, ' ');
+                    html += `<div><span style="color:var(--text-dim); font-size:0.7rem; font-weight:800; text-transform:uppercase;">${label}</span><p style="font-weight:600; margin-top:5px;">${v}</p></div>`;
+                }
+                document.getElementById('modalContent').innerHTML = html;
+
+                const photoCount = Array.isArray(kyc.registry_photos) ? kyc.registry_photos.length : 0;
+                const documentUploads = kyc.document_uploads || {};
+                const extraDocs = Array.isArray(documentUploads.additional_documents) ? documentUploads.additional_documents : [];
+                const docLinks = [
+                    ['PAN Card', documentUploads.pan_card],
+                    ['Aadhaar', documentUploads.aadhaar_card],
+                    ['Bank Statement', documentUploads.bank_statement],
+                    ['Registration Certificate', documentUploads.registration_certificate],
+                    ['80G / 12A', documentUploads.compliance_certificate],
+                    ['Trust Deed / MOA', documentUploads.trust_deed]
+                ].filter(([, url]) => url);
+
+                // Submission review display
+                let kycHtml = `
+                    <div style="grid-column: span 2; margin-bottom:20px; border-bottom: 1px solid var(--glass-border); padding-bottom:15px;">
+                        <span style="color:var(--text-dim); font-size:0.75rem; font-weight:800;">SUBMISSION REVIEW</span>
+                        <p style="color:var(--accent-green); font-size:1.2rem; font-weight:800;">${photoCount} live photos and ${docLinks.length + extraDocs.length} uploaded documents received</p>
+                    </div>
+                `;
+
+                if (kyc.registry_photos) {
+                    kycHtml += `<div style="grid-column: span 2; display:grid; grid-template-columns: repeat(4, 1fr); gap:10px;">`;
+                    kyc.registry_photos.forEach(p => {
+                        kycHtml += `
+                            <div style="background:rgba(255,255,255,0.05); padding:10px; border-radius:12px; text-align:center; border:1px solid var(--primary);">
+                                <img src="${p.url}" alt="${p.type}" style="width:100%; aspect-ratio:1/1; object-fit:cover; border-radius:10px; margin-bottom:8px;">
+                                <p style="font-size:0.6rem; font-weight:800; text-transform:uppercase;">${p.type}</p>
+                                <span style="font-size:0.55rem; color:var(--accent-green); font-weight:700;">LIVE ✓</span>
+                            </div>
+                        `;
+                    });
+                    kycHtml += `</div>`;
+                } else {
+                    kycHtml += `<p style="grid-column: span 2; color:var(--text-dim); font-style:italic;">Legacy application: No real-time registry photos found.</p>`;
+                }
+
+                if (docLinks.length || extraDocs.length) {
+                    kycHtml += `<div style="grid-column: span 2; margin-top:20px;"><span style="color:var(--text-dim); font-size:0.75rem; font-weight:800;">UPLOADED DOCUMENTS</span><div style="display:grid; grid-template-columns:repeat(2, 1fr); gap:12px; margin-top:12px;">`;
+                    docLinks.forEach(([label, url]) => {
+                        kycHtml += `<a href="${url}" target="_blank" style="display:flex; align-items:center; justify-content:space-between; gap:10px; padding:12px 14px; border-radius:12px; border:1px solid var(--glass-border); text-decoration:none; color:inherit;"><span style="font-size:0.8rem; font-weight:700;">${label}</span><i class="fas fa-up-right-from-square" style="color:var(--primary);"></i></a>`;
+                    });
+                    extraDocs.forEach((doc, idx) => {
+                        kycHtml += `<a href="${doc.url}" target="_blank" style="display:flex; align-items:center; justify-content:space-between; gap:10px; padding:12px 14px; border-radius:12px; border:1px solid var(--glass-border); text-decoration:none; color:inherit;"><span style="font-size:0.8rem; font-weight:700;">${doc.name || `Additional Document ${idx + 1}`}</span><i class="fas fa-up-right-from-square" style="color:var(--primary);"></i></a>`;
+                    });
+                    kycHtml += `</div></div>`;
+                }
+
+                document.getElementById('kycContent').innerHTML = kycHtml;
+                document.getElementById('modalApproveBtn').onclick = () => approveApplication(type, id, item.uid);
+                document.getElementById('detailsModal').classList.add('open');
+            } catch(e) { console.error(e); }
+        }
+
+        async function approveApplication(type, id, uid) {
+            if(!confirm('Authorize this node?')) return;
+            const res = await fetch('/api/admin/approve-application', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ type, id, uid })
+            });
+            if((await res.json()).success) { alert('Node Authorized.'); closeModal(); loadPendingApplications(); }
+        }
+
+        async function approveRepresentative(id, uid) {
+            if (!confirm('Grant representative app access?')) return;
+            const res = await fetch('/api/admin/approve-representative', {
+                method: 'POST', headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ id, uid })
+            });
+            const d = await res.json();
+            if (d.success) { alert('Representative approved: ' + (d.repId || '')); loadPendingApplications(); }
+        }
+
+        function closeModal(id) { document.getElementById(id || 'detailsModal').classList.remove('open'); }
+        async function loadAllReps() {
+            const reps = await (await fetch('/api/admin/representatives-all')).json();
+            const ngos = await (await fetch('/api/admin/verified-ngos')).json();
+            document.getElementById('allRepsList').innerHTML = reps.map(r => `
+                <tr>
+                    <td>${r.name}</td><td>${r.email}</td><td>${r.ngo_name || '—'}</td>
+                    <td><span class="badge ${r.status==='active'?'badge-green':r.status==='suspended'?'badge-red':'badge-orange'}">${r.status}</span></td>
+                    <td><small>${r.tracking_id || '—'}</small></td>
+                    <td>
+                        <button class="btn-pill btn-ghost" onclick="viewRepDetail(${r.id})">View</button>
+                        ${r.status==='pending_admin'?`<button class="btn-pill" onclick="approveRepresentative(${r.id},'${r.uid||''}')">Approve</button><button class="btn-pill btn-ghost" onclick="rejectRep(${r.id})">Reject</button>`:''}
+                        ${r.status==='active'?`<button class="btn-pill btn-ghost" onclick="suspendRep(${r.id},true)">Suspend</button>`:''}
+                        ${r.status==='suspended'?`<button class="btn-pill" onclick="suspendRep(${r.id},false)">Unsuspend</button>`:''}
+                        <select onchange="allotRepNgo(${r.id}, this.value)" style="padding:4px"><option value="">Allot NGO</option>${ngos.map(n=>`<option value="${n.id}" ${r.ngo_id==n.id?'selected':''}>${n.name}</option>`).join('')}</select>
+                    </td>
+                </tr>`).join('');
+        }
+        async function openCreateRepModal() {
+            const ngos = await (await fetch('/api/admin/verified-ngos')).json();
+            const sel = document.getElementById('createRepNgoSelect');
+            sel.innerHTML = '<option value="">Select NGO</option>' + ngos.map(n => `<option value="${n.id}">${n.name}</option>`).join('');
+            document.getElementById('createRepForm').reset();
+            document.getElementById('createRepModal').classList.add('open');
+        }
+        async function submitCreateRep() {
+            const f = document.getElementById('createRepForm');
+            const body = { name: f.name.value, email: f.email.value, phone: f.phone.value, ngoId: f.ngoId.value || null, vehicleType: f.vehicleType.value, vehicleNumber: f.vehicleNumber.value };
+            const res = await fetch('/api/admin/representatives/create', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(body) });
+            const d = await res.json();
+            if (!res.ok) return alert(d.error || 'Failed');
+            alert('Representative created. They must register at the representative portal with email: ' + body.email);
+            closeModal('createRepModal');
+            loadAllReps();
+        }
+        function openCreateCustomerModal() {
+            document.getElementById('createCustomerForm').reset();
+            document.getElementById('customerAccessResult').style.display = 'none';
+            document.getElementById('createCustomerModal').classList.add('open');
+        }
+        async function submitCreateCustomer() {
+            const f = document.getElementById('createCustomerForm');
+            const res = await fetch('/api/admin/customers/create', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ name: f.name.value, email: f.email.value, phone: f.phone.value }) });
+            const d = await res.json();
+            if (!res.ok) return alert(d.error || 'Failed');
+            const box = document.getElementById('customerAccessResult');
+            box.style.display = 'block';
+            if (d.existed) box.textContent = 'User already exists:\n' + JSON.stringify(d.customer, null, 2) + '\n\n' + (d.message || '');
+            else box.textContent = (d.instructions || 'Customer created.') + '\n\nAccess code: ' + (d.portalAccessCode || 'N/A');
+            loadCustomers();
+        }
+        async function lookupAdminCaseCustomer() {
+            const phone = document.getElementById('caseLookupPhone').value.trim();
+            const email = document.getElementById('caseLookupEmail').value.trim();
+            const status = document.getElementById('caseCustomerStatus');
+            if (!phone && !email) { status.textContent = ''; return; }
+            const d = await PawCaseForm.lookupCustomer(phone, email);
+            PawCaseForm.setLookupStatus(status, d);
+            if (d.found) document.getElementById('caseCustomerName').value = d.customer.name;
+        }
+        async function loadCaseNgoOptions() {
+            const ngos = await (await fetch('/api/admin/verified-ngos')).json();
+            const sel = document.getElementById('caseNgoSelect');
+            if (!sel) return;
+            sel.innerHTML = '<option value="">Auto / none</option>' + ngos.map(n => `<option value="${n.id}">${n.name}</option>`).join('');
+        }
+        async function viewRepDetail(id) {
+            if (typeof PawEntityProfile !== 'undefined') PawEntityProfile.openRep(id);
+            else alert('Profile viewer not loaded');
+        }
+        async function rejectRep(id) {
+            const reason = prompt('Rejection reason');
+            await fetch('/api/admin/reject-representative', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ id, reason }) });
+            loadAllReps();
+        }
+        async function suspendRep(id, suspend) {
+            await fetch('/api/admin/suspend-representative', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ id, suspend }) });
+            loadAllReps();
+        }
+        async function allotRepNgo(repId, ngoId) {
+            if (!ngoId) return;
+            await fetch('/api/admin/representatives/'+repId+'/allot-ngo', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ ngoId }) });
+            loadAllReps();
+        }
+
+        function logout() { window.location.href = 'index.html'; }
+
+        async function submitManualReg() {
+            const form = document.getElementById('manualRegForm');
+            const data = { type: form.type.value, name: form.name.value, email: form.email.value, phone: form.phone.value, details: { address: form.details.value, specialization: form.details.value, vehicleType: form.details.value } };
+            const res = await fetch('/api/admin/manual-register', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data) });
+            if(res.ok) { alert('Successfully registered and activated.'); closeModal('manualRegModal'); loadEntities(); form.reset(); }
+        }
+
+        function openAdminCaseModal() {
+            PawCaseForm.mount('adminCaseFormMount', {
+                prefix: 'admin',
+                showNgoSelect: true,
+                loadNgos: async (prefix) => {
+                    const ngos = await (await fetch('/api/admin/verified-ngos')).json();
+                    const sel = document.getElementById(prefix + 'NgoId');
+                    if (sel) sel.innerHTML = '<option value="">— Select NGO —</option>' + ngos.map(n => `<option value="${n.id}">${n.name}</option>`).join('');
+                }
+            });
+            document.getElementById('addCaseModal').classList.add('open');
+        }
+
+        async function submitNewCase() {
+            const data = PawCaseForm.readPayload('admin');
+            const err = PawCaseForm.validatePayload(data);
+            if (err) return alert(err);
+            try {
+                const d = await PawCaseForm.createCaseAdmin(data, 'admin');
+                const msg = d.customer_existed ? 'Case created. Customer already existed.' : 'Case created. New customer account created.';
+                alert(msg + ' Tracking: ' + (d.incident?.incident_code || ''));
+                closeModal('addCaseModal');
+                loadCases();
+            } catch (e) { alert(e.message || 'Failed to create case'); }
+        }
+
+        // CMS Logic
+        async function loadSiteConfig() {
+            const res = await fetch('/api/admin/site-settings-all');
+            const config = await res.json();
+            const form = document.getElementById('cmsForm');
+            for (const [k, v] of Object.entries(config)) if(form.elements[k]) form.elements[k].value = v;
+            loadStories();
+        }
+
+        async function saveSiteConfig() {
+            const form = document.getElementById('cmsForm');
+            for(let el of form.elements) {
+                if(el.name) {
+                    await fetch('/api/admin/update-site-setting', {
+                        method: 'POST', headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ key: el.name, value: el.value })
+                    });
+                }
+            }
+            alert('Live Portal Updated.');
+        }
+
+        async function loadSettings() {
+            const res = await fetch('/api/admin/site-settings-all');
+            const config = await res.json();
+            if(config.rzp_key_id) document.getElementById('rzp_key_id').value = config.rzp_key_id;
+            if(config.rzp_key_secret) document.getElementById('rzp_key_secret').value = config.rzp_key_secret;
+        }
+
+        async function saveRazorpaySettings() {
+            const id = document.getElementById('rzp_key_id').value;
+            const secret = document.getElementById('rzp_key_secret').value;
+            await fetch('/api/admin/update-site-setting', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ key: 'rzp_key_id', value: id }) });
+            await fetch('/api/admin/update-site-setting', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ key: 'rzp_key_secret', value: secret }) });
+            alert('Razorpay Credentials Saved Securely.');
+        }
+
+        async function loadEntities() {
+            const res = await fetch('/api/admin/verified-ngos');
+            const data = await res.json();
+            document.getElementById('verifiedNgosList').innerHTML = data.map(ngo => `
+                <tr>
+                    <td><span style="color:var(--primary); font-weight:800;">${ngo.prn}</span></td>
+                    <td>${ngo.name}</td>
+                    <td>${ngo.email}</td>
+                    <td><span class="badge ${ngo.status === 'active' ? 'badge-green' : 'badge-red'}">${ngo.status.toUpperCase()}</span></td>
+                    <td>
+                        <button class="btn-pill btn-ghost" style="padding:6px 12px; font-size:0.7rem;" onclick="PawEntityProfile.openNgo(${ngo.id})">Full profile</button>
+                        <button class="btn-pill" style="padding:6px 12px; font-size:0.7rem; background:rgba(239, 68, 68, 0.1); color:#EF4444;" onclick="banNgo(${ngo.id}, '${ngo.status === 'active' ? 'suspended' : 'active'}')">${ngo.status === 'active' ? 'Suspend' : 'Un-Suspend'}</button>
+                    </td>
+                </tr>
+            `).join('');
+        }
+
+        async function banNgo(id, status) {
+            if(!confirm('Are you sure you want to change this NGO status?')) return;
+            await fetch('/api/admin/ban-ngo', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id, status }) });
+            loadEntities();
+        }
+
+        let adminStatusOptions = [];
+        async function loadAdminStatusOptions() {
+            if (!adminStatusOptions.length) {
+                adminStatusOptions = window.PawApi
+                    ? await PawApi.fetchJson('/api/workflow/status-options')
+                    : await (await fetch('/api/workflow/status-options')).json();
+            }
+            return adminStatusOptions;
+        }
+        async function updateAdminCaseStatus(code, selectEl) {
+            try {
+                if (window.PawApi) await PawApi.postJson('/api/workflow/case/' + encodeURIComponent(code) + '/update', { workflow_status: selectEl.value, actor_type: 'admin' });
+                else {
+                    const res = await fetch('/api/workflow/case/' + encodeURIComponent(code) + '/update', {
+                        method: 'POST', headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ workflow_status: selectEl.value, actor_type: 'admin' })
+                    });
+                    const d = await res.json();
+                    if (!res.ok) throw new Error(d.error);
+                }
+            } catch (e) { alert(e.message || 'Update failed'); return; }
+            else loadCases();
+        }
+
+        let pchAdminMounted = false;
+        async function loadCases() {
+            await loadAdminStatusOptions();
+            const data = window.PawApi
+                ? await PawApi.fetchJson('/api/admin/workflow-cases')
+                : await (await fetch('/api/admin/workflow-cases')).json();
+            if (typeof PawCaseHub !== 'undefined') {
+                if (!pchAdminMounted) {
+                    PawCaseHub.mountAdmin('pchAdminRoot', { statusOptions: adminStatusOptions, onUpdated: loadCases });
+                    pchAdminMounted = true;
+                }
+                PawCaseHub.setAdminCases(data);
+            }
+        }
+
+        async function loadCustomers() {
+            const res = await fetch('/api/admin/customers');
+            const data = await res.json();
+            document.getElementById('customersList').innerHTML = data.map(c => `
+                <tr>
+                    <td>${c.id}</td>
+                    <td><strong>${c.name}</strong><br><small>${c.uid || ''}</small></td>
+                    <td>${c.user_email || c.email || '—'}</td>
+                    <td>${c.user_phone || c.phone || '—'}</td>
+                    <td><code style="font-size:0.75rem">${c.portal_access_code || '—'}</code></td>
+                    <td>${c.created_at ? new Date(c.created_at).toLocaleDateString() : '—'}</td>
+                </tr>
+            `).join('');
+        }
+
+        async function loadStories() {
+            try {
+                const res = await fetch('/api/stories');
+                if(res.ok) {
+                    const stories = await res.json();
+                    document.getElementById('storiesList').innerHTML = stories.map(s => `
+                        <div style="background:rgba(255,255,255,0.02); border:1px solid var(--glass-border); padding:15px; border-radius:14px; display:flex; justify-content:space-between; align-items:center;">
+                            <div><strong style="font-size:0.85rem;">${s.title}</strong><p style="font-size:0.7rem; color:var(--text-dim);">${s.location}</p></div>
+                            <button class="btn-pill btn-ghost" style="padding:4px; width:30px; height:30px; color:#EF4444;" onclick="deleteStory(${s.id})"><i class="fas fa-trash"></i></button>
+                        </div>
+                    `).join('');
+                }
+            } catch(e) {}
+        }
+
+        // Chart Initializer
+        const ctx = document.getElementById('mainChart').getContext('2d');
+        new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: ['Jan','Feb','Mar','Apr','May','Jun'],
+                datasets: [{
+                    label: 'Global Rescues',
+                    data: [12000, 15000, 14000, 18000, 21000, 24812],
+                    borderColor: '#4F46E5',
+                    backgroundColor: 'rgba(79, 70, 229, 0.1)',
+                    fill: true,
+                    tension: 0.4
+                }]
+            },
+            options: {
+                plugins: { legend: { display: false } },
+                scales: {
+                    y: { grid: { color: 'rgba(255,255,255,0.05)' }, ticks: { color: '#9CA3AF' } },
+                    x: { grid: { display: false }, ticks: { color: '#9CA3AF' } }
+                }
+            }
+        });
+    </script>
+</body>
+</html>

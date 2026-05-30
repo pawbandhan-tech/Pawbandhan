@@ -1,0 +1,320 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Rider Journey | PawBandhan</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #FF6B35;
+            --primary-dark: #E65A2B;
+            --bg-journey: #F8FAFC;
+            --text-main: #1E293B;
+            --text-dim: #64748B;
+            --card-shadow: 0 20px 50px rgba(0, 0, 0, 0.05);
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        
+        body {
+            font-family: 'Outfit', sans-serif;
+            background: linear-gradient(135deg, #1E293B 0%, #0F172A 100%);
+            color: var(--text-main);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 40px 20px;
+        }
+
+        .journey-card {
+            background: white;
+            width: 100%;
+            max-width: 900px;
+            border-radius: 40px;
+            box-shadow: 0 40px 100px rgba(0,0,0,0.5);
+            overflow: hidden;
+            display: grid;
+            grid-template-columns: 320px 1fr;
+            min-height: 700px;
+        }
+
+        /* ─── LEFT PANEL (PROGRESS) ─── */
+        .journey-sidebar {
+            background: #111827;
+            padding: 60px 40px;
+            color: white;
+            display: flex;
+            flex-direction: column;
+        }
+        .journey-sidebar h2 { font-weight: 900; font-size: 1.8rem; margin-bottom: 10px; color: var(--primary); }
+        .journey-sidebar p { color: #9CA3AF; font-size: 0.9rem; margin-bottom: 50px; }
+
+        .steps { list-style: none; }
+        .step-item {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            margin-bottom: 35px;
+            opacity: 0.4;
+            transition: 0.3s;
+        }
+        .step-item.active { opacity: 1; transform: translateX(10px); }
+        .step-item.completed { opacity: 0.7; }
+        
+        .step-idx {
+            width: 36px; height: 36px;
+            border: 2px solid #374151;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 800;
+            font-size: 0.9rem;
+        }
+        .step-item.active .step-idx { border-color: var(--primary); background: var(--primary); color: white; box-shadow: 0 0 20px rgba(255,107,53,0.3); }
+        .step-item.completed .step-idx { background: #22C55E; border-color: #22C55E; color: white; }
+        .step-label { font-weight: 700; font-size: 0.95rem; }
+
+        /* ─── CONTENT AREA ─── */
+        .journey-content {
+            padding: 60px;
+            overflow-y: auto;
+            position: relative;
+        }
+
+        .section-form { display: none; }
+        .section-form.active { display: block; animation: slideIn 0.5s ease; }
+        @keyframes slideIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+
+        .section-form h3 { font-size: 1.6rem; font-weight: 900; margin-bottom: 10px; }
+        .section-form .sub { color: var(--text-dim); margin-bottom: 40px; }
+
+        .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+        .full { grid-column: span 2; }
+
+        .form-group { margin-bottom: 20px; }
+        .form-group label { display: block; font-size: 0.75rem; font-weight: 800; color: var(--text-dim); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 8px; }
+        .form-group input, .form-group select, .form-group textarea {
+            width: 100%;
+            padding: 14px 18px;
+            border: 2px solid #F1F5F9;
+            border-radius: 14px;
+            font-family: inherit;
+            font-weight: 600;
+            color: var(--text-main);
+            transition: 0.3s;
+        }
+        .form-group input:focus { border-color: var(--primary); outline: none; background: var(--bg-journey); }
+
+        .upload-zone {
+            border: 2px dashed #E2E8F0;
+            border-radius: 20px;
+            padding: 30px;
+            text-align: center;
+            cursor: pointer;
+            transition: 0.3s;
+            margin-bottom: 20px;
+        }
+        .upload-zone:hover { border-color: var(--primary); background: #FFF5F2; }
+        .upload-zone i { font-size: 2rem; color: #CBD5E1; margin-bottom: 15px; }
+        .upload-zone p { font-size: 0.85rem; font-weight: 700; color: var(--text-dim); }
+
+        .actions {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 50px;
+            padding-top: 30px;
+            border-top: 1px solid #F1F5F9;
+        }
+        .btn-journey {
+            padding: 14px 30px;
+            border-radius: 14px;
+            font-weight: 800;
+            font-size: 0.95rem;
+            cursor: pointer;
+            transition: 0.3s;
+            border: none;
+        }
+        .btn-prev { background: #F1F5F9; color: var(--text-dim); }
+        .btn-next { background: var(--primary); color: white; box-shadow: 0 10px 20px rgba(255, 107, 53, 0.2); }
+        .btn-next:hover { transform: translateY(-2px); box-shadow: 0 15px 30px rgba(255, 107, 53, 0.3); }
+
+        .bio-box {
+            background: #0F172A;
+            border-radius: 24px;
+            padding: 40px;
+            text-align: center;
+            color: white;
+        }
+        .camera-circle {
+            width: 200px; height: 200px;
+            border-radius: 50%;
+            border: 4px solid var(--primary);
+            margin: 0 auto 30px;
+            overflow: hidden;
+            background: #000;
+            position: relative;
+        }
+        .camera-circle video { width: 100%; height: 100%; object-fit: cover; }
+    </style>
+</head>
+<body>
+
+    <div class="journey-card">
+        
+        <div class="journey-sidebar">
+            <h2>PawBandhan</h2>
+            <p>Rider Fleet Journey</p>
+            
+            <ul class="steps">
+                <li class="step-item active" id="s1"><div class="step-idx">1</div><span class="step-label">Vehicle Profile</span></li>
+                <li class="step-item" id="s2"><div class="step-idx">2</div><span class="step-label">Rider Identity</span></li>
+                <li class="step-item" id="s3"><div class="step-idx">3</div><span class="step-label">License Docs</span></li>
+                <li class="step-item" id="s4"><div class="step-idx">4</div><span class="step-label">Ready to Ride</span></li>
+            </ul>
+        </div>
+
+        <div class="journey-content">
+            
+            <!-- Step 1 -->
+            <div id="step1" class="section-form active">
+                <h3>Fleet Dispatch Details</h3>
+                <p class="sub">Register your vehicle for the emergency network.</p>
+                
+                <div class="form-grid">
+                    <div class="form-group full"><label>Full Name</label><input type="text" id="riderName" placeholder="Vikram Singh"></div>
+                    <div class="form-group"><label>Vehicle Type</label><select id="vType"><option>Two Wheeler</option><option>Three Wheeler (Ambulance)</option><option>Four Wheeler</option></select></div>
+                    <div class="form-group"><label>Vehicle Number</label><input type="text" id="vNo" placeholder="MH-02-AB-1234"></div>
+                    <div class="form-group"><label>Driving License No.</label><input type="text" id="dlNo" placeholder="DL-123456789"></div>
+                    <div class="form-group full"><label>Base Operation Area</label><input type="text" id="area" placeholder="Andheri, Mumbai"></div>
+                </div>
+                
+                <div class="actions">
+                    <div></div>
+                    <button class="btn-journey btn-next" onclick="goTo(2)">Start Journey</button>
+                </div>
+            </div>
+
+            <!-- Step 2 -->
+            <div id="step2" class="section-form">
+                <h3>Identity Verification</h3>
+                <p class="sub">Face matching with your official driving license.</p>
+                
+                <div class="bio-box">
+                    <div class="camera-circle">
+                        <video id="video" autoplay></video>
+                    </div>
+                    <h4 style="margin-bottom:10px;">Face Matching</h4>
+                    <p style="color:#94A3B8; font-size:0.85rem; margin-bottom:30px;">Hold your license next to your face for the automated liveness check.</p>
+                    <button class="btn-journey btn-next" style="background:white; color:var(--text-main);" onclick="verifyBio()">Verify Driver</button>
+                </div>
+
+                <div class="actions">
+                    <button class="btn-journey btn-prev" onclick="goTo(1)">Back</button>
+                    <button class="btn-journey btn-next" id="nextToStep3" style="display:none;" onclick="goTo(3)">Continue</button>
+                </div>
+            </div>
+
+            <!-- Step 3 -->
+            <div id="step3" class="section-form">
+                <h3>Compliance Documents</h3>
+                <p class="sub">Upload clear photos of your official permits.</p>
+                
+                <div class="upload-zone" onclick="document.getElementById('file1').click()">
+                    <i class="fas fa-id-card"></i>
+                    <p>Driving License (Front & Back)</p>
+                    <input type="file" id="file1" style="display:none;">
+                </div>
+                <div class="upload-zone" onclick="document.getElementById('file2').click()">
+                    <i class="fas fa-file-invoice"></i>
+                    <p>Vehicle RC Copy</p>
+                    <input type="file" id="file2" style="display:none;">
+                </div>
+                <div class="upload-zone" onclick="document.getElementById('file3').click()">
+                    <i class="fas fa-shield-cat"></i>
+                    <p>Insurance / PUC Certificate</p>
+                    <input type="file" id="file3" style="display:none;">
+                </div>
+
+                <div class="actions">
+                    <button class="btn-journey btn-prev" onclick="goTo(2)">Back</button>
+                    <button class="btn-journey btn-next" onclick="goTo(4)">Final Review</button>
+                </div>
+            </div>
+
+            <!-- Step 4 -->
+            <div id="step4" class="section-form">
+                <h3>Enlistment Confirmation</h3>
+                <p class="sub">Your fleet status is being analyzed by the Command Center.</p>
+                
+                <div style="background:#F8FAFC; padding:30px; border-radius:24px; margin-bottom:30px;">
+                    <div style="display:grid; gap:15px;">
+                        <div style="display:flex; justify-content:space-between;"><span style="color:var(--text-dim); font-weight:700;">Rider Name</span><span id="rName">Vikram Singh</span></div>
+                        <div style="display:flex; justify-content:space-between;"><span style="color:var(--text-dim); font-weight:700;">Vehicle Status</span><span style="color:var(--primary); font-weight:800;">VERIFIED</span></div>
+                        <div style="display:flex; justify-content:space-between;"><span style="color:var(--text-dim); font-weight:700;">Enlistment</span><span style="color:var(--primary); font-weight:800;">PENDING REVIEW</span></div>
+                    </div>
+                </div>
+
+                <div class="alert" style="background:#FFF5F2; border-left:4px solid var(--primary); padding:20px; border-radius:12px; margin-bottom:30px;">
+                    <p style="font-size:0.85rem; color:var(--primary-dark); font-weight:700; line-height:1.4;">Once approved, you will receive emergency dispatch notifications on your mobile dashboard.</p>
+                </div>
+
+                <div class="actions">
+                    <button class="btn-journey btn-prev" onclick="goTo(3)">Back</button>
+                    <button class="btn-journey btn-next" onclick="submitJourney()">Authorize & Join Fleet</button>
+                </div>
+            </div>
+
+        </div>
+
+    </div>
+
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+    <script>
+        const firebaseConfig = { apiKey: 'AIzaSyDRuOTikCSLCdb73oYSnrnhoEiKbv-6Ozc', authDomain: 'pawbandhan-29f84.firebaseapp.com', projectId: 'pawbandhan-29f84', storageBucket: 'pawbandhan-29f84.firebasestorage.app', messagingSenderId: '378867729624', appId: '1:378867729624:web:2371a816457fdcfe2303ad' };
+        firebase.initializeApp(firebaseConfig);
+        const auth = firebase.auth();
+
+        function goTo(step) {
+            document.querySelectorAll('.section-form').forEach(s => s.classList.remove('active'));
+            document.getElementById('step' + step).classList.add('active');
+            document.querySelectorAll('.step-item').forEach((item, idx) => {
+                item.classList.remove('active', 'completed');
+                if(idx + 1 < step) item.classList.add('completed');
+                if(idx + 1 === step) item.classList.add('active');
+            });
+            if(step === 4) document.getElementById('rName').innerText = document.getElementById('riderName').value || 'New Rider';
+        }
+
+        function verifyBio() {
+            alert('Liveness Detection... Success!');
+            document.getElementById('nextToStep3').style.display = 'block';
+        }
+
+        async function submitJourney() {
+            const formData = {
+                uid: auth.currentUser ? auth.currentUser.uid : 'temp_' + Date.now(),
+                name: document.getElementById('riderName').value,
+                vehicle_type: document.getElementById('vType').value,
+                license_number: document.getElementById('dlNo').value
+            };
+            
+            try {
+                const res = await fetch('/api/riders/register', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(formData)
+                });
+                if (res.ok) {
+                    alert('Journey Completed! Welcome to the Fleet.');
+                    window.location.href = '/rider_app.html';
+                }
+            } catch(e) { alert('Error: ' + e.message); }
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,654 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>Rider Hub | PawBandhan</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <style>
+        :root {
+            --primary: #FF6B35;
+            --primary-dark: #E65A2B;
+            --bg-dark: #0F172A;
+            --card-bg: rgba(30, 41, 59, 0.7);
+            --text-main: #F8FAFC;
+            --text-dim: #94A3B8;
+            --accent-green: #22C55E;
+            --accent-red: #EF4444;
+            --glass-border: rgba(255, 255, 255, 0.1);
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        
+        body {
+            font-family: 'Outfit', sans-serif;
+            background: var(--bg-dark);
+            color: var(--text-main);
+            overflow-x: hidden;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        /* ─── APP CONTAINER ─── */
+        .app-shell {
+            max-width: 500px;
+            margin: 0 auto;
+            min-height: 100vh;
+            background: radial-gradient(circle at top right, #1E293B, #0F172A);
+            position: relative;
+            padding-bottom: 90px;
+        }
+
+        /* ─── TOP HEADER ─── */
+        header {
+            padding: 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+            background: rgba(15, 23, 42, 0.8);
+            backdrop-filter: blur(10px);
+            border-bottom: 1px solid var(--glass-border);
+        }
+
+        .logo-area { display: flex; align-items: center; gap: 12px; }
+        .logo-area i { color: var(--primary); font-size: 1.5rem; }
+        .logo-area h1 { font-size: 1.2rem; font-weight: 800; letter-spacing: 0.5px; }
+
+        .status-toggle {
+            background: var(--accent-green);
+            color: white;
+            padding: 6px 14px;
+            border-radius: 50px;
+            font-size: 0.75rem;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            box-shadow: 0 0 15px rgba(34, 197, 94, 0.3);
+        }
+        .status-toggle span { width: 6px; height: 6px; background: white; border-radius: 50%; animation: pulse 1.5s infinite; }
+
+        @keyframes pulse { 0% { transform: scale(1); opacity: 1; } 50% { transform: scale(1.5); opacity: 0.5; } 100% { transform: scale(1); opacity: 1; } }
+
+        /* ─── QUICK STATS ─── */
+        .stats-bar {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 12px;
+            padding: 20px;
+        }
+        .stat-item {
+            background: var(--card-bg);
+            border: 1px solid var(--glass-border);
+            padding: 15px;
+            border-radius: 20px;
+            text-align: center;
+            transition: 0.3s;
+        }
+        .stat-item:hover { transform: translateY(-3px); border-color: var(--primary); }
+        .stat-item i { color: var(--primary); margin-bottom: 8px; font-size: 1.2rem; display: block; }
+        .stat-item .val { font-size: 1.3rem; font-weight: 800; display: block; }
+        .stat-item .lab { font-size: 0.65rem; color: var(--text-dim); text-transform: uppercase; font-weight: 600; margin-top: 2px; }
+
+        /* ─── ACTIVE CASE BANNER ─── */
+        .active-case-banner {
+            margin: 0 20px 20px;
+            background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+            padding: 20px;
+            border-radius: 24px;
+            display: none;
+            flex-direction: column;
+            gap: 15px;
+            box-shadow: 0 15px 30px rgba(255, 107, 53, 0.2);
+        }
+        .acb-head { display: flex; justify-content: space-between; align-items: center; }
+        .acb-head h3 { font-size: 1rem; font-weight: 800; }
+        .acb-head span { font-size: 0.7rem; background: rgba(255,255,255,0.2); padding: 4px 10px; border-radius: 50px; font-weight: 600; }
+        .acb-body { display: flex; align-items: center; gap: 12px; }
+        .acb-icon { width: 45px; height: 45px; background: rgba(255,255,255,0.2); border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 1.2rem; }
+        .acb-info { flex: 1; }
+        .acb-info p { font-size: 0.75rem; opacity: 0.9; margin-top: 2px; }
+        .acb-progress { height: 6px; background: rgba(0,0,0,0.1); border-radius: 10px; overflow: hidden; }
+        .acb-fill { height: 100%; background: white; transition: 1s ease; border-radius: 10px; }
+
+        /* ─── LIVE MAP ─── */
+        .map-container {
+            margin: 0 20px 25px;
+            position: relative;
+        }
+        .map-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
+        .map-header h2 { font-size: 1rem; font-weight: 700; color: var(--text-main); }
+        .map-header span { font-size: 0.75rem; color: var(--primary); font-weight: 600; display: flex; align-items: center; gap: 5px; }
+        #riderMap {
+            height: 250px;
+            border-radius: 24px;
+            border: 1px solid var(--glass-border);
+            z-index: 1;
+        }
+
+        /* ─── AVAILABLE CASES ─── */
+        .section-title {
+            padding: 0 20px;
+            margin-bottom: 15px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .section-title h2 { font-size: 1.1rem; font-weight: 800; }
+        .section-title a { font-size: 0.8rem; color: var(--primary); text-decoration: none; font-weight: 600; }
+
+        .case-list {
+            padding: 0 20px;
+            display: grid;
+            gap: 15px;
+        }
+        .case-card {
+            background: var(--card-bg);
+            border: 1px solid var(--glass-border);
+            border-radius: 20px;
+            padding: 18px;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            transition: 0.3s;
+            cursor: pointer;
+        }
+        .case-card:active { transform: scale(0.98); background: rgba(255, 107, 53, 0.1); border-color: var(--primary); }
+        .case-icon {
+            width: 55px; height: 55px;
+            background: rgba(255, 107, 53, 0.1);
+            color: var(--primary);
+            border-radius: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.4rem;
+            flex-shrink: 0;
+        }
+        .case-info { flex: 1; }
+        .case-info h4 { font-size: 0.95rem; font-weight: 700; margin-bottom: 3px; }
+        .case-info p { font-size: 0.75rem; color: var(--text-dim); }
+        .case-meta { display: flex; align-items: center; gap: 10px; margin-top: 8px; }
+        .dist-badge { background: rgba(255,255,255,0.05); padding: 4px 8px; border-radius: 6px; font-size: 0.65rem; color: var(--text-main); font-weight: 700; display: flex; align-items: center; gap: 4px; }
+        .pri-badge { padding: 4px 8px; border-radius: 6px; font-size: 0.65rem; font-weight: 700; }
+        .pri-high { background: rgba(239, 68, 68, 0.15); color: var(--accent-red); }
+        .pri-med { background: rgba(245, 158, 11, 0.15); color: #F59E0B; }
+
+        /* ─── BOTTOM NAVIGATION ─── */
+        .bottom-nav {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            max-width: 500px;
+            margin: 0 auto;
+            background: rgba(15, 23, 42, 0.95);
+            backdrop-filter: blur(20px);
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            padding: 12px 0 25px;
+            border-top: 1px solid var(--glass-border);
+            z-index: 2000;
+        }
+        .nav-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 4px;
+            color: var(--text-dim);
+            text-decoration: none;
+            transition: 0.3s;
+            cursor: pointer;
+        }
+        .nav-item.active { color: var(--primary); }
+        .nav-item i { font-size: 1.3rem; }
+        .nav-item span { font-size: 0.65rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; }
+
+        /* ─── SECTIONS ─── */
+        .content-section { display: none; padding-top: 10px; }
+        .content-section.active { display: block; }
+
+        /* ─── PROFILE PAGE ─── */
+        .profile-hero {
+            text-align: center;
+            padding: 30px 20px;
+            background: linear-gradient(180deg, rgba(255,107,53,0.1) 0%, transparent 100%);
+        }
+        .avatar-wrap {
+            width: 100px; height: 100px;
+            margin: 0 auto 20px;
+            position: relative;
+        }
+        .avatar-img {
+            width: 100%; height: 100%;
+            border-radius: 50%;
+            background: var(--primary);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2.5rem;
+            color: white;
+            border: 4px solid var(--bg-dark);
+            box-shadow: 0 10px 25px rgba(0,0,0,0.3);
+        }
+        .online-status-dot {
+            width: 24px; height: 24px;
+            background: var(--accent-green);
+            border: 4px solid var(--bg-dark);
+            border-radius: 50%;
+            position: absolute;
+            bottom: 5px; right: 5px;
+        }
+        .profile-hero h2 { font-size: 1.5rem; font-weight: 800; }
+        .profile-hero p { color: var(--text-dim); font-size: 0.85rem; margin-top: 4px; }
+
+        .profile-grid {
+            padding: 0 20px;
+            display: grid;
+            gap: 15px;
+        }
+        .profile-link {
+            background: var(--card-bg);
+            padding: 18px;
+            border-radius: 18px;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            text-decoration: none;
+            color: var(--text-main);
+            border: 1px solid var(--glass-border);
+        }
+        .profile-link i { width: 30px; font-size: 1.2rem; color: var(--primary); }
+        .profile-link div { flex: 1; font-weight: 600; }
+        .profile-link .val { color: var(--text-dim); font-size: 0.8rem; }
+
+        .btn-logout {
+            margin: 30px 20px;
+            padding: 16px;
+            background: rgba(239, 68, 68, 0.1);
+            color: var(--accent-red);
+            border: 1px solid rgba(239, 68, 68, 0.3);
+            border-radius: 18px;
+            font-weight: 800;
+            text-align: center;
+            cursor: pointer;
+            transition: 0.3s;
+        }
+        .btn-logout:hover { background: var(--accent-red); color: white; }
+
+        /* ─── MODAL ─── */
+        .modal-overlay {
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0,0,0,0.85);
+            backdrop-filter: blur(15px);
+            z-index: 3000;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+        .modal-overlay.open { display: flex; }
+        .modal-panel {
+            background: #1E293B;
+            width: 100%;
+            max-width: 400px;
+            border-radius: 32px;
+            padding: 30px;
+            border: 1px solid var(--glass-border);
+            animation: slideUp 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        @keyframes slideUp { from { transform: translateY(50px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+        .modal-panel h3 { font-size: 1.4rem; font-weight: 800; margin-bottom: 20px; text-align: center; }
+        .modal-detail { margin-bottom: 20px; }
+        .md-row { display: flex; justify-content: space-between; padding: 12px 0; border-bottom: 1px solid var(--glass-border); font-size: 0.9rem; }
+        .md-row .lbl { color: var(--text-dim); }
+        .md-row .val { font-weight: 700; }
+        .btn-accept { width: 100%; padding: 16px; background: var(--primary); color: white; border: none; border-radius: 18px; font-weight: 800; font-size: 1rem; cursor: pointer; box-shadow: 0 10px 20px rgba(255, 107, 53, 0.3); }
+        .btn-close-modal { display: block; width: 100%; margin-top: 15px; background: none; border: none; color: var(--text-dim); font-weight: 600; cursor: pointer; }
+
+        /* ─── KYC Hub ─── */
+        .kyc-banner {
+            background: #FFF7ED;
+            color: #C2410C;
+            margin: 20px;
+            padding: 20px;
+            border-radius: 20px;
+            border: 1px dashed #FB923C;
+            display: none;
+            align-items: flex-start;
+            gap: 15px;
+        }
+        .kyc-banner i { font-size: 1.5rem; }
+        .kyc-banner h4 { font-size: 0.95rem; font-weight: 800; }
+        .kyc-banner p { font-size: 0.75rem; margin-top: 4px; }
+        .kyc-banner button { margin-top: 10px; background: #C2410C; color: white; border: none; padding: 8px 16px; border-radius: 8px; font-weight: 700; font-size: 0.75rem; cursor: pointer; }
+
+    </style>
+</head>
+<body>
+
+    <div class="app-shell">
+        
+        <!-- HEADER -->
+        <header>
+            <div class="logo-area">
+                <i class="fas fa-heart-circle-bolt"></i>
+                <h1>PAWBANDHAN</h1>
+            </div>
+            <div class="status-toggle">
+                <span></span> ONLINE
+            </div>
+        </header>
+
+        <!-- DASHBOARD SECTION -->
+        <div id="dashSection" class="content-section active">
+            
+            <!-- KYC Hub -->
+            <div id="kycBanner" class="kyc-banner">
+                <i class="fas fa-id-card"></i>
+                <div>
+                    <h4>KYC Verification Required</h4>
+                    <p>Complete your profile to start receiving emergency rescue dispatch notifications.</p>
+                    <button onclick="window.location.href='rider_onboarding.html'">Verify Now</button>
+                </div>
+            </div>
+
+            <!-- Stats Bar -->
+            <div class="stats-bar">
+                <div class="stat-item">
+                    <i class="fas fa-paw"></i>
+                    <span class="val" id="totalRescues">24</span>
+                    <span class="lab">Rescues</span>
+                </div>
+                <div class="stat-item">
+                    <i class="fas fa-star"></i>
+                    <span class="val" id="rating">4.9</span>
+                    <span class="lab">Rating</span>
+                </div>
+                <div class="stat-item">
+                    <i class="fas fa-coins"></i>
+                    <span class="val" id="points">840</span>
+                    <span class="lab">Points</span>
+                </div>
+            </div>
+
+            <!-- Active Case Banner -->
+            <div id="activeCaseBanner" class="active-case-banner">
+                <div class="acb-head">
+                    <h3>LIVE RESCUE MISSION</h3>
+                    <span id="activeCaseId">PB-48291</span>
+                </div>
+                <div class="acb-body">
+                    <div class="acb-icon"><i class="fas fa-motorcycle"></i></div>
+                    <div class="acb-info">
+                        <strong id="activeStatus">En Route to Location</strong>
+                        <p id="activeETA">ETA: 8 mins • 2.4 km away</p>
+                    </div>
+                </div>
+                <div class="acb-progress">
+                    <div class="acb-fill" id="activeProgress" style="width: 25%;"></div>
+                </div>
+            </div>
+
+            <!-- Map View -->
+            <div class="map-container">
+                <div class="map-header">
+                    <h2>Live Rescue Radar</h2>
+                    <span><i class="fas fa-location-arrow"></i> Tracking Live</span>
+                </div>
+                <div id="riderMap"></div>
+            </div>
+
+            <!-- Available Cases -->
+            <div class="section-title">
+                <h2>Emergency Dispatches</h2>
+                <a href="javascript:void(0)" onclick="showSection('cases')">View All</a>
+            </div>
+            <div class="case-list" id="availableCaseList">
+                <!-- Cases injected here -->
+            </div>
+        </div>
+
+        <!-- CASES SECTION -->
+        <div id="casesSection" class="content-section">
+            <div class="section-title">
+                <h2>Mission History</h2>
+            </div>
+            <div class="case-list" id="historyCaseList">
+                <!-- History cases here -->
+            </div>
+        </div>
+
+        <!-- PROFILE SECTION -->
+        <div id="profileSection" class="content-section">
+            <div class="profile-hero">
+                <div class="avatar-wrap">
+                    <div class="avatar-img" id="profileInitials">VS</div>
+                    <div class="online-status-dot"></div>
+                </div>
+                <h2 id="profileName">Vikram Singh</h2>
+                <p>Professional Rescuer • Level 4</p>
+            </div>
+
+            <div class="profile-grid">
+                <div class="profile-link">
+                    <i class="fas fa-id-badge"></i>
+                    <div>Rider ID</div>
+                    <span class="val" id="profileId">RDR-4829</span>
+                </div>
+                <div class="profile-link">
+                    <i class="fas fa-building-ngo"></i>
+                    <div>Affiliated NGO</div>
+                    <span class="val">Rescue Foundation</span>
+                </div>
+                <div class="profile-link">
+                    <i class="fas fa-phone"></i>
+                    <div>Contact</div>
+                    <span class="val" id="profilePhone">+91 98765 43210</span>
+                </div>
+                <div class="profile-link">
+                    <i class="fas fa-shield-check"></i>
+                    <div>KYC Status</div>
+                    <span class="val" style="color:var(--accent-green); font-weight:800;">VERIFIED</span>
+                </div>
+            </div>
+
+            <div class="btn-logout" onclick="logout()">LOGOUT SESSION</div>
+        </div>
+
+        <!-- BOTTOM NAV -->
+        <nav class="bottom-nav">
+            <a href="javascript:void(0)" class="nav-item active" id="nav-dash" onclick="showSection('dash')">
+                <i class="fas fa-house-chimney-window"></i>
+                <span>Home</span>
+            </a>
+            <a href="javascript:void(0)" class="nav-item" id="nav-cases" onclick="showSection('cases')">
+                <i class="fas fa-folder-open"></i>
+                <span>Missions</span>
+            </a>
+            <a href="javascript:void(0)" class="nav-item" onclick="alert('Chat system opening...')">
+                <i class="fas fa-comment-dots"></i>
+                <span>Chat</span>
+            </a>
+            <a href="javascript:void(0)" class="nav-item" id="nav-profile" onclick="showSection('profile')">
+                <i class="fas fa-user-gear"></i>
+                <span>Profile</span>
+            </a>
+        </nav>
+
+    </div>
+
+    <!-- CASE MODAL -->
+    <div id="caseModal" class="modal-overlay">
+        <div class="modal-panel">
+            <h3 id="mTitle">Injured Indie</h3>
+            <div class="modal-detail">
+                <div class="md-row"><span class="lbl">Case ID</span><span class="val" id="mId">PB-48291</span></div>
+                <div class="md-row"><span class="lbl">Location</span><span class="val" id="mLoc">Andheri West</span></div>
+                <div class="md-row"><span class="lbl">Severity</span><span class="val" id="mSev">Critical</span></div>
+                <div class="md-row"><span class="lbl">Reporter</span><span class="val" id="mRep">John Doe</span></div>
+            </div>
+            <p style="font-size:0.8rem; color:var(--text-dim); margin-bottom:20px; line-height:1.4;" id="mDesc">Dog hit by auto near MG Road, bleeding heavily. Needs immediate medical transport.</p>
+            <button class="btn-accept" id="btnAccept" onclick="acceptCase()">ACCEPT MISSION</button>
+            <button class="btn-close-modal" onclick="closeModal()">LATER</button>
+        </div>
+    </div>
+
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+    <script>
+        const firebaseConfig = { apiKey: 'AIzaSyDRuOTikCSLCdb73oYSnrnhoEiKbv-6Ozc', authDomain: 'pawbandhan-29f84.firebaseapp.com', projectId: 'pawbandhan-29f84', storageBucket: 'pawbandhan-29f84.firebasestorage.app', messagingSenderId: '378867729624', appId: '1:378867729624:web:2371a816457fdcfe2303ad' };
+        firebase.initializeApp(firebaseConfig);
+        const auth = firebase.auth();
+
+        const dummyCases = [
+            { id: 'PB-48291', animal: 'Dog', title: 'Injured Indie', loc: 'Andheri West', dist: '0.9 km', sev: 'High', desc: 'Hit by auto-rickshaw. Severe bleeding on front leg. At Silver Beach entrance.', lat: 19.107, lng: 72.827 },
+            { id: 'PB-48285', animal: 'Cat', title: 'Sick Kitten', loc: 'Versova Beach', dist: '1.6 km', sev: 'Med', desc: 'Extremely dehydrated and lethargic. Near the fishing boats.', lat: 19.135, lng: 72.812 },
+            { id: 'PB-48279', animal: 'Bird', title: 'Injured Pigeon', loc: 'Bandra Bandstand', dist: '4.2 km', sev: 'Med', desc: 'Wing trapped in manja. Resting on the promenade wall.', lat: 19.043, lng: 72.819 }
+        ];
+
+        let selectedCaseId = null;
+
+        function showSection(name) {
+            document.querySelectorAll('.content-section').forEach(s => s.classList.remove('active'));
+            document.getElementById(name + 'Section').classList.add('active');
+            document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+            document.getElementById('nav-' + name).classList.add('active');
+            if(name === 'dash') renderCases();
+            if(name === 'cases') renderHistory();
+        }
+
+        function renderCases() {
+            const list = document.getElementById('availableCaseList');
+            list.innerHTML = dummyCases.map(c => `
+                <div class="case-card" onclick="openCaseModal('${c.id}')">
+                    <div class="case-icon"><i class="fas fa-${c.animal.toLowerCase()}"></i></div>
+                    <div class="case-info">
+                        <h4>${c.title}</h4>
+                        <p>${c.loc} • ${c.animal}</p>
+                        <div class="case-meta">
+                            <span class="dist-badge"><i class="fas fa-location-arrow"></i> ${c.dist}</span>
+                            <span class="pri-badge ${c.sev==='High'?'pri-high':'pri-med'}">${c.sev} Priority</span>
+                        </div>
+                    </div>
+                    <i class="fas fa-chevron-right" style="color:var(--text-dim); font-size:0.8rem;"></i>
+                </div>
+            `).join('');
+        }
+
+        function renderHistory() {
+            const list = document.getElementById('historyCaseList');
+            list.innerHTML = `
+                <div class="case-card" style="opacity: 0.7;">
+                    <div class="case-icon" style="background:rgba(34, 197, 94, 0.1); color:var(--accent-green);"><i class="fas fa-check-circle"></i></div>
+                    <div class="case-info">
+                        <h4>Case #PB-48112 • Completed</h4>
+                        <p>Delivered to Juhu Vet Clinic • 2 days ago</p>
+                    </div>
+                </div>
+                <div class="case-card" style="opacity: 0.7;">
+                    <div class="case-icon" style="background:rgba(34, 197, 94, 0.1); color:var(--accent-green);"><i class="fas fa-check-circle"></i></div>
+                    <div class="case-info">
+                        <h4>Case #PB-48095 • Completed</h4>
+                        <p>Dog Rescue, Malad West • 4 days ago</p>
+                    </div>
+                </div>
+            `;
+        }
+
+        function openCaseModal(id) {
+            const c = dummyCases.find(x => x.id === id);
+            selectedCaseId = id;
+            document.getElementById('mTitle').innerText = c.title;
+            document.getElementById('mId').innerText = c.id;
+            document.getElementById('mLoc').innerText = c.loc;
+            document.getElementById('mSev').innerText = c.sev;
+            document.getElementById('mDesc').innerText = c.desc;
+            document.getElementById('caseModal').classList.add('open');
+        }
+
+        function closeModal() { document.getElementById('caseModal').classList.remove('open'); }
+
+        function acceptCase() {
+            const c = dummyCases.find(x => x.id === selectedCaseId);
+            closeModal();
+            document.getElementById('activeCaseBanner').style.display = 'flex';
+            document.getElementById('activeCaseId').innerText = c.id;
+            document.getElementById('activeETA').innerText = `ETA: 8 mins • ${c.dist} away`;
+            
+            // Mock Animation
+            let prog = 0;
+            const iv = setInterval(() => {
+                prog += 5;
+                document.getElementById('activeProgress').style.width = prog + '%';
+                if(prog >= 100) {
+                    clearInterval(iv);
+                    document.getElementById('activeStatus').innerText = 'Arrived at Destination';
+                    alert('You have arrived! Please secure the animal and proceed to the designated vet.');
+                }
+            }, 1000);
+
+            // Focus map on case
+            if(riderMap) riderMap.setView([c.lat, c.lng], 16);
+        }
+
+        // ── Auth & Profile ──
+        if (sessionStorage.getItem('demo_session') === 'true') {
+            loadProfile({ first_name: 'Vikram', last_name: 'Singh', status: 'active' });
+        } else {
+            auth.onAuthStateChanged(user => {
+                if (user) loadProfile({ first_name: user.displayName || 'Vikram', last_name: '', status: 'pending' });
+                else window.location.href = 'index.html';
+            });
+        }
+
+        function loadProfile(data) {
+            document.getElementById('profileName').innerText = `${data.first_name} ${data.last_name}`;
+            document.getElementById('profileInitials').innerText = data.first_name[0] + (data.last_name[0] || '');
+            if(data.status !== 'active') document.getElementById('kycBanner').style.display = 'flex';
+            renderCases();
+            initMap();
+        }
+
+        // ── Live Map ──
+        let riderMap;
+        function initMap() {
+            riderMap = L.map('riderMap', { zoomControl: false }).setView([19.107, 72.827], 13);
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                attribution: '© OSM'
+            }).addTo(riderMap);
+
+            const riderIcon = L.divIcon({
+                html: '<div style="width:24px;height:24px;background:var(--primary);border-radius:50%;border:3px solid white;box-shadow:0 0 10px var(--primary);"></div>',
+                iconSize: [24, 24], className: ''
+            });
+
+            const caseIcon = L.divIcon({
+                html: '<div style="width:18px;height:18px;background:var(--accent-red);border-radius:50%;border:2px solid white;"></div>',
+                iconSize: [18, 18], className: ''
+            });
+
+            // My Location
+            L.marker([19.107, 72.827], { icon: riderIcon }).addTo(riderMap);
+
+            // Case Markers
+            dummyCases.forEach(c => {
+                L.marker([c.lat, c.lng], { icon: caseIcon }).addTo(riderMap).bindPopup(`<b>${c.title}</b><br>${c.sev} Priority`);
+            });
+        }
+
+        function logout() {
+            sessionStorage.removeItem('demo_session');
+            auth.signOut().then(() => window.location.href = 'index.html');
+        }
+
+        window.onload = () => showSection('dash');
+    </script>
+</body>
+</html>

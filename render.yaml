@@ -1,0 +1,16 @@
+# Deploy on https://render.com — connect repo pawbandhan-tech/Pawbandhan
+services:
+  - type: web
+    name: pawbandhan-api
+    runtime: node
+    rootDir: backend_api
+    buildCommand: npm install
+    startCommand: npm start
+    healthCheckPath: /api/stats
+    envVars:
+      - key: NODE_VERSION
+        value: "20"
+      - key: DATABASE_URL
+        sync: false
+      - key: PORT
+        value: "10000"

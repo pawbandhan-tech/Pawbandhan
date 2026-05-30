@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Representative Portal | PawBandhan</title>
+    <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@600;700;800&family=Fredoka:wght@600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="shared-portal.css">
+    <style>
+        body { background: #FFF8F0; }
+        .auth-visual { background: linear-gradient(160deg, #2D4A3E, #5BA87C) !important; }
+        .rep-hero-icon { font-size: 3rem; color: #FFD166; margin-bottom: 20px; }
+    </style>
+</head>
+<body class="pb-portal">
+    <div class="auth-page">
+        <div class="auth-split">
+            <div class="auth-visual">
+                <a href="index.html" style="color:#fff;text-decoration:none;margin-bottom:40px;font-weight:800;display:block;"><i class="fas fa-arrow-left"></i> Home</a>
+                <div class="rep-hero-icon"><i class="fas fa-paw"></i></div>
+                <h1 style="font-size:3rem;line-height:1.1;margin-bottom:20px;font-family:Fredoka,sans-serif;">Field Representative</h1>
+                <p style="opacity:0.9;max-width:420px;">Register on the portal, complete CKYC, get admin approval — then receive live rescue dispatch alerts on your phone.</p>
+            </div>
+            <div class="auth-form-side">
+                <div class="auth-card-premium">
+                    <h2 style="font-family:Fredoka,sans-serif;">Representative Login</h2>
+                    <p style="color:var(--text-gray);margin:12px 0 28px;">Use the email your NGO or admin invited you with.</p>
+                    <div class="auth-tabs">
+                        <div class="auth-tab active" onclick="showTab('login')">Login</div>
+                        <div class="auth-tab" onclick="showTab('signup')">Register</div>
+                    </div>
+                    <form id="loginForm" class="auth-form" style="display:block;">
+                        <div class="form-floating"><input type="email" id="loginEmail" placeholder="Email" required style="width:100%"></div>
+                        <div class="form-floating"><input type="password" id="loginPassword" placeholder="Password" required style="width:100%"></div>
+                        <button type="submit" class="nav-btn nav-btn-primary" style="width:100%;padding:16px;margin-top:10px;">Sign In</button>
+                        <button type="button" class="nav-btn nav-btn-outline" style="width:100%;padding:14px;margin-top:12px;border-radius:18px;" onclick="loginWithDemo()"><i class="fas fa-bolt"></i> Demo Representative Login</button>
+                        <p style="font-size:0.85rem;color:var(--text-gray);margin-top:16px;text-align:center;">Demo: rep@pawbandhan.com / Rep@123</p>
+                    </form>
+                    <form id="signupForm" class="auth-form" style="display:none;">
+                        <div class="form-floating"><input type="text" id="repName" placeholder="Full name" required style="width:100%"></div>
+                        <div class="form-floating"><input type="email" id="repEmail" placeholder="Email" required style="width:100%"></div>
+                        <div class="form-floating"><input type="tel" id="repPhone" placeholder="Phone" required style="width:100%"></div>
+                        <div class="form-floating"><input type="password" id="repPassword" placeholder="Password" required style="width:100%"></div>
+                        <button type="button" class="nav-btn nav-btn-primary" style="width:100%;padding:16px;" onclick="doSignup()">Create Account</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+    <script>
+        const DEMO_REP = { email: 'rep@pawbandhan.com', password: 'Rep@123', uid: 'demo-rep-uid' };
+        const firebaseConfig = { apiKey: 'AIzaSyDRuOTikCSLCdb73oYSnrnhoEiKbv-6Ozc', authDomain: 'pawbandhan-29f84.firebaseapp.com', projectId: 'pawbandhan-29f84', storageBucket: 'pawbandhan-29f84.firebasestorage.app', messagingSenderId: '378867729624', appId: '1:378867729624:web:2371a816457fdcfe2303ad' };
+        firebase.initializeApp(firebaseConfig);
+        const auth = firebase.auth();
+        function showTab(t) {
+            document.getElementById('loginForm').style.display = t === 'login' ? 'block' : 'none';
+            document.getElementById('signupForm').style.display = t === 'signup' ? 'block' : 'none';
+        }
+        async function linkAndRoute(uid, email) {
+            await fetch('/api/representatives/' + uid + '/link-account', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ email: email || '' })
+            }).catch(() => {});
+            const gate = await (await fetch('/api/representatives/' + uid + '/can-login?email=' + encodeURIComponent(email || ''))).json();
+            if (!gate.allowed) {
+                if (gate.pending) { alert('Pending admin approval. Complete onboarding if needed.'); location.href = 'representative_onboarding.html'; return; }
+                if (gate.onboarding) { location.href = 'representative_onboarding.html'; return; }
+                alert(gate.reason || 'Cannot login'); return;
+            }
+            location.href = 'representative_app.html';
+        }
+        async function loginWithDemo() {
+            sessionStorage.setItem('rep_uid', DEMO_REP.uid);
+            sessionStorage.setItem('demo_session', 'true');
+            try {
+                await fetch('/api/representatives/ensure-demo', { method: 'POST' });
+            } catch (e) { /* offline: still allow demo UI */ }
+            window.location.href = 'representative_app.html';
+        }
+        document.getElementById('loginForm').onsubmit = async (e) => {
+            e.preventDefault();
+            const email = document.getElementById('loginEmail').value.trim();
+            const password = document.getElementById('loginPassword').value;
+            if (email.toLowerCase() === DEMO_REP.email && password === DEMO_REP.password) {
+                loginWithDemo();
+                return;
+            }
+            try {
+                const cred = await auth.signInWithEmailAndPassword(email, password);
+                sessionStorage.setItem('rep_uid', cred.user.uid);
+                sessionStorage.removeItem('demo_session');
+                await linkAndRoute(cred.user.uid, cred.user.email || email);
+            } catch (err) {
+                if (err.code === 'auth/invalid-login-credentials') {
+                    alert('Wrong email or password. If your NGO invited you, register with the same email or use Demo login.');
+                } else alert(err.message);
+            }
+        };
+        async function doSignup() {
+            try {
+                const email = document.getElementById('repEmail').value.trim();
+                const cred = await auth.createUserWithEmailAndPassword(email, document.getElementById('repPassword').value);
+                await fetch('/api/users/register', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ uid: cred.user.uid, email, firstName: document.getElementById('repName').value.split(' ')[0], lastName: document.getElementById('repName').value.split(' ').slice(1).join(' '), phone: document.getElementById('repPhone').value, role: 'representative' }) }).catch(() => {});
+                await fetch('/api/representatives/register', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ uid: cred.user.uid, name: document.getElementById('repName').value, email, phone: document.getElementById('repPhone').value }) });
+                sessionStorage.setItem('rep_uid', cred.user.uid);
+                location.href = 'representative_onboarding.html';
+            } catch (err) { alert(err.message); }
+        }
+    </script>
+</body>
+</html>

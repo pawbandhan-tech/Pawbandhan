@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NGO Command Center | PawBandhan</title>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+    <div class="auth-page">
+        <div class="auth-split">
+            <div class="auth-visual">
+                <a href="index.html" style="color: #fff; text-decoration: none; margin-bottom: 60px; font-weight: 800; font-size: 1.2rem; display: block;"><i class="fas fa-arrow-left"></i> Main Site</a>
+                <h1 style="font-size: 4rem; line-height: 1.1; margin-bottom: 24px;">Empower Your <br><span style="color: var(--primary);">Rescue Mission</span></h1>
+                <p style="font-size: 1.2rem; opacity: 0.8; margin-bottom: 40px; max-width: 500px;">Access the nationwide rescue network, manage cases in real-time, and coordinate with verified vets and riders.</p>
+                
+                <div style="display: grid; gap: 30px;">
+                    <div style="display: flex; gap: 20px; align-items: center;">
+                        <div style="width: 50px; height: 50px; background: rgba(255,255,255,0.1); border-radius: 15px; display: flex; align-items: center; justify-content: center;"><i class="fas fa-chart-line" style="color: var(--primary);"></i></div>
+                        <div><h4 style="margin: 0;">Operational Analytics</h4><p style="margin: 0; font-size: 0.9rem; opacity: 0.6;">Track your shelter's impact data.</p></div>
+                    </div>
+                    <div style="display: flex; gap: 20px; align-items: center;">
+                        <div style="width: 50px; height: 50px; background: rgba(255,255,255,0.1); border-radius: 15px; display: flex; align-items: center; justify-content: center;"><i class="fas fa-shield-halved" style="color: var(--accent);"></i></div>
+                        <div><h4 style="margin: 0;">Verified Logistics</h4><p style="margin: 0; font-size: 0.9rem; opacity: 0.6;">Secure transport and medical links.</p></div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="auth-form-side">
+                <div class="auth-card-premium">
+                    <div class="auth-tabs">
+                        <div class="auth-tab active" id="tab-login" onclick="showTab('login')">NGO Login</div>
+                        <div class="auth-tab" id="tab-signup" onclick="showTab('signup')">Register Shelter</div>
+                    </div>
+
+                    <!-- Login -->
+                    <form id="loginForm" class="auth-form active" style="display: block;">
+                        <div class="form-floating">
+                            <label style="display: block; font-weight: 700; margin-bottom: 10px; font-size: 0.9rem; color: var(--text-gray);">Official Email</label>
+                            <input type="email" id="loginEmail" placeholder="rescue@foundation.org" required style="width: 100%;">
+                        </div>
+                        <div class="form-floating">
+                            <label style="display: block; font-weight: 700; margin-bottom: 10px; font-size: 0.9rem; color: var(--text-gray);">Password</label>
+                            <input type="password" id="loginPassword" placeholder="••••••••" required style="width: 100%;">
+                        </div>
+                        <button type="submit" class="nav-btn nav-btn-primary" style="width: 100%; padding: 18px; border-radius: 18px;">Access Dashboard</button>
+                    </form>
+
+                    <button type="button" class="nav-btn nav-btn-outline" style="width:100%; padding:14px; margin-top:16px; border-radius:18px;" onclick="loginWithDemo()">
+                        <i class="fas fa-bolt"></i> Login with Demo NGO
+                    </button>
+                    <div style="margin-top: 16px; padding: 15px; background: #fff7ed; border-radius: 16px; border: 1px dashed var(--primary); font-size: 0.8rem; color: var(--primary); text-align: center;">
+                        <strong>Demo:</strong> rescue@foundation.org / Rescue@123
+                    </div>
+
+                    <!-- Signup -->
+                    <form id="signupForm" class="auth-form" style="display: none;">
+                        <div id="signupStep1">
+                            <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px;">
+                                <div class="form-floating"><label style="display: block; font-weight: 700; margin-bottom: 10px; font-size: 0.8rem;">First Name</label><input type="text" id="firstName" required style="width: 100%;"></div>
+                                <div class="form-floating"><label style="display: block; font-weight: 700; margin-bottom: 10px; font-size: 0.8rem;">Middle Name</label><input type="text" id="middleName" style="width: 100%;"></div>
+                                <div class="form-floating"><label style="display: block; font-weight: 700; margin-bottom: 10px; font-size: 0.8rem;">Last Name</label><input type="text" id="lastName" required style="width: 100%;"></div>
+                            </div>
+                            <div class="form-floating">
+                                <label style="display: block; font-weight: 700; margin-bottom: 10px; font-size: 0.9rem; color: var(--text-gray);">Shelter / NGO Name</label>
+                                <input type="text" id="orgName" placeholder="Rescue Foundation" required style="width: 100%;">
+                            </div>
+                            <div class="form-floating">
+                                <label style="display: block; font-weight: 700; margin-bottom: 10px; font-size: 0.9rem; color: var(--text-gray);">Official Email</label>
+                                <input type="email" id="email" placeholder="contact@ngo.org" required style="width: 100%;">
+                            </div>
+                            <div class="form-floating">
+                                <label style="display: block; font-weight: 700; margin-bottom: 10px; font-size: 0.9rem; color: var(--text-gray);">Phone Number</label>
+                                <input type="tel" id="phone" placeholder="+91 98765 43210" required style="width: 100%;">
+                            </div>
+                            <div class="form-floating">
+                                <label style="display: block; font-weight: 700; margin-bottom: 10px; font-size: 0.9rem; color: var(--text-gray);">Password</label>
+                                <input type="password" id="password" required style="width: 100%;">
+                            </div>
+                            <button type="button" class="nav-btn nav-btn-primary" style="width: 100%; padding: 18px; border-radius: 18px;" onclick="requestOTP()">Send Verification Code</button>
+                        </div>
+
+                        <div id="signupStep2" style="display: none; text-align: center;">
+                            <p style="color: var(--text-gray); margin-bottom: 20px;">Enter the verification code sent to your email.</p>
+                            <div class="form-floating">
+                                <input type="text" id="otpInput" maxlength="6" style="width: 100%; text-align: center; letter-spacing: 5px; font-size: 1.5rem;" placeholder="000000">
+                            </div>
+                            <button type="button" class="nav-btn nav-btn-primary" style="width: 100%; padding: 18px; border-radius: 18px;" onclick="verifyAndJoin()">Verify & Join</button>
+                            <button type="button" style="background: none; border: none; color: var(--primary); margin-top: 15px; cursor: pointer;" onclick="backToStep1()">Back</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+    <script>
+        const firebaseConfig = { apiKey: 'AIzaSyDRuOTikCSLCdb73oYSnrnhoEiKbv-6Ozc', authDomain: 'pawbandhan-29f84.firebaseapp.com', projectId: 'pawbandhan-29f84', storageBucket: 'pawbandhan-29f84.firebasestorage.app', messagingSenderId: '378867729624', appId: '1:378867729624:web:2371a816457fdcfe2303ad' };
+        firebase.initializeApp(firebaseConfig);
+        const auth = firebase.auth();
+
+        function showTab(type) {
+            document.querySelectorAll('.auth-tab').forEach(t => t.classList.remove('active'));
+            document.getElementById('tab-' + type).classList.add('active');
+            document.getElementById('loginForm').style.display = type === 'login' ? 'block' : 'none';
+            document.getElementById('signupForm').style.display = type === 'signup' ? 'block' : 'none';
+        }
+
+        function requestOTP() {
+            document.getElementById('signupStep1').style.display = 'none';
+            document.getElementById('signupStep2').style.display = 'block';
+        }
+
+        function backToStep1() {
+            document.getElementById('signupStep1').style.display = 'block';
+            document.getElementById('signupStep2').style.display = 'none';
+        }
+
+        const DEMO_ACCOUNTS = [
+            { email: 'rescue@foundation.org', password: 'Rescue@123' },
+            { email: 'ngo@pawbandhan.com', password: 'Rescue@123' },
+            { email: 'demo@pawbandhan.com', password: 'Rescue@123' }
+        ];
+
+        function isDemoLogin(email, password) {
+            const e = (email || '').trim().toLowerCase();
+            const p = (password || '').trim();
+            return DEMO_ACCOUNTS.some(d => d.email === e && d.password === p);
+        }
+
+        function loginWithDemo() {
+            document.getElementById('loginEmail').value = 'rescue@foundation.org';
+            document.getElementById('loginPassword').value = 'Rescue@123';
+            enterDemoSession();
+        }
+
+        function enterDemoSession() {
+            sessionStorage.setItem('demo_session', 'true');
+            sessionStorage.setItem('ngo_uid', 'demo-ngo-id');
+            window.location.href = 'ngo_dashboard.html';
+        }
+
+        async function verifyAndJoin() {
+            const email = document.getElementById('email').value.trim();
+            const password = document.getElementById('password').value;
+            const otp = document.getElementById('otpInput').value.trim();
+
+            if (otp !== '000000') {
+                alert('Invalid OTP. Use 000000 for testing.');
+                return;
+            }
+            try {
+                let userCred;
+                try {
+                    userCred = await auth.createUserWithEmailAndPassword(email, password);
+                } catch (e) {
+                    if (e.code === 'auth/email-already-in-use') {
+                        userCred = await auth.signInWithEmailAndPassword(email, password);
+                    } else throw e;
+                }
+                await fetch('/api/users/register', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        uid: userCred.user.uid,
+                        firstName: document.getElementById('firstName').value.trim(),
+                        middleName: document.getElementById('middleName').value.trim(),
+                        lastName: document.getElementById('lastName').value.trim(),
+                        phoneNo: document.getElementById('phone').value.trim(),
+                        email,
+                        role: 'ngo',
+                        orgName: document.getElementById('orgName').value.trim()
+                    })
+                });
+                sessionStorage.removeItem('demo_session');
+                sessionStorage.setItem('ngo_uid', userCred.user.uid);
+                window.location.href = 'ngo_onboarding.html';
+            } catch (e) {
+                alert(e.message || 'Registration failed');
+            }
+        }
+
+        document.getElementById('loginForm').onsubmit = async (e) => {
+            e.preventDefault();
+            const email = document.getElementById('loginEmail').value.trim();
+            const password = document.getElementById('loginPassword').value;
+
+            if (isDemoLogin(email, password)) {
+                enterDemoSession();
+                return;
+            }
+
+            try {
+                const cred = await auth.signInWithEmailAndPassword(email, password);
+                sessionStorage.removeItem('demo_session');
+                sessionStorage.setItem('ngo_uid', cred.user.uid);
+                window.location.href = 'ngo_dashboard.html';
+            } catch (e) {
+                console.error('Auth Error:', e.code, e.message);
+                if (e.code === 'auth/invalid-login-credentials' || e.code === 'auth/wrong-password' || e.code === 'auth/user-not-found') {
+                    alert(
+                        'Login failed — email or password is wrong.\n\n' +
+                        '• Use "Login with Demo NGO" for instant access (no account needed).\n' +
+                        '• Or register under "Register Shelter", then sign in with that email & password.'
+                    );
+                } else if (e.code === 'auth/invalid-email') {
+                    alert('Please enter a valid email address.');
+                } else {
+                    alert(e.message);
+                }
+            }
+        };
+    </script>
+</body>
+</html>

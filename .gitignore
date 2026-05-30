@@ -1,0 +1,26 @@
+# Dependencies
+node_modules/
+backend_api/node_modules/
+
+# Secrets & local env
+.env
+.env.*
+!.env.example
+backend_api/.env
+**/serviceAccountKey.json
+
+# Uploads & runtime
+backend_api/uploads/*
+!backend_api/uploads/.gitkeep
+
+# OS / IDE
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+*.log
+
+# Build / cache
+dist/
+build/
+.cursor/

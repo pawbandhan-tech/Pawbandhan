@@ -1,0 +1,22 @@
+{
+  "appId": "com.pawbandhan.rider",
+  "appName": "PawBandhan Rider",
+  "webDir": "www",
+  "bundledWebRuntime": false,
+  "server": {
+    "androidScheme": "https",
+    "cleartext": true,
+    "allowNavigation": ["localhost", "*.pawbandhan.com"]
+  },
+  "plugins": {
+    "Geolocation": {
+      "permissions": ["ACCESS_COARSE_LOCATION", "ACCESS_FINE_LOCATION"]
+    },
+    "Camera": {
+      "permissions": ["CAMERA"]
+    },
+    "PushNotifications": {
+      "presentationOptions": ["badge", "sound", "alert"]
+    }
+  }
+}

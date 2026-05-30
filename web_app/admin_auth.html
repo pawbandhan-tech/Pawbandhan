@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>System Access | PawBandhan Admin</title>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="style.css">
+    <style>
+        body { background: #0f172a; display: flex; align-items: center; justify-content: center; min-height: 100vh; padding: 20px; }
+        .admin-card { background: #fff; width: 100%; max-width: 400px; padding: 50px; border-radius: 40px; box-shadow: 0 40px 100px -20px rgba(0,0,0,0.4); text-align: center; border: 1px solid rgba(255,255,255,0.1); }
+        .admin-icon { font-size: 3rem; color: #0f172a; margin-bottom: 30px; display: inline-block; padding: 20px; background: #f1f5f9; border-radius: 25px; }
+    </style>
+</head>
+<body>
+
+    <div class="admin-card">
+        <div class="admin-icon"><i class="fas fa-shield-halved"></i></div>
+        <h2 style="color: #0f172a; margin-bottom: 10px;">Security Gate</h2>
+        <p style="color: var(--text-gray); margin-bottom: 40px;">Unauthorized access is strictly monitored.</p>
+
+        <form id="adminForm">
+            <div class="form-floating">
+                <label style="display: block; text-align: left; font-weight: 700; margin-bottom: 10px; font-size: 0.85rem;">System Identifier</label>
+                <input type="email" id="adminEmail" required style="width: 100%; border-radius: 12px;">
+            </div>
+            <div class="form-floating">
+                <label style="display: block; text-align: left; font-weight: 700; margin-bottom: 10px; font-size: 0.85rem;">Private Key</label>
+                <input type="password" id="adminPassword" required style="width: 100%; border-radius: 12px;">
+            </div>
+            <button type="submit" class="nav-btn nav-btn-primary" style="width: 100%; padding: 18px; background: #0f172a; box-shadow: 0 10px 20px rgba(15, 23, 42, 0.3);">Initialize Command</button>
+        </form>
+
+        <div style="margin-top: 30px; padding: 15px; background: #f8fafc; border-radius: 16px; border: 1px dashed #cbd5e1; font-size: 0.8rem; color: #64748b;">
+            <strong>Demo:</strong> admin@pawbandhan.com | Admin@123
+        </div>
+
+        <div style="margin-top: 30px; padding-top: 20px; border-top: 1px solid #f1f5f9;">
+            <a href="index.html" style="color: #94a3b8; text-decoration: none; font-size: 0.85rem;"><i class="fas fa-arrow-left"></i> Return to Public Site</a>
+        </div>
+    </div>
+
+    <script>
+        document.getElementById('adminForm').onsubmit = (e) => {
+            e.preventDefault();
+            const email = document.getElementById('adminEmail').value;
+            const password = document.getElementById('adminPassword').value;
+            const btn = e.target.querySelector('button');
+
+            if(email === 'admin@pawbandhan.com' && password === 'Admin@123') {
+                btn.innerHTML = '<i class="fas fa-microchip fa-spin"></i> Authenticating...';
+                setTimeout(() => {
+                    window.location.href = 'admin_portal.html';
+                }, 1000);
+            } else {
+                alert("Invalid Admin Credentials. Use demo for testing.");
+            }
+        };
+    </script>
+</body>
+</html>

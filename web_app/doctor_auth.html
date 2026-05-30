@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Veterinary Portal | PawBandhan</title>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+    <div class="auth-page">
+        <div class="auth-split">
+            <div class="auth-visual" style="background: #0d1e1c;">
+                <a href="index.html" style="color: #fff; text-decoration: none; margin-bottom: 60px; font-weight: 800; font-size: 1.2rem; display: block;"><i class="fas fa-arrow-left"></i> Home</a>
+                <h1 style="font-size: 4rem; line-height: 1.1; margin-bottom: 24px; color: var(--accent);">Saving Lives, <br>Together.</h1>
+                <p style="font-size: 1.2rem; opacity: 0.8; margin-bottom: 40px; max-width: 500px;">Join India's largest network of partner vets. Streamline street animal medical care with our dedicated triage system.</p>
+                
+                <div style="background: rgba(255,255,255,0.05); padding: 30px; border-radius: 30px; border: 1px solid rgba(255,255,255,0.1);">
+                    <div style="display: flex; gap: 20px; align-items: center; margin-bottom: 20px;">
+                        <i class="fas fa-briefcase-medical" style="color: var(--accent); font-size: 1.5rem;"></i>
+                        <p style="margin: 0; font-weight: 600;">Priority Emergency Triage</p>
+                    </div>
+                    <div style="display: flex; gap: 20px; align-items: center;">
+                        <i class="fas fa-file-medical" style="color: var(--accent); font-size: 1.5rem;"></i>
+                        <p style="margin: 0; font-weight: 600;">Simplified Case Management</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="auth-form-side">
+                <div class="auth-card-premium">
+                    <h2 style="margin-bottom: 10px;">Medical Portal</h2>
+                    <p style="color: var(--text-gray); margin-bottom: 40px;">Please enter your professional credentials.</p>
+
+                    <div class="auth-tabs">
+                        <div class="auth-tab active" id="tab-login" onclick="showTab('login')">Sign In</div>
+                        <div class="auth-tab" id="tab-signup" onclick="showTab('signup')">Join Network</div>
+                    </div>
+
+                    <!-- Login -->
+                    <form id="loginForm" class="auth-form" style="display: block;">
+                        <div class="form-floating">
+                            <label style="display: block; font-weight: 700; margin-bottom: 10px; font-size: 0.9rem; color: var(--text-gray);">Medical ID / Email</label>
+                            <input type="email" id="loginEmail" placeholder="dr.smith@vet.com" required style="width: 100%;">
+                        </div>
+                        <div class="form-floating">
+                            <label style="display: block; font-weight: 700; margin-bottom: 10px; font-size: 0.9rem; color: var(--text-gray);">Security Password</label>
+                            <input type="password" id="loginPassword" placeholder="••••••••" required style="width: 100%;">
+                        </div>
+                        <button type="submit" class="nav-btn nav-btn-primary" style="width: 100%; padding: 18px; border-radius: 18px; background: var(--accent); box-shadow: 0 10px 20px rgba(78, 205, 196, 0.2);">Enter Clinic</button>
+                    </form>
+
+                    <!-- Demo Card -->
+                    <div style="margin-top: 30px; padding: 15px; background: #f0fdfa; border-radius: 16px; border: 1px dashed var(--accent); font-size: 0.8rem; color: var(--accent); text-align: center;">
+                        <strong>Demo Vet:</strong> dr.smith@vet.com | Vet@123
+                    </div>
+
+                    <!-- Signup -->
+                    <form id="signupForm" class="auth-form" style="display: none;">
+                        <div id="signupStep1">
+                            <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px;">
+                                <div class="form-floating"><label style="display: block; font-weight: 700; margin-bottom: 10px; font-size: 0.8rem;">First Name</label><input type="text" id="firstName" required style="width: 100%;"></div>
+                                <div class="form-floating"><label style="display: block; font-weight: 700; margin-bottom: 10px; font-size: 0.8rem;">Middle Name</label><input type="text" id="middleName" style="width: 100%;"></div>
+                                <div class="form-floating"><label style="display: block; font-weight: 700; margin-bottom: 10px; font-size: 0.8rem;">Last Name</label><input type="text" id="lastName" required style="width: 100%;"></div>
+                            </div>
+                            <div class="form-floating">
+                                <label style="display: block; font-weight: 700; margin-bottom: 10px; font-size: 0.9rem;">Clinic Name</label>
+                                <input type="text" id="clinicName" required style="width: 100%;">
+                            </div>
+                            <div class="form-floating">
+                                <label style="display: block; font-weight: 700; margin-bottom: 10px; font-size: 0.9rem;">Email Address</label>
+                                <input type="email" id="email" required style="width: 100%;">
+                            </div>
+                            <div class="form-floating">
+                                <label style="display: block; font-weight: 700; margin-bottom: 10px; font-size: 0.9rem;">Phone Number</label>
+                                <input type="tel" id="phone" required style="width: 100%;">
+                            </div>
+                            <div class="form-floating">
+                                <label style="display: block; font-weight: 700; margin-bottom: 10px; font-size: 0.9rem;">Password</label>
+                                <input type="password" id="password" required style="width: 100%;">
+                            </div>
+                            <button type="button" class="nav-btn nav-btn-primary" style="width: 100%; padding: 18px; border-radius: 18px; background: var(--accent);" onclick="requestOTP()">Send OTP</button>
+                        </div>
+
+                        <div id="signupStep2" style="display: none; text-align: center;">
+                            <p style="color: var(--text-gray); margin-bottom: 20px;">Enter the 6-digit code sent to your email.</p>
+                            <div class="form-floating">
+                                <input type="text" id="otpInput" maxlength="6" style="width: 100%; text-align: center; letter-spacing: 5px; font-size: 1.5rem;" placeholder="000000">
+                            </div>
+                            <button type="button" class="nav-btn nav-btn-primary" style="width: 100%; padding: 18px; border-radius: 18px; background: var(--accent);" onclick="verifyAndJoin()">Verify & Join</button>
+                            <button type="button" style="background: none; border: none; color: var(--accent); margin-top: 15px; cursor: pointer;" onclick="backToStep1()">Edit Information</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+    <script>
+        const firebaseConfig = { apiKey: 'AIzaSyDRuOTikCSLCdb73oYSnrnhoEiKbv-6Ozc', authDomain: 'pawbandhan-29f84.firebaseapp.com', projectId: 'pawbandhan-29f84', storageBucket: 'pawbandhan-29f84.firebasestorage.app', messagingSenderId: '378867729624', appId: '1:378867729624:web:2371a816457fdcfe2303ad' };
+        firebase.initializeApp(firebaseConfig);
+        const auth = firebase.auth();
+
+        function showTab(type) {
+            document.querySelectorAll('.auth-tab').forEach(t => t.classList.remove('active'));
+            document.getElementById('tab-' + type).classList.add('active');
+            document.getElementById('loginForm').style.display = type === 'login' ? 'block' : 'none';
+            document.getElementById('signupForm').style.display = type === 'signup' ? 'block' : 'none';
+        }
+
+        function requestOTP() {
+            // UI Transition
+            document.getElementById('signupStep1').style.display = 'none';
+            document.getElementById('signupStep2').style.display = 'block';
+            console.log("OTP Sent to:", document.getElementById('email').value);
+        }
+
+        function backToStep1() {
+            document.getElementById('signupStep1').style.display = 'block';
+            document.getElementById('signupStep2').style.display = 'none';
+        }
+
+        async function verifyAndJoin() {
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
+            const otp = document.getElementById('otpInput').value;
+
+            if(otp === '123456' || otp === '000000') { // Demo OTP
+                try {
+                    await auth.createUserWithEmailAndPassword(email, password);
+                    // In a real app, you'd call a backend to save extra info
+                    window.location.href = 'doctor_onboarding.html';
+                } catch (e) { alert(e.message); }
+            } else {
+                alert("Invalid OTP. Use 000000 for demo.");
+            }
+        }
+
+        document.getElementById('loginForm').onsubmit = async (e) => {
+            e.preventDefault();
+            const email = document.getElementById('loginEmail').value.trim();
+            const password = document.getElementById('loginPassword').value.trim();
+            
+            // Demo Credential Check (Robust)
+            if(email.toLowerCase() === 'dr.smith@vet.com' && password === 'Vet@123') {
+                sessionStorage.setItem('demo_session', 'true');
+                window.location.href = 'doctor_dashboard.html';
+                return;
+            }
+
+            try {
+                await auth.signInWithEmailAndPassword(email, password);
+                window.location.href = 'doctor_dashboard.html';
+            } catch (e) { 
+                console.error("Auth Error:", e.code, e.message);
+                alert(e.message); 
+            }
+        };
+    </script>
+</body>
+</html>
