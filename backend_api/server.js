@@ -1049,7 +1049,7 @@ async function initDB() {
         INSERT INTO site_config (key, value) VALUES 
             ('hero_title', 'Saving India''s Indie Dogs'),
             ('hero_subtitle', 'Join the nation''s most advanced rescue network. Every second counts when a life is on the line.'),
-            ('emergency_hotline', '1800-PAW-HELP'),
+            ('emergency_hotline', 'pawbandhan@gmail.com'),
             ('mission_title', 'Technology Meets Compassion'),
             ('mission_text', 'PawBandhan is India''s first tech-first animal welfare platform.'),
             ('stat_rescues_override', '15000'),
@@ -1061,7 +1061,11 @@ async function initDB() {
     `;
     try { 
         await pool.query(createTables);
-        
+        await pool.query(
+            `INSERT INTO site_config (key, value) VALUES ('emergency_hotline', 'pawbandhan@gmail.com')
+             ON CONFLICT (key) DO UPDATE SET value = EXCLUDED.value, updated_at = NOW()`
+        ).catch(() => {});
+
         // Force schema updates for legacy tables
         await pool.query('ALTER TABLE ngos ADD COLUMN IF NOT EXISTS uid VARCHAR(255)');
         await pool.query('ALTER TABLE doctors ADD COLUMN IF NOT EXISTS uid VARCHAR(255)');

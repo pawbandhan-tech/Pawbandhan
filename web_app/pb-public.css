@@ -163,6 +163,14 @@ body.pb-public {
     max-width: 520px;
 }
 .pb-hero-actions { display: flex; flex-wrap: wrap; gap: 12px; margin-bottom: 28px; }
+.pb-hero-meta a {
+    color: var(--pb-brand);
+    font-weight: 600;
+    text-decoration: none;
+}
+.pb-hero-meta a:hover { text-decoration: underline; }
+.pb-footer a#footerHotline { color: #99f6e4; }
+
 .pb-hero-meta {
     display: flex;
     flex-wrap: wrap;
@@ -307,7 +315,7 @@ body.pb-public {
     grid-template-columns: repeat(3, 1fr);
     gap: 20px;
 }
-.pb-portal-card-hotline {
+.pb-portal-card-contact {
     grid-column: span 1;
 }
 @media (max-width: 900px) {

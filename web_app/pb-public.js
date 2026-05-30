@@ -42,12 +42,13 @@
                 var sub = document.getElementById('heroSubtitle');
                 if (sub) sub.textContent = config.hero_subtitle;
             }
-            if (config.hotline) {
-                ['heroHotline', 'footerHotline'].forEach(function (id) {
-                    var el = document.getElementById(id);
-                    if (el) el.textContent = config.hotline;
-                });
-            }
+            var contactEmail = config.emergency_hotline || config.contact_email || 'pawbandhan@gmail.com';
+            ['heroHotline', 'footerHotline'].forEach(function (id) {
+                var el = document.getElementById(id);
+                if (!el) return;
+                el.textContent = contactEmail;
+                if (el.href !== undefined) el.href = 'mailto:' + contactEmail;
+            });
         } catch (e) { /* optional */ }
 
         try {
