@@ -1,12 +1,14 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
   "name": "pawbandhan",
+  "installCommand": "npm install --omit=dev",
   "buildCommand": "npm run vercel-build",
   "outputDirectory": "web_app",
   "framework": null,
   "functions": {
     "api/index.js": {
-      "maxDuration": 30,
+      "maxDuration": 60,
+      "memory": 1024,
       "includeFiles": "backend_api/**"
     }
   },

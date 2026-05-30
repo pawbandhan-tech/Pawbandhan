@@ -2,24 +2,38 @@ const express = require('express');
 const cors = require('cors');
 const { Pool } = require('pg');
 const multer = require('multer');
-const socketIO = require('socket.io');
 const http = require('http');
 const path = require('path');
 const fs = require('fs');
 const nodemailer = require('nodemailer');
-require('dotenv').config();
+require('dotenv').config({ path: path.join(__dirname, '.env') });
+
+const IS_VERCEL = Boolean(process.env.VERCEL);
+
+function createMockIo() {
+    const noop = () => {};
+    return { on: noop, emit: noop, to: () => ({ emit: noop }) };
+}
 
 const app = express();
-const server = http.createServer(app);
-const io = socketIO(server, {
-    cors: { origin: '*', methods: ['GET', 'POST'] }
-});
+let server;
+let io;
+if (IS_VERCEL) {
+    io = createMockIo();
+} else {
+    const socketIO = require('socket.io');
+    server = http.createServer(app);
+    io = socketIO(server, {
+        cors: { origin: '*', methods: ['GET', 'POST'] }
+    });
+}
 
 // Middleware
 app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
-app.use('/uploads', express.static('uploads'));
+const UPLOAD_DIR = IS_VERCEL ? path.join('/tmp', 'paw-uploads') : path.join(__dirname, 'uploads');
+app.use('/uploads', express.static(UPLOAD_DIR));
 
 // Liveness probe — no database required (Render / production health checks)
 app.get('/health', (req, res) => {
@@ -31,8 +45,7 @@ app.get('/health', (req, res) => {
     });
 });
 
-// Create uploads directory
-if (!fs.existsSync('uploads')) fs.mkdirSync('uploads');
+if (!fs.existsSync(UPLOAD_DIR)) fs.mkdirSync(UPLOAD_DIR, { recursive: true });
 
 // Database connection (Neon / PostgreSQL via DATABASE_URL)
 const dbUrl = process.env.DATABASE_URL;
@@ -55,7 +68,7 @@ const transporter = nodemailer.createTransport(
 
 // File upload
 const storage = multer.diskStorage({
-    destination: (req, file, cb) => cb(null, 'uploads/'),
+    destination: (req, file, cb) => cb(null, UPLOAD_DIR),
     filename: (req, file, cb) => cb(null, Date.now() + '-' + file.originalname)
 });
 const upload = multer({ storage: storage });
@@ -732,6 +745,7 @@ app.patch('/api/notifications/:id/read', async (req, res) => {
 });
 
 async function getCustomerProfile(uid) {
+    if (!pool) throw Object.assign(new Error('Database not configured. Add DATABASE_URL in Vercel environment variables.'), { status: 503 });
     const u = await pool.query(
         `SELECT u.uid, u.first_name, u.last_name, u.email, u.phone_no, u.account_no, u.portal_access_code,
                 COALESCE(u.gender, c.gender) AS gender, c.name AS customer_name
@@ -1644,11 +1658,21 @@ app.use('/assets', express.static(ASSETS_DIR));
 const PORT = Number(process.env.PORT) || 5000;
 const HOST = process.env.HOST || '0.0.0.0';
 
-const dbInitPromise = pool
-    ? initDB().catch((err) => console.error('Database init error:', err.message))
-    : Promise.resolve();
+let dbInitPromise = null;
+function getDbReady() {
+    if (!dbInitPromise) {
+        dbInitPromise = pool
+            ? initDB().catch((err) => {
+                console.error('Database init error:', err.message);
+                throw err;
+            })
+            : Promise.resolve();
+    }
+    return dbInitPromise;
+}
 
-if (!process.env.VERCEL) {
+if (!IS_VERCEL) {
+    getDbReady();
     server.listen(PORT, HOST, () => {
         console.log('');
         console.log('========================================');
@@ -1663,4 +1687,4 @@ if (!process.env.VERCEL) {
 
 process.on('unhandledRejection', (err) => console.error('Unhandled rejection:', err));
 
-module.exports = { app, server, io, pool, initDB, dbInitPromise };
+module.exports = { app, server, io, pool, initDB, getDbReady, IS_VERCEL };
