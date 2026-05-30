@@ -358,10 +358,12 @@ window.PawTracker = {
         const staff = await this.buildStaffPanel(data, opts);
         return (
             '<div class="track-sheet-handle"></div>' +
-            '<div class="track-header"><span class="track-id">' + this.esc(code) + '</span>' +
-            '<h2>' + this.esc(data.animal_type || 'Rescue') + ' · Live tracking</h2>' +
+            '<div class="track-header track-hero">' +
+            '<span class="track-id"><i class="fas fa-paw"></i> ' + this.esc(code) + '</span>' +
+            '<h2>' + this.esc(data.animal_type || 'Rescue') + '</h2>' +
             '<p class="track-loc">' + this.esc(data.location || data.description || '') + '</p>' +
-            '<p class="track-updated">Updated ' + new Date().toLocaleString('en-IN', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' }) + '</p></div>' +
+            '<p class="track-updated">Updated ' + new Date().toLocaleString('en-IN', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' }) + '</p>' +
+            '<div class="track-progress-ring"><span class="ring-val">' + pct + '%</span><span style="font-size:0.85rem;opacity:0.9;">Rescue progress · ' + this.esc(data.status_label || ws) + '</span></div></div>' +
             staff +
             this.buildNgoSection(data.ngo) +
             this.buildRepSection(rep, showEta ? data.eta_minutes : null) +

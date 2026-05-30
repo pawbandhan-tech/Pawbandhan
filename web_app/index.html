@@ -18,20 +18,30 @@
     <span class="pb-deco pb-deco-2" aria-hidden="true">🐈</span>
     <span class="pb-deco pb-deco-3" aria-hidden="true">🐾</span>
 
-    <header class="pb-nav" id="pbNav">
-        <a href="index.html" class="pb-brand">
-            <span class="pb-brand-icon"><i class="fas fa-paw"></i></span>
-            PawBandhan
-        </a>
-        <button class="pb-nav-toggle" id="pbNavToggle" aria-label="Menu"><span></span><span></span><span></span></button>
-        <nav class="pb-nav-links" id="pbNavLinks">
-            <a href="#impact">Impact</a>
-            <a href="#how">How it works</a>
-            <a href="#portals">Portals</a>
-            <a href="#stories">Stories</a>
-            <a href="customer_auth.html" class="pb-btn pb-btn-ghost">Sign in</a>
-            <a href="customer_auth.html" class="pb-btn pb-btn-primary"><i class="fas fa-bell"></i> Report rescue</a>
-        </nav>
+    <header class="pb-site-header" id="pbNav">
+        <div class="pb-header-inner">
+            <a href="index.html" class="pb-brand">
+                <span class="pb-brand-icon"><i class="fas fa-paw"></i></span>
+                <span class="pb-brand-text">
+                    <strong>PawBandhan</strong>
+                    <small>Rescue network</small>
+                </span>
+            </a>
+            <button class="pb-nav-toggle" id="pbNavToggle" aria-label="Menu" aria-expanded="false">
+                <span></span><span></span><span></span>
+            </button>
+            <nav class="pb-nav-links" id="pbNavLinks">
+                <a href="#impact"><i class="fas fa-chart-line"></i> Impact</a>
+                <a href="#how"><i class="fas fa-route"></i> How it works</a>
+                <a href="#portals"><i class="fas fa-grid-2"></i> Portals</a>
+                <a href="#stories"><i class="fas fa-heart"></i> Stories</a>
+                <div class="pb-nav-cta">
+                    <a href="customer_auth.html" class="pb-btn pb-btn-ghost">Sign in</a>
+                    <a href="customer_auth.html" class="pb-btn pb-btn-primary"><i class="fas fa-location-dot"></i> Report rescue</a>
+                </div>
+            </nav>
+        </div>
+        <div class="pb-header-glow" aria-hidden="true"></div>
     </header>
 
     <section class="pb-hero pb-reveal">
@@ -210,30 +220,52 @@
         </div>
     </section>
 
-    <footer class="pb-footer">
-        <div class="pb-footer-grid">
-            <div>
-                <a href="index.html" class="pb-brand" style="color:#fff;margin-bottom:12px;">
-                    <span class="pb-brand-icon"><i class="fas fa-paw"></i></span> PawBandhan
-                </a>
-                <p style="opacity:0.85;font-size:0.9rem;">Technology and compassion for every street animal in India.</p>
-            </div>
-            <div>
-                <h4>Support</h4>
-                <p>Email<br><strong><a href="mailto:pawbandhan@gmail.com" id="footerHotline">pawbandhan@gmail.com</a></strong></p>
-            </div>
-            <div>
-                <h4>Explore</h4>
-                <p><a href="#how">How it works</a><br><a href="#portals">Portals</a><br><a href="customer_auth.html">Report case</a></p>
-            </div>
-            <div>
-                <h4>Contact</h4>
-                <p><a href="mailto:help@pawbandhan.com">help@pawbandhan.com</a><br>Mumbai, India</p>
-            </div>
+    <footer class="pb-site-footer">
+        <div class="pb-footer-wave" aria-hidden="true">
+            <svg viewBox="0 0 1440 80" preserveAspectRatio="none"><path fill="currentColor" d="M0,40 C360,80 720,0 1080,40 C1260,60 1380,50 1440,40 L1440,80 L0,80 Z"/></svg>
         </div>
-        <div class="pb-footer-bottom">
-            <span>&copy; 2026 PawBandhan</span>
-            <span>Made with care for every paw</span>
+        <div class="pb-footer-inner">
+            <div class="pb-footer-top">
+                <div class="pb-footer-brand">
+                    <a href="index.html" class="pb-brand pb-brand-footer">
+                        <span class="pb-brand-icon"><i class="fas fa-paw"></i></span>
+                        <span class="pb-brand-text"><strong>PawBandhan</strong><small>Every paw matters</small></span>
+                    </a>
+                    <p>India's connected rescue network — report, track, and save street animals with verified NGOs, field teams, and vets.</p>
+                    <div class="pb-footer-social">
+                        <a href="mailto:pawbandhan@gmail.com" aria-label="Email"><i class="fas fa-envelope"></i></a>
+                        <a href="customer_auth.html" aria-label="Report"><i class="fas fa-bell"></i></a>
+                    </div>
+                </div>
+                <div class="pb-footer-col">
+                    <h4>Get help</h4>
+                    <ul>
+                        <li><a href="customer_auth.html">Report an emergency</a></li>
+                        <li><a href="customer_auth.html">Customer portal</a></li>
+                        <li><a href="mailto:pawbandhan@gmail.com" id="footerHotline">pawbandhan@gmail.com</a></li>
+                    </ul>
+                </div>
+                <div class="pb-footer-col">
+                    <h4>Partners</h4>
+                    <ul>
+                        <li><a href="ngo_auth.html">NGO login</a></li>
+                        <li><a href="representative_auth.html">Field executive</a></li>
+                        <li><a href="doctor_auth.html">Veterinarian</a></li>
+                    </ul>
+                </div>
+                <div class="pb-footer-col">
+                    <h4>Explore</h4>
+                    <ul>
+                        <li><a href="#how">How it works</a></li>
+                        <li><a href="#impact">Our impact</a></li>
+                        <li><a href="#stories">Success stories</a></li>
+                    </ul>
+                </div>
+            </div>
+            <div class="pb-footer-bottom">
+                <span>&copy; 2026 PawBandhan · Mumbai, India</span>
+                <span class="pb-footer-tag"><i class="fas fa-paw"></i> Made with care for every paw</span>
+            </div>
         </div>
     </footer>
 

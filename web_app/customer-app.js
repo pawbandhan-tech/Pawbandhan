@@ -14,11 +14,29 @@
     let pbMapAnim = null;
     let pbRoutePath = null;
 
+    async function loadDashboardStats() {
+        try {
+            const stats = window.PAW_SITE
+                ? await PAW_SITE.fetchJson('/api/stats')
+                : await (await fetch('/api/stats')).json();
+            const fmt = (n) => {
+                const x = Number(n) || 0;
+                return x >= 1000 ? (x / 1000).toFixed(1).replace(/\.0$/, '') + 'k' : String(x);
+            };
+            const set = (id, v) => { const el = document.getElementById(id); if (el) el.textContent = fmt(v); };
+            set('cdStatRescues', stats.totalRescues);
+            set('cdStatNgos', stats.totalNGOs);
+            set('cdStatHeroes', stats.totalRiders);
+            set('cdStatVets', stats.totalDoctors);
+        } catch (e) { /* optional */ }
+    }
+
     window.initCustomerPortal = function (uid) {
         currentUid = uid;
         loadCustomerProfile();
         loadNotifications();
         loadMyCases();
+        loadDashboardStats();
         setupRealtime();
         if (pollTimer) clearInterval(pollTimer);
         pollTimer = setInterval(() => {
@@ -300,8 +318,8 @@
                 <div class="empty-cases-card">
                     <i class="fas fa-paw"></i>
                     <h3>No rescues yet</h3>
-                    <p>Report an injured animal to see live tracking with date & time on every step.</p>
-                    <button class="btn-track-primary" onclick="typeof openCamera==='function'?openCamera():null">Report emergency</button>
+                    <p>Report an injured animal to see live tracking with date and time on every step.</p>
+                    <button type="button" class="btn-track-primary" onclick="typeof openCamera==='function'?openCamera():null">Report emergency</button>
                 </div>`;
             return;
         }
@@ -314,15 +332,16 @@
             const pill = resolved ? 'pill-green' : 'pill-amber';
             const live = !resolved && c.workflow_status;
             const pct = c.progress_percent != null ? c.progress_percent : '';
+            const statusClass = resolved ? 'done' : 'live';
             return `
-                <article class="case-card track-card" onclick="openCaseTracking('${code}')">
-                    <div class="case-icon"><i class="fas ${icon}"></i></div>
-                    <div class="case-body">
+                <article class="cd-case-card track-card" onclick="openCaseTracking('${code}')">
+                    <div class="cd-case-icon"><i class="fas ${icon}"></i></div>
+                    <div class="cd-case-body">
                         <h4>${escapeHtml(c.animal_type || 'Animal')} rescue ${live ? '<span class="live-tag">● LIVE</span>' : ''}</h4>
                         <p>${escapeHtml(c.location || c.description || 'Location pending')}</p>
-                        <div class="sub"><i class="fas fa-hashtag"></i> ${code}${pct !== '' ? ` · ${pct}% complete` : ''}</div>
+                        <div class="cd-case-meta"><i class="fas fa-hashtag"></i> ${code}${pct !== '' ? ` · ${pct}% complete` : ''}</div>
                     </div>
-                    <span class="pill ${pill}">${escapeHtml(c.status_label || c.workflow_status || 'Active')}</span>
+                    <span class="cd-status-pill ${statusClass}">${escapeHtml(c.status_label || c.workflow_status || 'Active')}</span>
                 </article>`;
         }).join('');
     }

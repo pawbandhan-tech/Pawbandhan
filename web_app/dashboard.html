@@ -5,10 +5,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Dashboard | PawBandhan</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="shared-portal.css">
-    <link rel="stylesheet" href="portal-shell.css">
-    <link rel="stylesheet" href="customer-dashboard.css">
+    <link rel="stylesheet" href="customer-dashboard.css?v=8">
+    <link rel="stylesheet" href="customer-portal.css?v=1">
     <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs"></script>
     <script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/coco-ssd"></script>
     <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCj24WzNBtXKorLO4A4p518ZM3SERcYmQU&libraries=places,geometry"></script>
@@ -439,22 +438,25 @@
 </head>
 <body class="pb-portal pb-customer">
 
-    <!-- ─── TOP NAVIGATION BAR ─── -->
-    <nav class="topbar">
-        <a href="index.html" class="topbar-logo">
-            <i class="fas fa-paw"></i> PawBandhan
-        </a>
-        <div class="topbar-right">
-            <button type="button" class="pb-notif-btn" onclick="toggleNotifDrawer()"><i class="fas fa-bell"></i><span class="pb-notif-badge" id="notifBadge">0</span></button>
-            <div class="points-badge" onclick="alert('You have 840 Rescue Points!')"><i class="fas fa-coins"></i> Points</div>
-            <div class="user-chip" onclick="openProfileModal()">
-                <div class="user-avatar" id="userInitials">JD</div>
-                <span style="font-weight: 700;" id="userName">John Doe</span>
-                <i class="fas fa-chevron-down" style="font-size: 0.7rem; color: var(--text-gray); margin-left: 5px;"></i>
+    <header class="cd-header">
+        <div class="cd-header-inner">
+            <a href="index.html" class="cd-brand">
+                <span class="cd-brand-icon"><i class="fas fa-paw"></i></span>
+                <span><strong>PawBandhan</strong><small>Customer portal</small></span>
+            </a>
+            <div class="cd-header-actions">
+                <button type="button" class="cd-btn-icon" onclick="toggleNotifDrawer()" aria-label="Notifications">
+                    <i class="fas fa-bell"></i>
+                    <span class="pb-notif-badge" id="notifBadge">0</span>
+                </button>
+                <div class="cd-user-chip" onclick="openProfileModal()">
+                    <div class="cd-user-avatar" id="userInitials">—</div>
+                    <span style="font-weight:700;font-size:0.9rem;" id="userName">Guest</span>
+                </div>
+                <button type="button" class="cd-btn-logout" onclick="logout()"><i class="fas fa-right-from-bracket"></i> <span>Sign out</span></button>
             </div>
-            <button class="btn-logout" onclick="logout()"><i class="fas fa-power-off"></i> Logout</button>
         </div>
-    </nav>
+    </header>
 
     <!-- ─── MAIN PAGE ─── -->
     <div id="notifDrawer" class="pb-notif-drawer">
@@ -465,7 +467,7 @@
         <div class="pb-notif-list" id="notifList"></div>
     </div>
 
-    <div class="page-wrap">
+    <main class="cd-main page-wrap">
 
         <div id="liveHero" class="pb-live-hero">
             <div class="pb-live-status" id="liveHeroStatus"><span class="pulse-dot"></span> Tracking live</div>
@@ -486,109 +488,43 @@
             <button type="button" class="pb-btn-track-live" onclick="activeCaseCode&&openCaseTracking(activeCaseCode)">View full tracking</button>
         </div>
 
-        <!-- Greeting -->
-        <div class="greeting">
-            <h1>Welcome back, <span id="userGreet">John</span> 👋</h1>
-            <p>Every report saves a life. Thank you for being alert.</p>
+        <section class="cd-welcome">
+            <h1>Welcome back, <em id="userGreet">friend</em> 🐾</h1>
+            <p>Report injured animals and follow every rescue step — live from your phone.</p>
+        </section>
+
+        <div class="cd-stats-row" id="cdLiveStats">
+            <div class="cd-stat-pill"><i class="fas fa-heart"></i><strong id="cdStatRescues">—</strong><span>Rescues</span></div>
+            <div class="cd-stat-pill"><i class="fas fa-building"></i><strong id="cdStatNgos">—</strong><span>NGO partners</span></div>
+            <div class="cd-stat-pill"><i class="fas fa-motorcycle"></i><strong id="cdStatHeroes">—</strong><span>Field heroes</span></div>
+            <div class="cd-stat-pill"><i class="fas fa-stethoscope"></i><strong id="cdStatVets">—</strong><span>Veterinarians</span></div>
         </div>
 
-        <!-- XP Progress -->
-        <div class="xp-bar-wrap">
-            <div style="width: 48px; height: 48px; background: var(--primary-light); border-radius: 14px; display: flex; align-items: center; justify-content: center; color: var(--primary); font-size: 1.2rem;"><i class="fas fa-trophy"></i></div>
-            <div class="xp-info">
-                <h4>Level 4 Rescuer — 650 / 1000 XP</h4>
-            </div>
-            <div class="xp-track" style="max-width: 350px;">
-                <div class="xp-fill" style="width: 65%;"></div>
-            </div>
+        <div class="cd-actions">
+            <button type="button" class="cd-action-primary" onclick="openCamera()">
+                <div class="cd-action-icon"><i class="fas fa-camera"></i></div>
+                <h3>Report emergency</h3>
+                <p>AI verifies the animal, captures location, and alerts the nearest NGO instantly.</p>
+            </button>
+            <button type="button" class="cd-action-secondary" onclick="typeof loadMyCases==='function'&&loadMyCases()">
+                <i class="fas fa-route"></i>
+                <h4>Track rescues</h4>
+                <p>Flipkart-style live timeline</p>
+            </button>
+            <button type="button" class="cd-action-secondary" onclick="openNearestNgoModal()">
+                <i class="fas fa-map-location-dot"></i>
+                <h4>NGOs near me</h4>
+                <p>Verified shelters on map</p>
+            </button>
         </div>
 
-        <!-- Quick Actions (4 Tiles) -->
-        <div class="quick-grid">
-            <div class="q-card hero-card" onclick="openCamera()">
-                <div class="q-icon"><i class="fas fa-bolt"></i></div>
-                <div>
-                    <h3>Report Emergency</h3>
-                    <p>Found an injured animal? AI will verify & dispatch help instantly.</p>
-                </div>
-            </div>
-            <div class="q-card" onclick="alert('Redirecting to secure donation gateway...')">
-                <div class="q-icon"><i class="fas fa-heart"></i></div>
-                <h3>Support NGOs</h3>
-                <p>Fund verified rescue orgs</p>
-            </div>
-            <div class="q-card" onclick="openNearestNgoModal()">
-                <div class="q-icon"><i class="fas fa-map-location-dot"></i></div>
-                <h3>Near Me</h3>
-                <p>Shelters, Vets, Riders</p>
-            </div>
+        <div class="cd-section-head">
+            <h2>Your rescue cases</h2>
+            <button type="button" onclick="typeof loadMyCases==='function'&&loadMyCases()"><i class="fas fa-rotate"></i> Refresh</button>
         </div>
+        <div id="caseListArea"></div>
 
-        <!-- Two-Column: Cases + Community -->
-        <div class="two-col">
-            <div>
-                <div class="section-head">
-                    <h2>Your rescue cases</h2>
-                    <a href="javascript:void(0)" onclick="typeof loadMyCases==='function'&&loadMyCases()"><i class="fas fa-rotate"></i> Refresh</a>
-                </div>
-
-                <div id="caseListArea">
-                    <!-- Dynamic rendering -->
-                </div>
-            </div>
-
-            <!-- Community Stats -->
-            <div class="community-card">
-                <h3>Community Impact</h3>
-
-                <div class="stat-row">
-                    <div class="stat-icon" style="background: var(--primary-light); color: var(--primary);"><i class="fas fa-heart-pulse"></i></div>
-                    <div class="stat-info">
-                        <h4>Rescues This Year</h4>
-                        <p>Nationwide total</p>
-                    </div>
-                    <span class="stat-val" style="color: var(--primary);">15,842</span>
-                </div>
-
-                <div class="stat-row">
-                    <div class="stat-icon" style="background: #dcfce7; color: #16a34a;"><i class="fas fa-building-ngo"></i></div>
-                    <div class="stat-info">
-                        <h4>Verified NGOs</h4>
-                        <p>Active partners</p>
-                    </div>
-                    <span class="stat-val" style="color: #16a34a;">842</span>
-                </div>
-
-                <div class="stat-row">
-                    <div class="stat-icon" style="background: #dbeafe; color: #2563eb;"><i class="fas fa-indian-rupee-sign"></i></div>
-                    <div class="stat-info">
-                        <h4>Donations Distributed</h4>
-                        <p>Transparent funding</p>
-                    </div>
-                    <span class="stat-val" style="color: #2563eb;">₹24L</span>
-                </div>
-
-                <div class="stat-row">
-                    <div class="stat-icon" style="background: #fef3c7; color: #d97706;"><i class="fas fa-stethoscope"></i></div>
-                    <div class="stat-info">
-                        <h4>Vet Consultations</h4>
-                        <p>Free teleconsults given</p>
-                    </div>
-                    <span class="stat-val" style="color: #d97706;">3,210</span>
-                </div>
-            </div>
-        </div>
-
-        <!-- Leaderboard Banner -->
-        <div class="leader-banner">
-            <div>
-                <h3><i class="fas fa-ranking-star" style="margin-right: 10px; color: #f59e0b;"></i> Rescue Points Leaderboard</h3>
-                <p>You are in the Top 5% of rescuers in Mumbai!</p>
-            </div>
-            <button onclick="alert('Leaderboard:\n1. Priya Sharma — 1,240 pts\n2. Rahul Mehta — 1,100 pts\n3. You — 840 pts\n4. Sneha Iyer — 780 pts\n5. Amit Patel — 720 pts')">View Rankings</button>
-        </div>
-
-    </div>
+    </main>
 
     <!-- ─── REPORT FORM MODAL ─── -->
     <div id="reportModal" class="modal-bg">
@@ -720,9 +656,9 @@
     <script src="config.js"></script>
     <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
     <script src="paw-api.js?v=1"></script>
-    <script src="paw-tracker.js?v=3"></script>
+    <script src="paw-tracker.js?v=4"></script>
     <script src="shared-case-portal.js?v=2"></script>
-    <script src="customer-app.js?v=7"></script>
+    <script src="customer-app.js?v=8"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
     <script>
