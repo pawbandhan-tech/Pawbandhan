@@ -32,7 +32,10 @@
     }
 
     async function loadCms() {
-        if (!window.PAW_SITE) return;
+        if (!window.PAW_SITE) {
+            loadStories();
+            return;
+        }
         try {
             var config = await PAW_SITE.fetchJson('/api/site-config');
             if (config.hero_subtitle) {
@@ -68,18 +71,96 @@
             });
         }
 
+        loadStories();
+    }
+
+    var FALLBACK_STORIES = [
+        {
+            title: 'Bruno walked again',
+            description: 'A hit-and-run left Bruno unable to stand. An NGO accepted the case within minutes; a hero reached the spot in 12 minutes. After surgery and foster care, he was adopted by the family that first reported him.',
+            image_url: 'https://images.unsplash.com/photo-1587300003388-59208cc962cb?w=800&q=85',
+            tag: 'Full recovery',
+            meta: 'Mumbai · 14 days'
+        },
+        {
+            title: 'Kittens under the flyover',
+            description: 'Five neonatal kittens were boxed and left near traffic. Volunteers warmed them, a vet stabilized feeding, and a shelter found bottle-feed fosters within 48 hours.',
+            image_url: 'https://images.unsplash.com/photo-1548199973-03cce0fe87b9?w=600&q=80',
+            tag: 'Litter rescue',
+            meta: 'Pune · 2 days'
+        },
+        {
+            title: 'Spirit healed at sunrise',
+            description: 'Malnutrition and mange had left Spirit too weak to move. Live tracking kept the reporter updated through treatment until release back to a monitored colony.',
+            image_url: 'https://images.unsplash.com/photo-1601758228041-f3b2795255f1?w=600&q=80',
+            tag: 'Released safe',
+            meta: 'Delhi · 3 weeks'
+        }
+    ];
+
+    function esc(s) {
+        if (!s) return '';
+        return String(s)
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;');
+    }
+
+    function storyCard(s, featured) {
+        var img = s.image_url || 'https://images.unsplash.com/photo-1548199973-03cce0fe87b9?w=600&q=80';
+        var tag = s.tag || 'Rescue story';
+        var meta = s.meta || '';
+        var desc = (s.description || '').slice(0, featured ? 220 : 130);
+        var cls = featured ? 'pb-story pb-story-featured' : 'pb-story';
+        return '<article class="' + cls + '">' +
+            '<div class="pb-story-media">' +
+            '<span class="pb-story-tag">' + esc(tag) + '</span>' +
+            '<img src="' + esc(img) + '" alt="" loading="lazy">' +
+            '</div>' +
+            '<div class="pb-story-body">' +
+            '<h4>' + esc(s.title || 'A life saved') + '</h4>' +
+            '<p>' + esc(desc) + (desc.length < (s.description || '').length ? '…' : '') + '</p>' +
+            (meta ? '<span class="pb-story-meta"><i class="fas fa-location-dot"></i> ' + esc(meta) + '</span>' : '') +
+            '</div></article>';
+    }
+
+    function renderStories(list) {
+        var grid = document.getElementById('storiesGrid');
+        if (!grid) return;
+        var items = (list && list.length) ? list.slice(0, 3) : FALLBACK_STORIES;
+        if (!items.length) items = FALLBACK_STORIES;
+        grid.setAttribute('aria-busy', 'false');
+        grid.innerHTML = items.map(function (s, i) {
+            return storyCard(s, i === 0);
+        }).join('');
+    }
+
+    async function loadStories() {
+        var grid = document.getElementById('storiesGrid');
+        if (!grid || !window.PAW_SITE) {
+            renderStories(FALLBACK_STORIES);
+            return;
+        }
         try {
             var stories = await PAW_SITE.fetchJson('/api/stories');
-            var grid = document.getElementById('storiesGrid');
-            if (grid && stories && stories.length) {
-                grid.innerHTML = stories.slice(0, 6).map(function (s) {
-                    return '<article class="pb-story">' +
-                        '<img src="' + (s.image_url || '') + '" alt="">' +
-                        '<div class="pb-story-body"><h4>' + (s.title || '') + '</h4>' +
-                        '<p>' + (s.description || '').slice(0, 120) + '</p></div></article>';
-                }).join('');
+            if (stories && stories.length) {
+                var mapped = stories.slice(0, 3).map(function (s, i) {
+                    return {
+                        title: s.title,
+                        description: s.description,
+                        image_url: s.image_url,
+                        tag: i === 0 ? 'Featured' : 'Recovery',
+                        meta: ''
+                    };
+                });
+                renderStories(mapped);
+            } else {
+                renderStories(FALLBACK_STORIES);
             }
-        } catch (e) { /* optional */ }
+        } catch (e) {
+            renderStories(FALLBACK_STORIES);
+        }
     }
 
     document.addEventListener('DOMContentLoaded', function () {

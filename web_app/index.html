@@ -55,7 +55,7 @@
     <section class="pb-tracker-demo pb-reveal">
         <div>
             <h2>Flipkart-style live rescue tracking</h2>
-            <p>Customers, NGOs, and admins see the same timeline — NGO accept, hero dispatch, vet care, and safe release.</p>
+            <p>Report, track, and celebrate every step — from NGO accept to hero dispatch, vet care, and safe release.</p>
             <a href="customer_auth.html" class="pb-btn pb-btn-primary" style="background:#fff;color:var(--pb-brand);">See a live case</a>
         </div>
         <div class="pb-track-mock">
@@ -128,7 +128,7 @@
         <div class="pb-section-head pb-reveal">
             <span class="pb-label">Portals</span>
             <h2 class="pb-display">Built for every role</h2>
-            <p>One platform — customer, NGO, admin, representative, and veterinarian dashboards.</p>
+            <p>Portals for citizens, shelter partners, field heroes, and veterinarians — one connected rescue network.</p>
         </div>
         <div class="pb-portals pb-reveal">
             <article class="pb-portal-card">
@@ -150,18 +150,12 @@
                 <a href="representative_auth.html" class="pb-btn pb-btn-outline">Hero login</a>
             </article>
             <article class="pb-portal-card">
-                <i class="portal-icon fas fa-shield-halved" style="background:#e0e7ff;color:#4f46e5;"></i>
-                <h3>Admin command</h3>
-                <p>Oversee all cases, assign NGOs, approve partners, and manage the network.</p>
-                <a href="admin_auth.html" class="pb-btn pb-btn-outline">Admin login</a>
-            </article>
-            <article class="pb-portal-card">
                 <i class="portal-icon fas fa-stethoscope" style="background:#fce7f3;color:#db2777;"></i>
                 <h3>Veterinarian</h3>
                 <p>Receive handovers, treatment workflows, and clinical records.</p>
                 <a href="doctor_auth.html" class="pb-btn pb-btn-outline">Vet login</a>
             </article>
-            <article class="pb-portal-card">
+            <article class="pb-portal-card pb-portal-card-hotline">
                 <i class="portal-icon fas fa-heart" style="background:#ccfbf1;color:#0f766e;"></i>
                 <h3>Emergency hotline</h3>
                 <p>24/7 support for urgent animal distress across India.</p>
@@ -178,19 +172,21 @@
         <a href="customer_auth.html" class="pb-btn pb-btn-primary"><i class="fas fa-plus-circle"></i> Start a rescue report</a>
     </section>
 
-    <section id="stories" class="pb-section">
-        <div class="pb-section-head pb-reveal">
-            <span class="pb-label">Success stories</span>
-            <h2 class="pb-display">Tails of hope</h2>
+    <section id="stories" class="pb-section pb-stories-section">
+        <div class="pb-stories-intro pb-reveal">
+            <div class="pb-section-head" style="margin-bottom:0;text-align:left;">
+                <span class="pb-label">Success stories</span>
+                <h2 class="pb-display">Tails of hope</h2>
+                <p class="pb-stories-lead">Real rescues from shelters and heroes on the PawBandhan network — every tail has a second chance.</p>
+            </div>
+            <a href="customer_auth.html" class="pb-btn pb-btn-outline"><i class="fas fa-pen"></i> Share your story</a>
         </div>
-        <div id="storiesGrid" class="pb-stories pb-reveal">
-            <article class="pb-story">
-                <img src="https://images.unsplash.com/photo-1548199973-03cce0fe87b9?w=600&q=80" alt="">
-                <div class="pb-story-body">
-                    <h4>Loading stories…</h4>
-                    <p>Recovery stories from our community appear here.</p>
-                </div>
-            </article>
+        <div id="storiesGrid" class="pb-stories pb-reveal" aria-live="polite" aria-busy="true">
+            <div class="pb-stories-skeleton" aria-hidden="true">
+                <div class="pb-story-skel pb-story-skel-featured"></div>
+                <div class="pb-story-skel"></div>
+                <div class="pb-story-skel"></div>
+            </div>
         </div>
     </section>
 
