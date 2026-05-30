@@ -15,9 +15,9 @@
         giraffe: { label: 'Giraffe', icon: 'fa-paw' }
     };
 
-    var MIN_SCORE = 0.38;
-    var DETECT_INTERVAL_MS = 380;
-    var LOCK_FRAMES = 2;
+    var MIN_SCORE = 0.30;
+    var DETECT_INTERVAL_MS = 350;
+    var LOCK_FRAMES = 1;
 
     var model = null;
     var modelLoading = null;
