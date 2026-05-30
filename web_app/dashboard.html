@@ -735,6 +735,17 @@
                 <input type="email" id="editEmail" placeholder="your@email.com" readonly style="opacity:0.6;cursor:not-allowed;">
             </div>
             <div class="form-group">
+                <label>Gender</label>
+                <select id="editGender">
+                    <option value="">Select gender</option>
+                    <option value="female">Female</option>
+                    <option value="male">Male</option>
+                    <option value="non_binary">Non-binary</option>
+                    <option value="other">Other</option>
+                    <option value="prefer_not_to_say">Prefer not to say</option>
+                </select>
+            </div>
+            <div class="form-group">
                 <label>Phone (for rescue updates)</label>
                 <input type="tel" id="editPhone" placeholder="+91 98765 43210" autocomplete="tel">
             </div>
@@ -781,11 +792,11 @@
 
     <script src="config.js"></script>
     <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
-    <script src="paw-api.js?v=1"></script>
+    <script src="paw-api.js?v=2"></script>
     <script src="paw-tracker.js?v=4"></script>
     <script src="shared-case-portal.js?v=2"></script>
     <script src="paw-live-detect.js?v=4"></script>
-    <script src="customer-app.js?v=9"></script>
+    <script src="customer-app.js?v=10"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
     <script>
@@ -835,6 +846,17 @@
             return sessionStorage.getItem('customer_uid') || sessionStorage.getItem('portal_customer_uid') || (auth.currentUser && auth.currentUser.uid) || null;
         }
 
+        function applyProfileToSession(p) {
+            if (!p) return;
+            if (p.name) {
+                setUserName(p.name);
+                sessionStorage.setItem('portal_customer_name', p.name);
+            }
+            if (p.phone) sessionStorage.setItem('user_phone', p.phone);
+            if (p.email) sessionStorage.setItem('user_email', p.email);
+            if (p.gender) sessionStorage.setItem('user_gender', p.gender);
+        }
+
         async function loadAndApplyProfile() {
             const uid = getCustomerUid();
             if (!uid || uid === 'demo') {
@@ -844,16 +866,10 @@
             const cached = sessionStorage.getItem('portal_customer_name');
             if (cached) setUserName(cached);
             try {
-                const res = await fetch('/api/customers/' + encodeURIComponent(uid) + '/profile');
-                if (!res.ok) throw new Error('Profile not found');
-                const p = await res.json();
-                if (p.name) {
-                    setUserName(p.name);
-                    sessionStorage.setItem('portal_customer_name', p.name);
-                }
-                if (p.phone) sessionStorage.setItem('user_phone', p.phone);
-                if (p.email) sessionStorage.setItem('user_email', p.email);
+                const p = await PawApi.fetchJson('/api/customers/' + encodeURIComponent(uid) + '/profile');
+                applyProfileToSession(p);
             } catch (e) {
+                console.warn('Profile load', e);
                 if (!cached && auth.currentUser && auth.currentUser.displayName) {
                     setUserName(auth.currentUser.displayName);
                 }
@@ -1578,12 +1594,16 @@
             document.getElementById('editPhone').value = sessionStorage.getItem('user_phone') || '';
             document.getElementById('editEmail').value = sessionStorage.getItem('user_email') ||
                 (auth.currentUser ? auth.currentUser.email : '') || '';
+            var g = sessionStorage.getItem('user_gender') || '';
+            var genderEl = document.getElementById('editGender');
+            if (genderEl) genderEl.value = g;
             document.getElementById('profileModal').classList.add('open');
         }
 
         async function saveProfile() {
             var newName = document.getElementById('editName').value.trim();
             var newPhone = document.getElementById('editPhone').value.trim();
+            var newGender = (document.getElementById('editGender') && document.getElementById('editGender').value) || '';
             var status = document.getElementById('profileSaveStatus');
             var btn = document.getElementById('btnSaveProfile');
             if (!newName) {
@@ -1595,22 +1615,22 @@
                 setUserName(newName);
                 sessionStorage.setItem('portal_customer_name', newName);
                 sessionStorage.setItem('user_phone', newPhone);
+                sessionStorage.setItem('user_gender', newGender);
                 if (status) { status.textContent = 'Saved locally (demo mode)'; status.className = 'profile-save-status ok'; }
                 return;
             }
             if (btn) btn.disabled = true;
             if (status) { status.textContent = 'Saving…'; status.className = 'profile-save-status'; }
+            var path = '/api/customers/' + encodeURIComponent(uid) + '/profile';
+            var payload = { name: newName, phone: newPhone, gender: newGender || null };
             try {
-                var res = await fetch('/api/customers/' + encodeURIComponent(uid) + '/profile', {
-                    method: 'PATCH',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ name: newName, phone: newPhone })
-                });
-                var data = await res.json();
-                if (!res.ok) throw new Error(data.error || 'Save failed');
-                setUserName(data.name || newName);
-                sessionStorage.setItem('portal_customer_name', data.name || newName);
-                sessionStorage.setItem('user_phone', data.phone || newPhone);
+                var data;
+                try {
+                    data = await PawApi.postJson(path, payload);
+                } catch (postErr) {
+                    data = await PawApi.patchJson(path, payload);
+                }
+                applyProfileToSession(data);
                 if (auth.currentUser) {
                     try { await auth.currentUser.updateProfile({ displayName: data.name || newName }); } catch (e) { /* optional */ }
                 }
@@ -1628,6 +1648,7 @@
             sessionStorage.removeItem('portal_customer_name');
             sessionStorage.removeItem('user_phone');
             sessionStorage.removeItem('user_email');
+            sessionStorage.removeItem('user_gender');
             sessionStorage.removeItem('customer_uid');
             sessionStorage.removeItem('portal_customer_uid');
             if (auth.currentUser) auth.signOut().finally(function () { window.location.href = 'customer_auth.html'; });

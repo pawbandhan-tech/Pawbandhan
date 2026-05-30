@@ -84,15 +84,14 @@
     async function loadCustomerProfile() {
         if (!currentUid || currentUid === 'demo') return;
         try {
-            const res = await fetch('/api/customers/' + encodeURIComponent(currentUid) + '/profile');
-            if (!res.ok) return;
-            const p = await res.json();
+            const p = await PawApi.fetchJson('/api/customers/' + encodeURIComponent(currentUid) + '/profile');
             if (p.name) {
                 sessionStorage.setItem('portal_customer_name', p.name);
                 if (typeof setUserName === 'function') setUserName(p.name);
             }
             if (p.phone) sessionStorage.setItem('user_phone', p.phone);
             if (p.email) sessionStorage.setItem('user_email', p.email);
+            if (p.gender) sessionStorage.setItem('user_gender', p.gender);
         } catch (e) { /* ignore */ }
     }
 

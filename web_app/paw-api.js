@@ -25,9 +25,13 @@ window.PawApi = {
             try {
                 data = JSON.parse(text);
             } catch (e) {
-                const hint = text.trim().startsWith('<!DOCTYPE') || text.trim().startsWith('<html')
-                    ? ' Got an HTML page instead of JSON. Open admin/NGO portals at http://localhost:5000 (not Live Server) and ensure the API is running.'
-                    : ' Invalid JSON from server.';
+                const t = text.trim();
+                let hint = ' Server returned non-JSON (' + res.status + ').';
+                if (t.startsWith('<!DOCTYPE') || t.startsWith('<html')) {
+                    hint = ' Got an HTML page instead of JSON. Ensure the API is running and /api routes are proxied to Render.';
+                } else if (t) {
+                    hint = ' ' + t.slice(0, 120);
+                }
                 throw new Error(hint);
             }
         }
@@ -38,6 +42,14 @@ window.PawApi = {
     async postJson(path, body) {
         return this.fetchJson(path, {
             method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(body || {})
+        });
+    },
+
+    async patchJson(path, body) {
+        return this.fetchJson(path, {
+            method: 'PATCH',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(body || {})
         });
