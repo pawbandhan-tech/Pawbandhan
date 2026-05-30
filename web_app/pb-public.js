@@ -48,20 +48,17 @@
         requestAnimationFrame(step);
     }
 
-    function initTrackerDemo() {
-        var steps = document.querySelectorAll('.pb-track-step');
+    function initJourneyHighlight() {
+        var track = document.getElementById('pbJourneyTrack');
+        if (!track) return;
+        var steps = track.querySelectorAll('.pb-journey-step');
         if (!steps.length) return;
-        var idx = 2;
+        var idx = 0;
         setInterval(function () {
-            steps.forEach(function (s, i) {
-                s.classList.remove('active');
-                if (i < idx) s.classList.add('done');
-                else s.classList.remove('done');
-            });
-            if (steps[idx]) steps[idx].classList.add('active');
+            steps.forEach(function (s) { s.classList.remove('active'); });
+            steps[idx].classList.add('active');
             idx = (idx + 1) % steps.length;
-            if (idx === 0) idx = 1;
-        }, 2800);
+        }, 3200);
     }
 
     async function loadCms() {
@@ -219,7 +216,7 @@
     document.addEventListener('DOMContentLoaded', function () {
         initNav();
         initReveal();
-        initTrackerDemo();
+        initJourneyHighlight();
         loadCms();
     });
 })();

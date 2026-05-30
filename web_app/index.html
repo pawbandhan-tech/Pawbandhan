@@ -82,21 +82,46 @@
         </div>
     </section>
 
-    <section class="pb-tracker-demo pb-reveal">
-        <div>
-            <h2>Flipkart-style live rescue tracking</h2>
-            <p>Report, track, and celebrate every step — from NGO accept to hero dispatch, vet care, and safe release.</p>
-            <a href="customer_auth.html" class="pb-btn pb-btn-primary" style="background:#fff;color:var(--pb-brand);">See a live case</a>
+    <section class="pb-journey pb-reveal" id="journey" aria-label="How tracking works">
+        <div class="pb-journey-intro">
+            <span class="pb-label">Live transparency</span>
+            <h2 class="pb-display">Follow the full rescue journey</h2>
+            <p>From your first alert to safe recovery — every milestone is timestamped and visible in your customer portal.</p>
         </div>
-        <div class="pb-track-mock">
-            <strong style="font-size:0.85rem;color:var(--pb-muted);">PB240531 · Injured pup</strong>
-            <div class="pb-track-bar"><i></i></div>
-            <div class="pb-track-steps">
-                <div class="pb-track-step done"><i class="fas fa-circle-check"></i> Rescue reported</div>
-                <div class="pb-track-step done"><i class="fas fa-circle-check"></i> NGO accepted</div>
-                <div class="pb-track-step active"><i class="fas fa-motorcycle"></i> Hero on the way · 12 min</div>
-                <div class="pb-track-step"><i class="far fa-circle"></i> Treatment &amp; safe release</div>
+        <div class="pb-journey-track" id="pbJourneyTrack">
+            <article class="pb-journey-step active" data-step="0">
+                <div class="pb-journey-icon"><i class="fas fa-camera"></i></div>
+                <h3>You report</h3>
+                <p>Photo, GPS, and animal details reach the network in seconds.</p>
+            </article>
+            <article class="pb-journey-step" data-step="1">
+                <div class="pb-journey-icon"><i class="fas fa-hand-holding-heart"></i></div>
+                <h3>NGO accepts</h3>
+                <p>A verified shelter takes ownership and plans the response.</p>
+            </article>
+            <article class="pb-journey-step" data-step="2">
+                <div class="pb-journey-icon"><i class="fas fa-motorcycle"></i></div>
+                <h3>Hero dispatched</h3>
+                <p>Field executive en route with live location on your map.</p>
+            </article>
+            <article class="pb-journey-step" data-step="3">
+                <div class="pb-journey-icon"><i class="fas fa-stethoscope"></i></div>
+                <h3>Vet care</h3>
+                <p>Treatment updates, photos, and handover when care begins.</p>
+            </article>
+            <article class="pb-journey-step" data-step="4">
+                <div class="pb-journey-icon"><i class="fas fa-house-chimney"></i></div>
+                <h3>Safe &amp; home</h3>
+                <p>Release, foster, or adoption — you see the happy outcome.</p>
+            </article>
+        </div>
+        <div class="pb-journey-foot">
+            <div class="pb-journey-perks">
+                <span><i class="fas fa-bell"></i> Push alerts at each step</span>
+                <span><i class="fas fa-map"></i> GPS when hero is active</span>
+                <span><i class="fas fa-images"></i> Photos from the field</span>
             </div>
+            <a href="customer_auth.html" class="pb-btn pb-btn-primary"><i class="fas fa-route"></i> Track a rescue in the app</a>
         </div>
     </section>
 
