@@ -419,16 +419,68 @@
 .ap-admin .pch-table td { border-color: var(--ap-border); }
 .ap-admin .pch-code { color: var(--ap-brand-dark); }
 
+.ap-form-section {
+    font-size: 0.72rem;
+    font-weight: 800;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--ap-brand);
+    margin: 20px 0 12px;
+    padding-top: 8px;
+    border-top: 1px solid var(--ap-border);
+}
+.ap-form-section:first-of-type { margin-top: 0; border-top: none; padding-top: 0; }
+.ap-form-grid-2 {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+}
+.ap-form-hint {
+    font-size: 0.78rem;
+    color: var(--ap-muted);
+    margin: 6px 0 8px;
+}
+.ap-card-scroll { max-height: none; }
+.ap-story-preview {
+    margin-bottom: 16px;
+    border-radius: 12px;
+    overflow: hidden;
+    border: 1px solid var(--ap-border);
+    background: #f1f5f9;
+}
+.ap-story-preview img {
+    width: 100%;
+    max-height: 160px;
+    object-fit: cover;
+    display: block;
+}
 .ap-queue-list { display: flex; flex-direction: column; gap: 10px; }
 .ap-queue-item {
     display: flex;
     justify-content: space-between;
     align-items: center;
+    gap: 12px;
     padding: 14px 16px;
     background: #f8fafc;
     border-radius: 12px;
     border: 1px solid var(--ap-border);
 }
+.ap-queue-item-main {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex: 1;
+    min-width: 0;
+}
+.ap-queue-thumb {
+    width: 52px;
+    height: 52px;
+    border-radius: 10px;
+    object-fit: cover;
+    flex-shrink: 0;
+    background: #e2e8f0;
+}
+.ap-queue-actions { display: flex; gap: 8px; flex-shrink: 0; }
 
 @media (max-width: 1100px) {
     .ap-stats { grid-template-columns: repeat(2, 1fr); }

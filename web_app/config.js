@@ -5,6 +5,8 @@
     const host = window.location.hostname;
     const isLocal = host === 'localhost' || host === '127.0.0.1' || window.location.protocol === 'file:';
     window.PAW_API_BASE = isLocal ? 'http://localhost:5000' : '';
+    /** Prefix for /uploads/… paths (same origin on Vercel via rewrite) */
+    window.PAW_MEDIA_BASE = window.PAW_API_BASE;
     window.PAW_SITE = {
         api: function (path) {
             const p = path.startsWith('/') ? path : '/' + path;

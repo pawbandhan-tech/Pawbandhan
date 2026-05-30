@@ -8,6 +8,10 @@
     {
       "source": "/api/:path*",
       "destination": "https://pawbandhan-api.onrender.com/api/:path*"
+    },
+    {
+      "source": "/uploads/:path*",
+      "destination": "https://pawbandhan-api.onrender.com/uploads/:path*"
     }
   ],
   "headers": [

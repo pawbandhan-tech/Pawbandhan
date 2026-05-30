@@ -23,8 +23,8 @@
             <a href="index.html" class="pb-brand">
                 <span class="pb-brand-icon"><i class="fas fa-paw"></i></span>
                 <span class="pb-brand-text">
-                    <strong>PawBandhan</strong>
-                    <small>Rescue network</small>
+                    <strong id="siteNameNav">PawBandhan</strong>
+                    <small id="siteTaglineNav">Rescue network</small>
                 </span>
             </a>
             <button class="pb-nav-toggle" id="pbNavToggle" aria-label="Menu" aria-expanded="false">
@@ -46,8 +46,8 @@
 
     <section class="pb-hero pb-reveal">
         <div>
-            <span class="pb-hero-badge"><i class="fas fa-shield-heart"></i> Verified NGOs &amp; live tracking</span>
-            <h1 class="pb-display">Every life deserves a <em>helping paw</em></h1>
+            <span class="pb-hero-badge" id="heroBadge"><i class="fas fa-shield-heart"></i> Verified NGOs &amp; live tracking</span>
+            <h1 class="pb-display" id="heroTitle">Every life deserves a <em>helping paw</em></h1>
             <p class="pb-hero-lead" id="heroSubtitle">India's rescue network connects caring citizens with shelters, veterinarians, and field heroes — from alert to safe recovery.</p>
             <div class="pb-hero-actions">
                 <a href="customer_auth.html" class="pb-btn pb-btn-primary btn-lg"><i class="fas fa-location-dot"></i> Report a case</a>
@@ -61,7 +61,7 @@
         </div>
         <div class="pb-hero-visual">
             <div class="pb-hero-ring" aria-hidden="true"></div>
-            <img class="pb-hero-img" src="https://images.unsplash.com/photo-1587300003388-59208cc962cb?w=900&q=85" alt="Rescued dog receiving care">
+            <img class="pb-hero-img" id="heroBannerImg" src="https://images.unsplash.com/photo-1587300003388-59208cc962cb?w=900&q=85" alt="Rescued animal receiving care">
             <div class="pb-float-card pb-float-1"><i class="fas fa-heart"></i> <span id="heroRescues">2,400+</span> rescues</div>
             <div class="pb-float-card pb-float-2"><i class="fas fa-motorcycle"></i> Field hero en route</div>
             <div class="pb-hero-paw-trail" aria-hidden="true">
@@ -231,17 +231,15 @@
         <div class="pb-stories-intro pb-reveal">
             <div class="pb-section-head" style="margin-bottom:0;text-align:left;">
                 <span class="pb-label">Success stories</span>
-                <h2 class="pb-display">Tails of hope</h2>
-                <p class="pb-stories-lead">Real rescues from shelters and heroes on the PawBandhan network — every tail has a second chance.</p>
+                <h2 class="pb-display" id="storiesSectionTitle">Tails of hope</h2>
+                <p class="pb-stories-lead" id="storiesSectionLead">Real rescues published by our team from the PawBandhan network — every tail has a second chance.</p>
             </div>
-            <a href="customer_auth.html" class="pb-btn pb-btn-outline"><i class="fas fa-pen"></i> Share your story</a>
+            <span class="pb-stories-admin-pill" id="storiesAdminNote"><i class="fas fa-shield-halved"></i> Curated in admin portal</span>
         </div>
-        <div id="storiesGrid" class="pb-stories pb-reveal" aria-live="polite" aria-busy="true">
-            <div class="pb-stories-skeleton" aria-hidden="true">
-                <div class="pb-story-skel pb-story-skel-featured"></div>
-                <div class="pb-story-skel"></div>
-                <div class="pb-story-skel"></div>
-            </div>
+        <div id="storiesGrid" class="pb-stories pb-reveal" aria-live="polite" aria-busy="true"></div>
+        <div id="storiesEmpty" class="pb-stories-empty" style="display:none;">
+            <i class="fas fa-paw"></i>
+            <p id="storiesEmptyMsg">Success stories will appear here once your team publishes them from the website editor.</p>
         </div>
     </section>
 
@@ -254,7 +252,7 @@
                 <div class="pb-footer-brand">
                     <a href="index.html" class="pb-brand pb-brand-footer">
                         <span class="pb-brand-icon"><i class="fas fa-paw"></i></span>
-                        <span class="pb-brand-text"><strong>PawBandhan</strong><small>Every paw matters</small></span>
+                        <span class="pb-brand-text"><strong id="footerSiteName">PawBandhan</strong><small id="footerSiteTagline">Every paw matters</small></span>
                     </a>
                     <p>India's connected rescue network — report, track, and save street animals with verified NGOs, field teams, and vets.</p>
                     <div class="pb-footer-social">
@@ -288,7 +286,7 @@
                 </div>
             </div>
             <div class="pb-footer-bottom">
-                <span>&copy; 2026 PawBandhan · Mumbai, India</span>
+                <span id="footerCopyright">&copy; 2026 PawBandhan · Mumbai, India</span>
                 <span class="pb-footer-tag"><i class="fas fa-paw"></i> Made with care for every paw</span>
             </div>
         </div>

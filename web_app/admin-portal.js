@@ -23,6 +23,25 @@
         });
     }
 
+    async function putJson(path, body) {
+        return fetchJson(path, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(body)
+        });
+    }
+
+    function resolveImageUrl(url) {
+        if (!url || !String(url).trim()) return '';
+        const u = String(url).trim();
+        if (/^https?:\/\//i.test(u)) return u;
+        const base = window.PAW_MEDIA_BASE != null ? window.PAW_MEDIA_BASE : (window.PAW_API_BASE || '');
+        if (u.startsWith('/')) return base + u;
+        return base + '/' + u.replace(/^\//, '');
+    }
+
+    let cachedStories = [];
+
     let pchAdminMounted = false;
     let adminStatusOptions = [];
 
@@ -556,38 +575,143 @@
         }
     }
 
+    function storyPayloadFromForm() {
+        const f = document.getElementById('storyForm');
+        const urlField = document.getElementById('storyImageUrl');
+        const urlText = document.getElementById('storyImageUrlText');
+        const imageUrl = (urlText && urlText.value.trim()) || (urlField && urlField.value) || '';
+        return {
+            title: f.title.value,
+            location: f.location.value,
+            description: f.description.value,
+            image_url: imageUrl,
+            category: f.category.value || 'Rescue story'
+        };
+    }
+
+    function updateStoryPreview(url) {
+        const wrap = document.getElementById('storyImagePreview');
+        const img = document.getElementById('storyImagePreviewImg');
+        const resolved = resolveImageUrl(url);
+        if (!wrap || !img || !resolved) {
+            if (wrap) wrap.style.display = 'none';
+            return;
+        }
+        img.src = resolved;
+        img.onerror = function () {
+            this.onerror = null;
+            wrap.style.display = 'none';
+        };
+        wrap.style.display = 'block';
+    }
+
     async function loadStories() {
         try {
             const stories = await fetchJson('/api/stories');
+            cachedStories = stories || [];
             const el = document.getElementById('storiesList');
             if (!stories.length) {
-                el.innerHTML = '<p style="color:var(--ap-muted);font-size:0.9rem;">No stories yet. Add one below.</p>';
+                el.innerHTML = '<p style="color:var(--ap-muted);font-size:0.9rem;">No stories yet. Add one to show on the homepage.</p>';
                 return;
             }
-            el.innerHTML = stories.map((s) => `
+            el.innerHTML = stories.map((s) => {
+                const thumb = resolveImageUrl(s.image_url);
+                const thumbHtml = thumb
+                    ? `<img class="ap-queue-thumb" src="${thumb.replace(/"/g, '&quot;')}" alt="" onerror="this.style.display='none'">`
+                    : '<span class="ap-queue-thumb" style="display:flex;align-items:center;justify-content:center;font-size:1.2rem">🐾</span>';
+                return `
                 <div class="ap-queue-item">
-                    <div><strong>${escapeHtml(s.title)}</strong><br><small>${escapeHtml(s.location || '')}</small></div>
-                    <button type="button" class="ap-btn ap-btn-danger ap-btn-sm" onclick="AdminPortal.deleteStory(${s.id})"><i class="fas fa-trash"></i></button>
-                </div>`).join('');
+                    <div class="ap-queue-item-main">
+                        ${thumbHtml}
+                        <div><strong>${escapeHtml(s.title)}</strong><br><small>${escapeHtml(s.category || '')} · ${escapeHtml(s.location || '')}</small></div>
+                    </div>
+                    <div class="ap-queue-actions">
+                        <button type="button" class="ap-btn ap-btn-ghost ap-btn-sm" onclick="AdminPortal.editStory(${s.id})"><i class="fas fa-pen"></i></button>
+                        <button type="button" class="ap-btn ap-btn-danger ap-btn-sm" onclick="AdminPortal.deleteStory(${s.id})"><i class="fas fa-trash"></i></button>
+                    </div>
+                </div>`;
+            }).join('');
         } catch (e) { /* */ }
     }
 
-    function showStoryModal() {
-        document.getElementById('storyForm').reset();
+    function showStoryModal(story) {
+        const f = document.getElementById('storyForm');
+        const idField = document.getElementById('storyIdField');
+        const modalTitle = document.getElementById('storyModalTitle');
+        const submitBtn = document.getElementById('storySubmitBtn');
+        const urlField = document.getElementById('storyImageUrl');
+        const urlText = document.getElementById('storyImageUrlText');
+        const fileInput = document.getElementById('storyImageFile');
+        f.reset();
+        if (fileInput) fileInput.value = '';
+        if (story) {
+            idField.value = String(story.id);
+            f.title.value = story.title || '';
+            f.location.value = story.location || '';
+            f.description.value = story.description || '';
+            f.category.value = story.category || 'Rescue story';
+            const img = story.image_url || '';
+            if (urlField) urlField.value = img;
+            if (urlText) urlText.value = img;
+            if (modalTitle) modalTitle.textContent = 'Edit success story';
+            if (submitBtn) submitBtn.textContent = 'Save changes';
+            updateStoryPreview(img);
+        } else {
+            idField.value = '';
+            if (urlField) urlField.value = '';
+            if (urlText) urlText.value = '';
+            if (modalTitle) modalTitle.textContent = 'Add success story';
+            if (submitBtn) submitBtn.textContent = 'Publish story';
+            updateStoryPreview('');
+        }
         openModal('storyModal');
     }
 
+    function editStory(id) {
+        const story = cachedStories.find((s) => Number(s.id) === Number(id));
+        if (story) showStoryModal(story);
+        else toast('Story not found. Refresh and try again.', false);
+    }
+
+    async function uploadStoryImage(file) {
+        if (!file) return;
+        const fd = new FormData();
+        fd.append('image', file);
+        const headers = {};
+        const token = window.PawAdminAuth && PawAdminAuth.getToken();
+        if (token) headers.Authorization = 'Bearer ' + token;
+        const res = await fetch(api('/api/admin/stories/upload-image'), {
+            method: 'POST',
+            headers,
+            body: fd
+        });
+        const text = await res.text();
+        let data = {};
+        try { data = text ? JSON.parse(text) : {}; } catch (e) {
+            throw new Error('Upload failed');
+        }
+        if (!res.ok) throw new Error(data.error || 'Upload failed');
+        const url = data.url || '';
+        const urlField = document.getElementById('storyImageUrl');
+        const urlText = document.getElementById('storyImageUrlText');
+        if (urlField) urlField.value = url;
+        if (urlText) urlText.value = url;
+        updateStoryPreview(url);
+        toast('Image uploaded.', true);
+    }
+
     async function submitStory() {
-        const f = document.getElementById('storyForm');
+        const idField = document.getElementById('storyIdField');
+        const storyId = idField && idField.value ? idField.value.trim() : '';
+        const payload = storyPayloadFromForm();
         try {
-            await postJson('/api/admin/stories', {
-                title: f.title.value,
-                location: f.location.value,
-                description: f.description.value,
-                image_url: f.image_url.value,
-                category: f.category.value || 'rescue'
-            });
-            toast('Story published.', true);
+            if (storyId) {
+                await putJson('/api/admin/stories/' + storyId, payload);
+                toast('Story updated.', true);
+            } else {
+                await postJson('/api/admin/stories', payload);
+                toast('Story published.', true);
+            }
             closeModal('storyModal');
             loadStories();
         } catch (e) {
@@ -630,6 +754,16 @@
             e.preventDefault();
             submitStory();
         });
+        document.getElementById('storyImageFile')?.addEventListener('change', (e) => {
+            const file = e.target.files && e.target.files[0];
+            if (file) uploadStoryImage(file).catch((err) => toast(err.message, false));
+        });
+        document.getElementById('storyImageUrlText')?.addEventListener('input', (e) => {
+            const v = e.target.value.trim();
+            const urlField = document.getElementById('storyImageUrl');
+            if (urlField) urlField.value = v;
+            updateStoryPreview(v);
+        });
 
         refreshDashboard();
         showTab('dash', document.querySelector('.ap-nav a[data-tab="dash"]'));
@@ -664,6 +798,8 @@
         loadCases,
         loadCustomers,
         showStoryModal,
+        editStory,
+        uploadStoryImage,
         submitStory,
         deleteStory,
         logout,

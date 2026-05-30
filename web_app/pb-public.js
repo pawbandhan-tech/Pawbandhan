@@ -1,15 +1,17 @@
 (function () {
+    var PLACEHOLDER_IMG = 'https://images.unsplash.com/photo-1548199973-03cce0fe87b9?w=800&q=80';
+
     function initNav() {
-        const nav = document.getElementById('pbNav');
-        const toggle = document.getElementById('pbNavToggle');
-        const links = document.getElementById('pbNavLinks');
+        var nav = document.getElementById('pbNav');
+        var toggle = document.getElementById('pbNavToggle');
+        var links = document.getElementById('pbNavLinks');
         if (!nav) return;
         window.addEventListener('scroll', function () {
             nav.classList.toggle('scrolled', window.scrollY > 40);
         });
         if (toggle && links) {
             toggle.addEventListener('click', function () {
-                const open = links.classList.toggle('open');
+                var open = links.classList.toggle('open');
                 toggle.setAttribute('aria-expanded', open ? 'true' : 'false');
             });
             links.querySelectorAll('a').forEach(function (a) {
@@ -36,14 +38,12 @@
         if (!el || isNaN(target)) return;
         var start = 0;
         var startTime = null;
-        var card = el.closest('.pb-stat');
         function step(ts) {
             if (!startTime) startTime = ts;
             var p = Math.min((ts - startTime) / duration, 1);
             var eased = 1 - Math.pow(1 - p, 3);
             el.textContent = fmt(Math.round(start + (target - start) * eased));
             if (p < 1) requestAnimationFrame(step);
-            else if (card) card.classList.add('pb-stat-animated');
         }
         requestAnimationFrame(step);
     }
@@ -61,6 +61,77 @@
         }, 3200);
     }
 
+    function resolveImageUrl(url) {
+        if (!url || !String(url).trim()) return '';
+        var u = String(url).trim();
+        if (/^https?:\/\//i.test(u)) return u;
+        var base = window.PAW_MEDIA_BASE != null ? window.PAW_MEDIA_BASE : (window.PAW_API_BASE || '');
+        if (u.startsWith('/')) return base + u;
+        return base + '/' + u.replace(/^\//, '');
+    }
+
+    function esc(s) {
+        if (!s) return '';
+        return String(s)
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;');
+    }
+
+    function setText(id, text) {
+        var el = document.getElementById(id);
+        if (el && text) el.textContent = text;
+    }
+
+    function applySiteConfig(config) {
+        if (!config) return;
+        setText('siteNameNav', config.site_name);
+        setText('siteTaglineNav', config.site_tagline);
+        setText('footerSiteName', config.site_name);
+        setText('footerSiteTagline', config.site_tagline);
+        if (config.site_name) {
+            document.title = config.site_name + ' | India\'s kindest animal rescue network';
+        }
+        if (config.hero_badge) {
+            var badge = document.getElementById('heroBadge');
+            if (badge) badge.innerHTML = '<i class="fas fa-shield-heart"></i> ' + esc(config.hero_badge);
+        }
+        if (config.hero_title) {
+            var h1 = document.getElementById('heroTitle');
+            if (h1) h1.textContent = config.hero_title;
+        }
+        if (config.hero_subtitle) {
+            var sub = document.getElementById('heroSubtitle');
+            if (sub) sub.textContent = config.hero_subtitle;
+        }
+        if (config.hero_banner) {
+            var img = document.getElementById('heroBannerImg');
+            if (img) {
+                img.src = resolveImageUrl(config.hero_banner) || config.hero_banner;
+                img.onerror = function () {
+                    this.onerror = null;
+                    this.src = PLACEHOLDER_IMG;
+                };
+            }
+        }
+        setText('storiesSectionTitle', config.stories_section_title);
+        setText('storiesSectionLead', config.stories_section_lead);
+        setText('storiesEmptyMsg', config.stories_empty_message);
+        if (config.footer_tagline) {
+            var ft = document.querySelector('.pb-footer-brand p');
+            if (ft) ft.textContent = config.footer_tagline;
+        }
+        setText('footerCopyright', config.footer_copyright);
+        var contactEmail = config.emergency_hotline || config.contact_email || 'pawbandhan@gmail.com';
+        ['heroHotline', 'footerHotline'].forEach(function (id) {
+            var el = document.getElementById(id);
+            if (!el) return;
+            el.textContent = contactEmail;
+            if (el.href !== undefined) el.href = 'mailto:' + contactEmail;
+        });
+    }
+
     async function loadCms() {
         if (!window.PAW_SITE) {
             loadStories();
@@ -68,23 +139,7 @@
         }
         try {
             var config = await PAW_SITE.fetchJson('/api/site-config');
-            if (config.hero_title) {
-                var h1 = document.querySelector('.pb-hero h1');
-                if (h1 && config.hero_title.indexOf('paw') === -1) {
-                    /* keep creative headline unless CMS has custom full title */
-                }
-            }
-            if (config.hero_subtitle) {
-                var sub = document.getElementById('heroSubtitle');
-                if (sub) sub.textContent = config.hero_subtitle;
-            }
-            var contactEmail = config.emergency_hotline || config.contact_email || 'pawbandhan@gmail.com';
-            ['heroHotline', 'footerHotline'].forEach(function (id) {
-                var el = document.getElementById(id);
-                if (!el) return;
-                el.textContent = contactEmail;
-                if (el.href !== undefined) el.href = 'mailto:' + contactEmail;
-            });
+            applySiteConfig(config);
         } catch (e) { /* optional */ }
 
         try {
@@ -123,49 +178,18 @@
         loadStories();
     }
 
-    var FALLBACK_STORIES = [
-        {
-            title: 'Bruno walked again',
-            description: 'A hit-and-run left Bruno unable to stand. An NGO accepted the case within minutes; a hero reached the spot in 12 minutes. After surgery and foster care, he was adopted by the family that first reported him.',
-            image_url: 'https://images.unsplash.com/photo-1587300003388-59208cc962cb?w=800&q=85',
-            tag: 'Full recovery',
-            meta: 'Mumbai · 14 days'
-        },
-        {
-            title: 'Kittens under the flyover',
-            description: 'Five neonatal kittens were boxed and left near traffic. Volunteers warmed them, a vet stabilized feeding, and a shelter found bottle-feed fosters within 48 hours.',
-            image_url: 'https://images.unsplash.com/photo-1548199973-03cce0fe87b9?w=600&q=80',
-            tag: 'Litter rescue',
-            meta: 'Pune · 2 days'
-        },
-        {
-            title: 'Spirit healed at sunrise',
-            description: 'Malnutrition and mange had left Spirit too weak to move. Live tracking kept the reporter updated through treatment until release back to a monitored colony.',
-            image_url: 'https://images.unsplash.com/photo-1601758228041-f3b2795255f1?w=600&q=80',
-            tag: 'Released safe',
-            meta: 'Delhi · 3 weeks'
-        }
-    ];
-
-    function esc(s) {
-        if (!s) return '';
-        return String(s)
-            .replace(/&/g, '&amp;')
-            .replace(/</g, '&lt;')
-            .replace(/>/g, '&gt;')
-            .replace(/"/g, '&quot;');
-    }
-
     function storyCard(s, featured) {
-        var img = s.image_url || 'https://images.unsplash.com/photo-1548199973-03cce0fe87b9?w=600&q=80';
-        var tag = s.tag || 'Rescue story';
-        var meta = s.meta || s.location || '';
+        var img = resolveImageUrl(s.image_url) || PLACEHOLDER_IMG;
+        var tag = s.category || s.tag || 'Rescue story';
+        var meta = s.location || s.meta || '';
         var desc = (s.description || '').slice(0, featured ? 220 : 130);
         var cls = featured ? 'pb-story pb-story-featured' : 'pb-story';
+        var safeImg = img.replace(/"/g, '&quot;');
         return '<article class="' + cls + '">' +
             '<div class="pb-story-media">' +
             '<span class="pb-story-tag">' + esc(tag) + '</span>' +
-            '<img src="' + esc(img) + '" alt="" loading="lazy">' +
+            '<img src="' + safeImg + '" alt="' + esc(s.title || 'Rescue story') + '" loading="lazy" ' +
+            'onerror="this.onerror=null;this.src=\'' + PLACEHOLDER_IMG + '\'">' +
             '</div>' +
             '<div class="pb-story-body">' +
             '<h4>' + esc(s.title || 'A life saved') + '</h4>' +
@@ -176,10 +200,23 @@
 
     function renderStories(list) {
         var grid = document.getElementById('storiesGrid');
+        var empty = document.getElementById('storiesEmpty');
         if (!grid) return;
-        var items = (list && list.length) ? list.slice(0, 3) : FALLBACK_STORIES;
-        if (!items.length) items = FALLBACK_STORIES;
+
+        if (!list || !list.length) {
+            grid.innerHTML = '';
+            grid.setAttribute('aria-busy', 'false');
+            grid.classList.remove('pb-stories-has-items');
+            if (empty) empty.style.display = 'block';
+            return;
+        }
+
+        if (empty) empty.style.display = 'none';
+        var max = Math.min(list.length, 6);
+        var items = list.slice(0, max);
         grid.setAttribute('aria-busy', 'false');
+        grid.classList.toggle('pb-stories-many', max > 3);
+        grid.classList.add('pb-stories-has-items');
         grid.innerHTML = items.map(function (s, i) {
             return storyCard(s, i === 0);
         }).join('');
@@ -187,29 +224,32 @@
 
     async function loadStories() {
         var grid = document.getElementById('storiesGrid');
-        if (!grid || !window.PAW_SITE) {
-            renderStories(FALLBACK_STORIES);
+        if (!grid) return;
+
+        if (!window.PAW_SITE) {
+            renderStories([]);
             return;
         }
+
+        grid.setAttribute('aria-busy', 'true');
+        grid.innerHTML = '<div class="pb-stories-loading"><i class="fas fa-spinner fa-spin"></i> Loading stories…</div>';
+
         try {
             var stories = await PAW_SITE.fetchJson('/api/stories');
             if (stories && stories.length) {
-                var mapped = stories.slice(0, 3).map(function (s, i) {
-                    return {
-                        title: s.title,
-                        description: s.description,
-                        image_url: s.image_url,
-                        location: s.location,
-                        tag: i === 0 ? 'Featured' : 'Recovery',
-                        meta: s.location || ''
-                    };
-                });
-                renderStories(mapped);
+                renderStories(stories);
             } else {
-                renderStories(FALLBACK_STORIES);
+                renderStories([]);
             }
         } catch (e) {
-            renderStories(FALLBACK_STORIES);
+            grid.innerHTML = '';
+            grid.setAttribute('aria-busy', 'false');
+            var empty = document.getElementById('storiesEmpty');
+            if (empty) {
+                empty.style.display = 'block';
+                var msg = document.getElementById('storiesEmptyMsg');
+                if (msg) msg.textContent = 'Could not load stories. Please try again later.';
+            }
         }
     }
 

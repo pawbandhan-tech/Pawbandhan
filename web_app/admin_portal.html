@@ -30,7 +30,7 @@
             <li><a href="#" data-tab="reps"><i class="fas fa-user-shield"></i> Representatives</a></li>
             <li><a href="#" data-tab="cases"><i class="fas fa-truck-medical"></i> Cases</a></li>
             <li><a href="#" data-tab="customers"><i class="fas fa-users"></i> Customers</a></li>
-            <li><a href="#" data-tab="cms"><i class="fas fa-globe"></i> Public site</a></li>
+            <li><a href="#" data-tab="cms"><i class="fas fa-globe"></i> Website editor</a></li>
             <li><a href="#" data-tab="settings"><i class="fas fa-gear"></i> Settings</a></li>
         </ul>
         <div class="ap-sidebar-foot">
@@ -153,19 +153,35 @@
 
         <div id="cmsTab" class="ap-tab">
             <header class="ap-header">
-                <div><h2>Public site</h2><p>Hero copy, contact email, stats overrides, and success stories.</p></div>
+                <div><h2>Website editor</h2><p>Site name, hero, stories section copy, footer, live stats overrides, and success stories shown on the homepage.</p></div>
             </header>
             <div class="ap-grid-2">
-                <div class="ap-card">
+                <div class="ap-card ap-card-scroll">
                     <form id="cmsForm">
-                        <div class="ap-form-group"><label>Hero title</label><input type="text" name="hero_title" placeholder="Saving India's Indie Dogs"></div>
+                        <h3 class="ap-form-section">Branding</h3>
+                        <div class="ap-form-group"><label>Site name</label><input type="text" name="site_name" placeholder="PawBandhan"></div>
+                        <div class="ap-form-group"><label>Site tagline (nav)</label><input type="text" name="site_tagline" placeholder="Rescue network"></div>
+                        <div class="ap-form-group"><label>Footer tagline</label><textarea name="footer_tagline" rows="2" placeholder="Short line under logo"></textarea></div>
+                        <div class="ap-form-group"><label>Footer copyright line</label><input type="text" name="footer_copyright" placeholder="© 2026 PawBandhan · Mumbai, India"></div>
+
+                        <h3 class="ap-form-section">Hero</h3>
+                        <div class="ap-form-group"><label>Hero badge</label><input type="text" name="hero_badge" placeholder="Verified NGOs & live tracking"></div>
+                        <div class="ap-form-group"><label>Hero title</label><input type="text" name="hero_title" placeholder="Every life deserves a helping paw"></div>
                         <div class="ap-form-group"><label>Hero subtitle</label><textarea name="hero_subtitle" rows="3"></textarea></div>
-                        <div class="ap-form-group"><label>Banner image URL</label><input type="text" name="hero_banner" placeholder="https://…"></div>
+                        <div class="ap-form-group"><label>Banner image URL</label><input type="text" name="hero_banner" placeholder="https://… or /uploads/…"></div>
+
+                        <h3 class="ap-form-section">Success stories section</h3>
+                        <div class="ap-form-group"><label>Section title</label><input type="text" name="stories_section_title" placeholder="Tails of hope"></div>
+                        <div class="ap-form-group"><label>Section description</label><textarea name="stories_section_lead" rows="2"></textarea></div>
+                        <div class="ap-form-group"><label>Empty state message</label><textarea name="stories_empty_message" rows="2"></textarea></div>
+
+                        <h3 class="ap-form-section">Contact &amp; stats</h3>
                         <div class="ap-form-group"><label>Public contact email</label><input type="email" name="emergency_hotline" placeholder="pawbandhan@gmail.com"></div>
-                        <div class="ap-form-group"><label>Footer text</label><input type="text" name="footer_copyright"></div>
-                        <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
-                            <div class="ap-form-group"><label>Rescues (display override)</label><input type="number" name="stat_rescues_override"></div>
-                            <div class="ap-form-group"><label>NGOs (display override)</label><input type="number" name="stat_ngos_override"></div>
+                        <div class="ap-form-grid-2">
+                            <div class="ap-form-group"><label>Rescues (display)</label><input type="number" name="stat_rescues_override" min="0"></div>
+                            <div class="ap-form-group"><label>NGOs (display)</label><input type="number" name="stat_ngos_override" min="0"></div>
+                            <div class="ap-form-group"><label>Vets (display)</label><input type="number" name="stat_doctors_override" min="0"></div>
+                            <div class="ap-form-group"><label>Field heroes (display)</label><input type="number" name="stat_riders_override" min="0"></div>
                         </div>
                         <button type="button" class="ap-btn ap-btn-primary" onclick="AdminPortal.saveSiteConfig()">Publish to live site</button>
                     </form>
@@ -318,14 +334,24 @@
     <div id="storyModal" class="ap-modal-bg">
         <div class="ap-modal ap-modal-sm">
             <button type="button" class="ap-modal-close" onclick="AdminPortal.closeModal('storyModal')">&times;</button>
-            <h2 style="margin-bottom:16px;font-family:Fraunces,serif;">Add success story</h2>
+            <h2 id="storyModalTitle" style="margin-bottom:16px;font-family:Fraunces,serif;">Add success story</h2>
             <form id="storyForm">
+                <input type="hidden" name="story_id" id="storyIdField" value="">
                 <div class="ap-form-group"><label>Title</label><input type="text" name="title" required></div>
-                <div class="ap-form-group"><label>Location</label><input type="text" name="location"></div>
-                <div class="ap-form-group"><label>Description</label><textarea name="description" rows="3"></textarea></div>
-                <div class="ap-form-group"><label>Image URL</label><input type="url" name="image_url" placeholder="https://…"></div>
-                <div class="ap-form-group"><label>Category</label><input type="text" name="category" value="rescue"></div>
-                <button type="submit" class="ap-btn ap-btn-primary" style="width:100%">Publish story</button>
+                <div class="ap-form-group"><label>Location · duration</label><input type="text" name="location" placeholder="Mumbai · 14 days"></div>
+                <div class="ap-form-group"><label>Description</label><textarea name="description" rows="4"></textarea></div>
+                <div class="ap-form-group"><label>Category tag</label><input type="text" name="category" value="Full recovery" placeholder="Full recovery"></div>
+                <div class="ap-form-group">
+                    <label>Cover image</label>
+                    <input type="file" id="storyImageFile" accept="image/jpeg,image/png,image/webp,image/gif">
+                    <input type="hidden" name="image_url" id="storyImageUrl">
+                    <p class="ap-form-hint">Upload a photo or paste a full https:// URL below.</p>
+                    <input type="text" id="storyImageUrlText" placeholder="https://… or leave blank after upload">
+                </div>
+                <div id="storyImagePreview" class="ap-story-preview" style="display:none">
+                    <img id="storyImagePreviewImg" alt="Preview">
+                </div>
+                <button type="submit" class="ap-btn ap-btn-primary" style="width:100%" id="storySubmitBtn">Publish story</button>
             </form>
         </div>
     </div>
@@ -340,6 +366,6 @@
     <script src="paw-case-hub.js?v=1"></script>
     <script src="shared-case-portal.js?v=3"></script>
     <script src="shared-entity-profile.js?v=2"></script>
-    <script src="admin-portal.js?v=1"></script>
+    <script src="admin-portal.js?v=2"></script>
 </body>
 </html>

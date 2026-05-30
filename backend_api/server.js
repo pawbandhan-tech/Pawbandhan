@@ -830,8 +830,32 @@ app.get('/api/stories', async (req, res) => {
 app.post('/api/admin/stories', async (req, res) => {
     try {
         const { title, location, description, image_url, category } = req.body;
-        await pool.query('INSERT INTO success_stories (title, location, description, image_url, category) VALUES ($1, $2, $3, $4, $5)', [title, location, description, image_url, category]);
-        res.json({ success: true });
+        const r = await pool.query(
+            'INSERT INTO success_stories (title, location, description, image_url, category) VALUES ($1, $2, $3, $4, $5) RETURNING *',
+            [title, location, description, image_url, category || 'rescue']
+        );
+        res.json({ success: true, story: r.rows[0] });
+    } catch (error) { res.status(500).json({ error: error.message }); }
+});
+
+app.put('/api/admin/stories/:id', async (req, res) => {
+    try {
+        const { title, location, description, image_url, category } = req.body;
+        const r = await pool.query(
+            `UPDATE success_stories SET title=$1, location=$2, description=$3, image_url=$4, category=$5
+             WHERE id=$6 RETURNING *`,
+            [title, location, description, image_url, category || 'rescue', req.params.id]
+        );
+        if (!r.rows.length) return res.status(404).json({ error: 'Story not found' });
+        res.json({ success: true, story: r.rows[0] });
+    } catch (error) { res.status(500).json({ error: error.message }); }
+});
+
+app.post('/api/admin/stories/upload-image', upload.single('image'), async (req, res) => {
+    try {
+        if (!req.file) return res.status(400).json({ error: 'No image file uploaded' });
+        const url = '/uploads/' + req.file.filename;
+        res.json({ success: true, url });
     } catch (error) { res.status(500).json({ error: error.message }); }
 });
 
@@ -1058,7 +1082,14 @@ async function initDB() {
             ('stat_rescues_override', '15000'),
             ('stat_ngos_override', '245'),
             ('stat_doctors_override', '1200'),
-            ('stat_riders_override', '5600')
+            ('stat_riders_override', '5600'),
+            ('site_name', 'PawBandhan'),
+            ('site_tagline', 'Rescue network'),
+            ('hero_badge', 'Verified NGOs & live tracking'),
+            ('stories_section_title', 'Tails of hope'),
+            ('stories_section_lead', 'Real rescues published by the PawBandhan team from NGOs and field heroes across India.'),
+            ('stories_empty_message', 'New success stories will appear here once published from the admin portal.'),
+            ('footer_tagline', 'Technology and compassion for every street animal in India.')
         ON CONFLICT DO NOTHING;
         INSERT INTO ngos (name, email, phone) SELECT 'PawBandhan Foundation', 'admin@pawbandhan.com', '1234567890' WHERE NOT EXISTS (SELECT 1 FROM ngos);
     `;
