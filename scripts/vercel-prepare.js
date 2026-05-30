@@ -18,3 +18,4 @@ function copyDir(src, dest) {
 
 copyDir(assetsSrc, assetsDest);
 console.log('Vercel prepare: assets copied to web_app/assets');
+console.log('Vercel prepare: API runs via /api serverless (set DATABASE_URL in Vercel env)');

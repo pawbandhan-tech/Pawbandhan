@@ -756,6 +756,7 @@ async function getCustomerProfile(uid) {
 }
 
 async function upsertCustomerProfile(uid, body) {
+    if (!pool) throw Object.assign(new Error('Database not configured. Add DATABASE_URL in Vercel environment variables.'), { status: 503 });
     const name = body.name != null ? String(body.name).trim() : '';
     const phone = body.phone != null ? String(body.phone).trim() : null;
     const gender = body.gender != null ? String(body.gender).trim() : null;
@@ -1643,16 +1644,23 @@ app.use('/assets', express.static(ASSETS_DIR));
 const PORT = Number(process.env.PORT) || 5000;
 const HOST = process.env.HOST || '0.0.0.0';
 
-server.listen(PORT, HOST, () => {
-    console.log('');
-    console.log('========================================');
-    console.log('PawBandhan Server Running');
-    console.log('========================================');
-    console.log(`Listening on ${HOST}:${PORT}`);
-    console.log('DATABASE_URL:', dbUrl ? 'set' : 'MISSING — add in hosting dashboard');
-    console.log('========================================');
-    console.log('');
-    initDB().catch((err) => console.error('Database init error:', err.message));
-});
+const dbInitPromise = pool
+    ? initDB().catch((err) => console.error('Database init error:', err.message))
+    : Promise.resolve();
+
+if (!process.env.VERCEL) {
+    server.listen(PORT, HOST, () => {
+        console.log('');
+        console.log('========================================');
+        console.log('PawBandhan Server Running');
+        console.log('========================================');
+        console.log(`Listening on ${HOST}:${PORT}`);
+        console.log('DATABASE_URL:', dbUrl ? 'set' : 'MISSING — add in hosting dashboard');
+        console.log('========================================');
+        console.log('');
+    });
+}
 
 process.on('unhandledRejection', (err) => console.error('Unhandled rejection:', err));
+
+module.exports = { app, server, io, pool, initDB, dbInitPromise };
