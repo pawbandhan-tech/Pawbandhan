@@ -1,5 +1,6 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
+  "name": "pawbandhan",
   "buildCommand": "npm run vercel-build",
   "outputDirectory": "web_app",
   "framework": null,
