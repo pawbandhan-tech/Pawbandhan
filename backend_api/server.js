@@ -255,6 +255,13 @@ app.post('/api/users/register', async (req, res) => {
         } else if (role === 'rider') {
             ackNo = 'ACK-RID-' + Date.now().toString().slice(-6);
             await pool.query('INSERT INTO riders (uid, name, email, phone, status) VALUES ($1,$2,$3,$4,$5)', [uid, `${firstName} ${lastName}`, email, phoneNo, 'pending']);
+        } else if ((role || 'customer') === 'customer') {
+            const customerName = `${firstName || ''} ${lastName || ''}`.trim() || 'Customer';
+            await pool.query(
+                `INSERT INTO customers (uid, name, email, phone) VALUES ($1, $2, $3, $4)
+                 ON CONFLICT (uid) DO UPDATE SET name = EXCLUDED.name, email = EXCLUDED.email, phone = EXCLUDED.phone`,
+                [uid, customerName, email, phoneNo]
+            );
         }
 
         await sendEmail(email, 'Welcome to PawBandhan', `<h2>Welcome ${firstName}!</h2><p>Your account has been created. ${tempId ? `Your Temporary ID is: <strong>${tempId}</strong>.` : ''} Please login to complete your KYC onboarding. Your Application Reference: <strong>${ackNo || accountNo}</strong></p>`);
@@ -733,14 +740,60 @@ app.get('/api/customers/:uid/profile', async (req, res) => {
         );
         if (!u.rows.length) return res.status(404).json({ error: 'Not found' });
         const row = u.rows[0];
+        const fullName = (row.customer_name || `${row.first_name || ''} ${row.last_name || ''}`.trim()) || 'Customer';
         res.json({
             uid: row.uid,
-            name: row.customer_name || `${row.first_name || ''} ${row.last_name || ''}`.trim(),
+            name: fullName,
             email: row.email,
             phone: row.phone_no,
             accountNo: row.account_no,
             hasPortalAccess: Boolean(row.portal_access_code)
         });
+    } catch (error) { res.status(500).json({ error: error.message }); }
+});
+
+app.patch('/api/customers/:uid/profile', async (req, res) => {
+    try {
+        const uid = req.params.uid;
+        const name = req.body.name != null ? String(req.body.name).trim() : '';
+        const phone = req.body.phone != null ? String(req.body.phone).trim() : null;
+        if (!name) return res.status(400).json({ error: 'Name is required' });
+
+        let existing = await pool.query('SELECT uid, email FROM users WHERE uid = $1', [uid]);
+        const parts = name.split(/\s+/).filter(Boolean);
+        const firstName = parts[0] || name;
+        const lastName = parts.slice(1).join(' ') || '';
+        const emailIn = req.body.email != null ? String(req.body.email).trim().toLowerCase() : null;
+
+        if (!existing.rows.length) {
+            const accountNo = generateCode('PB');
+            await pool.query(
+                'INSERT INTO users (uid, first_name, last_name, phone_no, email, account_no, role, status) VALUES ($1,$2,$3,$4,$5,$6,$7,$8)',
+                [uid, firstName, lastName, phone, emailIn || `customer-${uid.slice(0, 8)}@pawbandhan.local`, accountNo, 'customer', 'active']
+            );
+            existing = await pool.query('SELECT uid, email FROM users WHERE uid = $1', [uid]);
+        } else {
+            await pool.query(
+                'UPDATE users SET first_name = $1, last_name = $2, phone_no = COALESCE($3, phone_no) WHERE uid = $4',
+                [firstName, lastName, phone, uid]
+            );
+        }
+
+        const email = emailIn || existing.rows[0].email;
+        const cust = await pool.query('SELECT id FROM customers WHERE uid = $1', [uid]);
+        if (cust.rows.length) {
+            await pool.query(
+                'UPDATE customers SET name = $1, phone = COALESCE($2, phone), email = COALESCE($3, email) WHERE uid = $4',
+                [name, phone, email, uid]
+            );
+        } else {
+            await pool.query(
+                'INSERT INTO customers (uid, name, email, phone) VALUES ($1, $2, $3, $4)',
+                [uid, name, email, phone]
+            );
+        }
+
+        res.json({ success: true, uid, name, email, phone });
     } catch (error) { res.status(500).json({ error: error.message }); }
 });
 

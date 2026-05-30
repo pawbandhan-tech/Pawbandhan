@@ -66,9 +66,10 @@
             const email = document.getElementById('loginEmail').value.trim();
             const password = document.getElementById('loginPassword').value;
             try {
-                await auth.signInWithEmailAndPassword(email, password);
-                sessionStorage.setItem('customer_uid', auth.currentUser.uid);
+                const cred = await auth.signInWithEmailAndPassword(email, password);
+                sessionStorage.setItem('customer_uid', cred.user.uid);
                 sessionStorage.removeItem('portal_customer_uid');
+                if (cred.user.displayName) sessionStorage.setItem('portal_customer_name', cred.user.displayName);
                 window.location.href = 'dashboard.html';
             } catch (err) {
                 try {
@@ -104,9 +105,14 @@
                         firstName: document.getElementById('firstName').value,
                         lastName: document.getElementById('lastName').value,
                         email: document.getElementById('email').value,
-                        phone: document.getElementById('phone').value
+                        phoneNo: document.getElementById('phone').value,
+                        role: 'customer'
                     })
                 });
+                sessionStorage.setItem('customer_uid', cred.user.uid);
+                const fn = document.getElementById('firstName').value.trim();
+                const ln = document.getElementById('lastName').value.trim();
+                sessionStorage.setItem('portal_customer_name', (fn + ' ' + ln).trim());
                 window.location.href = 'dashboard.html';
             } catch (err) { alert(err.message); }
             return false;

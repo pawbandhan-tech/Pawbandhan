@@ -84,8 +84,15 @@
     async function loadCustomerProfile() {
         if (!currentUid || currentUid === 'demo') return;
         try {
-            const p = await (await fetch('/api/customers/' + currentUid + '/profile')).json();
-            if (p.name && typeof setUserName === 'function') setUserName(p.name);
+            const res = await fetch('/api/customers/' + encodeURIComponent(currentUid) + '/profile');
+            if (!res.ok) return;
+            const p = await res.json();
+            if (p.name) {
+                sessionStorage.setItem('portal_customer_name', p.name);
+                if (typeof setUserName === 'function') setUserName(p.name);
+            }
+            if (p.phone) sessionStorage.setItem('user_phone', p.phone);
+            if (p.email) sessionStorage.setItem('user_email', p.email);
         } catch (e) { /* ignore */ }
     }
 

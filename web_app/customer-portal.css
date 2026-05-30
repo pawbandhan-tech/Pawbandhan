@@ -116,6 +116,13 @@ body.pb-customer::before {
     border-radius: 999px;
     cursor: pointer;
     transition: box-shadow 0.2s;
+    font-family: inherit;
+    color: inherit;
+}
+
+button.cd-user-chip {
+    appearance: none;
+    -webkit-appearance: none;
 }
 
 .cd-user-chip:hover { box-shadow: var(--cd-shadow); }

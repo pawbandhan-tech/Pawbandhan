@@ -10,7 +10,8 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="shared-portal.css">
     <link rel="stylesheet" href="customer-dashboard.css?v=8">
-    <link rel="stylesheet" href="customer-portal.css?v=2">
+    <link rel="stylesheet" href="customer-portal.css?v=3">
+    <link rel="stylesheet" href="customer-dashboard-v2.css?v=1">
     <link rel="stylesheet" href="customer-rescue-mobile.css?v=2">
     <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs"></script>
     <script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/coco-ssd"></script>
@@ -538,10 +539,10 @@
                     <i class="fas fa-bell"></i>
                     <span class="pb-notif-badge" id="notifBadge">0</span>
                 </button>
-                <div class="cd-user-chip" onclick="openProfileModal()">
+                <button type="button" class="cd-user-chip" onclick="openProfileModal()" aria-label="Edit profile">
                     <div class="cd-user-avatar" id="userInitials">—</div>
                     <span style="font-weight:700;font-size:0.9rem;" id="userName">Guest</span>
-                </div>
+                </button>
                 <button type="button" class="cd-btn-logout" onclick="logout()"><i class="fas fa-right-from-bracket"></i> <span>Sign out</span></button>
             </div>
         </div>
@@ -577,41 +578,67 @@
             <button type="button" class="pb-btn-track-live" onclick="activeCaseCode&&openCaseTracking(activeCaseCode)">View full tracking</button>
         </div>
 
-        <section class="cd-welcome">
-            <h1>Welcome back, <em id="userGreet">friend</em> 🐾</h1>
-            <p>Report injured animals and follow every rescue step — live from your phone.</p>
+        <section class="cd-hero-card">
+            <div class="cd-hero-top">
+                <div class="cd-hero-avatar" id="heroAvatar">—</div>
+                <div class="cd-hero-text">
+                    <p class="cd-hero-label">Your rescue hub</p>
+                    <h1>Hi, <em id="userGreet">friend</em> 🐾</h1>
+                    <p class="cd-hero-sub">Report injured animals with live camera AI and track every rescue step.</p>
+                </div>
+                <button type="button" class="cd-btn-profile" onclick="openProfileModal()"><i class="fas fa-user-pen"></i> Profile</button>
+            </div>
+            <div class="cd-hero-stats" id="cdLiveStats">
+                <div class="cd-hero-stat"><strong id="cdStatRescues">—</strong> Rescues</div>
+                <div class="cd-hero-stat"><strong id="cdStatNgos">—</strong> NGOs</div>
+                <div class="cd-hero-stat"><strong id="cdStatHeroes">—</strong> Heroes</div>
+                <div class="cd-hero-stat"><strong id="cdStatVets">—</strong> Vets</div>
+            </div>
         </section>
 
-        <div class="cd-stats-row" id="cdLiveStats">
-            <div class="cd-stat-pill"><i class="fas fa-heart"></i><strong id="cdStatRescues">—</strong><span>Rescues</span></div>
-            <div class="cd-stat-pill"><i class="fas fa-building"></i><strong id="cdStatNgos">—</strong><span>NGO partners</span></div>
-            <div class="cd-stat-pill"><i class="fas fa-motorcycle"></i><strong id="cdStatHeroes">—</strong><span>Field heroes</span></div>
-            <div class="cd-stat-pill"><i class="fas fa-stethoscope"></i><strong id="cdStatVets">—</strong><span>Veterinarians</span></div>
+        <div class="cd-quick-grid">
+            <button type="button" class="cd-qbtn cd-qbtn-emergency" onclick="openCamera()">
+                <span class="cd-qicon"><i class="fas fa-camera"></i></span>
+                <div>
+                    <h3>Report emergency</h3>
+                    <p>Live camera detects dog, cat, bird & more — dispatches nearest NGO</p>
+                </div>
+                <i class="fas fa-chevron-right" style="margin-left:auto;opacity:0.8"></i>
+            </button>
+            <button type="button" class="cd-qbtn" onclick="typeof loadMyCases==='function'&&loadMyCases()">
+                <span class="cd-qicon"><i class="fas fa-route"></i></span>
+                <strong>Track rescues</strong>
+                <span>Live timeline & GPS</span>
+            </button>
+            <button type="button" class="cd-qbtn" onclick="openNearestNgoModal()">
+                <span class="cd-qicon"><i class="fas fa-map-location-dot"></i></span>
+                <strong>NGOs near me</strong>
+                <span>Map & shelters</span>
+            </button>
+            <button type="button" class="cd-qbtn" onclick="openProfileModal()">
+                <span class="cd-qicon"><i class="fas fa-id-card"></i></span>
+                <strong>My profile</strong>
+                <span>Name & phone</span>
+            </button>
+            <button type="button" class="cd-qbtn" onclick="toggleNotifDrawer()">
+                <span class="cd-qicon"><i class="fas fa-bell"></i></span>
+                <strong>Alerts</strong>
+                <span>Case updates</span>
+            </button>
+            <button type="button" class="cd-qbtn" onclick="window.location.href='index.html#portals'">
+                <span class="cd-qicon"><i class="fas fa-circle-info"></i></span>
+                <strong>Help</strong>
+                <span>How it works</span>
+            </button>
         </div>
 
-        <div class="cd-actions">
-            <button type="button" class="cd-action-primary" onclick="openCamera()">
-                <div class="cd-action-icon"><i class="fas fa-camera"></i></div>
-                <h3>Report emergency</h3>
-                <p>Live camera detects dog, cat, bird, cow & more — then dispatches the nearest NGO.</p>
-            </button>
-            <button type="button" class="cd-action-secondary" onclick="typeof loadMyCases==='function'&&loadMyCases()">
-                <i class="fas fa-route"></i>
-                <h4>Track rescues</h4>
-                <p>Step-by-step live timeline</p>
-            </button>
-            <button type="button" class="cd-action-secondary" onclick="openNearestNgoModal()">
-                <i class="fas fa-map-location-dot"></i>
-                <h4>NGOs near me</h4>
-                <p>Verified shelters on map</p>
-            </button>
+        <div class="cd-cases-panel">
+            <div class="cd-section-head">
+                <h2>Your rescue cases</h2>
+                <button type="button" onclick="typeof loadMyCases==='function'&&loadMyCases()"><i class="fas fa-rotate"></i> Refresh</button>
+            </div>
+            <div id="caseListArea"></div>
         </div>
-
-        <div class="cd-section-head">
-            <h2>Your rescue cases</h2>
-            <button type="button" onclick="typeof loadMyCases==='function'&&loadMyCases()"><i class="fas fa-rotate"></i> Refresh</button>
-        </div>
-        <div id="caseListArea"></div>
 
     </main>
 
@@ -693,24 +720,26 @@
 
     <!-- ─── PROFILE MODAL ─── -->
     <div id="profileModal" class="modal-bg">
-        <div class="modal-panel">
-            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:30px;">
-                <h2>Edit Profile</h2>
-                <button onclick="closeModal('profileModal')" style="background:none;border:none;font-size:1.5rem;cursor:pointer;color:var(--text-gray);">&times;</button>
+        <div class="modal-panel profile-modal-panel">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
+                <h2>My profile</h2>
+                <button type="button" onclick="closeModal('profileModal')" style="background:none;border:none;font-size:1.5rem;cursor:pointer;color:var(--text-gray);">&times;</button>
+            </div>
+            <div class="profile-avatar-lg" id="profileModalAvatar">—</div>
+            <div class="form-group">
+                <label>Full name</label>
+                <input type="text" id="editName" placeholder="Your full name" autocomplete="name">
             </div>
             <div class="form-group">
-                <label>Full Name</label>
-                <input type="text" id="editName" placeholder="Your Name">
+                <label>Email</label>
+                <input type="email" id="editEmail" placeholder="your@email.com" readonly style="opacity:0.6;cursor:not-allowed;">
             </div>
             <div class="form-group">
-                <label>Email Address</label>
-                <input type="email" id="editEmail" placeholder="your@email.com" readonly style="opacity: 0.6; cursor: not-allowed;">
+                <label>Phone (for rescue updates)</label>
+                <input type="tel" id="editPhone" placeholder="+91 98765 43210" autocomplete="tel">
             </div>
-            <div class="form-group">
-                <label>Phone Number</label>
-                <input type="tel" id="editPhone" placeholder="+91 00000 00000">
-            </div>
-            <button class="btn-submit" onclick="saveProfile()"><i class="fas fa-save"></i> Save Changes</button>
+            <p class="profile-save-status" id="profileSaveStatus"></p>
+            <button type="button" class="btn-submit btn-profile-save" id="btnSaveProfile" onclick="saveProfile()"><i class="fas fa-save"></i> Save profile</button>
         </div>
     </div>
 
@@ -756,7 +785,7 @@
     <script src="paw-tracker.js?v=4"></script>
     <script src="shared-case-portal.js?v=2"></script>
     <script src="paw-live-detect.js?v=4"></script>
-    <script src="customer-app.js?v=8"></script>
+    <script src="customer-app.js?v=9"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
     <script>
@@ -774,16 +803,13 @@
             setUserName('John Doe');
             bootCustomerApp('demo');
         } else if (portalUid) {
-            if (portalName) setUserName(portalName);
-            bootCustomerApp(portalUid);
-            fetch('/api/customers/' + portalUid + '/profile').then(r => r.json()).then(p => setUserName(p.name || portalName || 'Customer')).catch(() => { if (!portalName) setUserName('Customer'); });
+            sessionStorage.setItem('customer_uid', portalUid);
+            loadAndApplyProfile().then(function () { bootCustomerApp(portalUid); });
         } else {
-            auth.onAuthStateChanged(user => {
+            auth.onAuthStateChanged(function (user) {
                 if (user) {
                     sessionStorage.setItem('customer_uid', user.uid);
-                    const name = user.displayName || user.email?.split('@')[0] || 'Friend';
-                    setUserName(name);
-                    bootCustomerApp(user.uid);
+                    loadAndApplyProfile().then(function () { bootCustomerApp(user.uid); });
                 } else {
                     window.location.href = 'customer_auth.html';
                 }
@@ -791,10 +817,47 @@
         }
 
         function setUserName(name) {
-            document.getElementById('userName').innerText = name;
-            document.getElementById('userGreet').innerText = name.split(' ')[0];
-            const initials = name.split(' ').map(n => n[0]).join('').toUpperCase().substring(0, 2);
-            document.getElementById('userInitials').innerText = initials;
+            const display = (name || '').trim() || 'Friend';
+            const elName = document.getElementById('userName');
+            const elGreet = document.getElementById('userGreet');
+            const elInit = document.getElementById('userInitials');
+            const elHero = document.getElementById('heroAvatar');
+            const elProf = document.getElementById('profileModalAvatar');
+            if (elName) elName.innerText = display;
+            if (elGreet) elGreet.innerText = display.split(' ')[0];
+            const initials = display.split(' ').map(function (n) { return n[0]; }).join('').toUpperCase().substring(0, 2) || '—';
+            if (elInit) elInit.innerText = initials;
+            if (elHero) elHero.innerText = initials;
+            if (elProf) elProf.innerText = initials;
+        }
+
+        function getCustomerUid() {
+            return sessionStorage.getItem('customer_uid') || sessionStorage.getItem('portal_customer_uid') || (auth.currentUser && auth.currentUser.uid) || null;
+        }
+
+        async function loadAndApplyProfile() {
+            const uid = getCustomerUid();
+            if (!uid || uid === 'demo') {
+                setUserName(sessionStorage.getItem('portal_customer_name') || 'Demo user');
+                return;
+            }
+            const cached = sessionStorage.getItem('portal_customer_name');
+            if (cached) setUserName(cached);
+            try {
+                const res = await fetch('/api/customers/' + encodeURIComponent(uid) + '/profile');
+                if (!res.ok) throw new Error('Profile not found');
+                const p = await res.json();
+                if (p.name) {
+                    setUserName(p.name);
+                    sessionStorage.setItem('portal_customer_name', p.name);
+                }
+                if (p.phone) sessionStorage.setItem('user_phone', p.phone);
+                if (p.email) sessionStorage.setItem('user_email', p.email);
+            } catch (e) {
+                if (!cached && auth.currentUser && auth.currentUser.displayName) {
+                    setUserName(auth.currentUser.displayName);
+                }
+            }
         }
 
         let cameraStream = null;
@@ -1509,26 +1572,66 @@
         }
 
         function openProfileModal() {
+            var status = document.getElementById('profileSaveStatus');
+            if (status) { status.textContent = ''; status.className = 'profile-save-status'; }
             document.getElementById('editName').value = document.getElementById('userName').innerText;
-            document.getElementById('editPhone').value = sessionStorage.getItem('user_phone') || '+91 98765 43210';
-            document.getElementById('editEmail').value = auth.currentUser ? auth.currentUser.email : 'demo@pawbandhan.org';
+            document.getElementById('editPhone').value = sessionStorage.getItem('user_phone') || '';
+            document.getElementById('editEmail').value = sessionStorage.getItem('user_email') ||
+                (auth.currentUser ? auth.currentUser.email : '') || '';
             document.getElementById('profileModal').classList.add('open');
         }
 
-        function saveProfile() {
-            const newName = document.getElementById('editName').value;
-            const newPhone = document.getElementById('editPhone').value;
-            if(!newName.trim()) return alert('Name cannot be empty');
-            
-            setUserName(newName);
-            sessionStorage.setItem('user_phone', newPhone);
-            closeModal('profileModal');
-            alert('Profile updated successfully!');
+        async function saveProfile() {
+            var newName = document.getElementById('editName').value.trim();
+            var newPhone = document.getElementById('editPhone').value.trim();
+            var status = document.getElementById('profileSaveStatus');
+            var btn = document.getElementById('btnSaveProfile');
+            if (!newName) {
+                if (status) { status.textContent = 'Please enter your name'; status.className = 'profile-save-status err'; }
+                return;
+            }
+            var uid = getCustomerUid();
+            if (!uid || uid === 'demo') {
+                setUserName(newName);
+                sessionStorage.setItem('portal_customer_name', newName);
+                sessionStorage.setItem('user_phone', newPhone);
+                if (status) { status.textContent = 'Saved locally (demo mode)'; status.className = 'profile-save-status ok'; }
+                return;
+            }
+            if (btn) btn.disabled = true;
+            if (status) { status.textContent = 'Saving…'; status.className = 'profile-save-status'; }
+            try {
+                var res = await fetch('/api/customers/' + encodeURIComponent(uid) + '/profile', {
+                    method: 'PATCH',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ name: newName, phone: newPhone })
+                });
+                var data = await res.json();
+                if (!res.ok) throw new Error(data.error || 'Save failed');
+                setUserName(data.name || newName);
+                sessionStorage.setItem('portal_customer_name', data.name || newName);
+                sessionStorage.setItem('user_phone', data.phone || newPhone);
+                if (auth.currentUser) {
+                    try { await auth.currentUser.updateProfile({ displayName: data.name || newName }); } catch (e) { /* optional */ }
+                }
+                if (status) { status.textContent = 'Profile saved'; status.className = 'profile-save-status ok'; }
+                setTimeout(function () { closeModal('profileModal'); }, 600);
+            } catch (e) {
+                if (status) { status.textContent = e.message || 'Could not save'; status.className = 'profile-save-status err'; }
+            } finally {
+                if (btn) btn.disabled = false;
+            }
         }
 
         function logout() {
             sessionStorage.removeItem('demo_session');
-            window.location.href = 'index.html';
+            sessionStorage.removeItem('portal_customer_name');
+            sessionStorage.removeItem('user_phone');
+            sessionStorage.removeItem('user_email');
+            sessionStorage.removeItem('customer_uid');
+            sessionStorage.removeItem('portal_customer_uid');
+            if (auth.currentUser) auth.signOut().finally(function () { window.location.href = 'customer_auth.html'; });
+            else window.location.href = 'customer_auth.html';
         }
 
         // ─── NEAREST NGOS LOGIC ───
