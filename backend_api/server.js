@@ -21,6 +21,16 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use('/uploads', express.static('uploads'));
 
+// Liveness probe — no database required (Render / production health checks)
+app.get('/health', (req, res) => {
+    res.status(200).json({
+        ok: true,
+        service: 'pawbandhan-api',
+        database: Boolean(process.env.DATABASE_URL),
+        uptime: Math.floor(process.uptime())
+    });
+});
+
 // Create uploads directory
 if (!fs.existsSync('uploads')) fs.mkdirSync('uploads');
 
@@ -29,10 +39,12 @@ const dbUrl = process.env.DATABASE_URL;
 if (!dbUrl) {
     console.warn('WARNING: DATABASE_URL is not set. Copy backend_api/.env.example to backend_api/.env');
 }
-const pool = new Pool({
-    connectionString: dbUrl,
-    ssl: dbUrl && !dbUrl.includes('localhost') ? { rejectUnauthorized: false } : false
-});
+const pool = dbUrl
+    ? new Pool({
+        connectionString: dbUrl,
+        ssl: !dbUrl.includes('localhost') ? { rejectUnauthorized: false } : false
+    })
+    : null;
 
 // Email configuration (optional — set SMTP_USER / SMTP_PASS in .env)
 const transporter = nodemailer.createTransport(
@@ -899,6 +911,10 @@ app.get('/representative_auth.html', (req, res) => res.sendFile(path.join(__dirn
 
 // Initialize database
 async function initDB() {
+    if (!pool) {
+        console.warn('Skipping database init — DATABASE_URL is not configured.');
+        return;
+    }
     const createTables = `
         CREATE TABLE IF NOT EXISTS users (
             id SERIAL PRIMARY KEY, 
@@ -1494,17 +1510,32 @@ app.post('/api/admin/manual-register', async (req, res) => {
 
 
 // Static files last so /api/* always returns JSON from route handlers
-app.use(express.static(path.join(__dirname, '..', 'web_app')));
-app.use('/assets', express.static(path.join(__dirname, '..', 'assets')));
+const WEB_APP_DIR = path.join(__dirname, '..', 'web_app');
+const ASSETS_DIR = path.join(__dirname, '..', 'assets');
+if (!fs.existsSync(WEB_APP_DIR)) {
+    console.error('WARNING: web_app not found at', WEB_APP_DIR);
+}
+app.get('/', (req, res) => {
+    const indexPath = path.join(WEB_APP_DIR, 'index.html');
+    if (fs.existsSync(indexPath)) return res.sendFile(indexPath);
+    res.status(200).send('PawBandhan API is running. Set DATABASE_URL and open /index.html');
+});
+app.use(express.static(WEB_APP_DIR));
+app.use('/assets', express.static(ASSETS_DIR));
 
-const PORT = process.env.PORT || 5000;
-server.listen(PORT, () => {
+const PORT = Number(process.env.PORT) || 5000;
+const HOST = process.env.HOST || '0.0.0.0';
+
+server.listen(PORT, HOST, () => {
     console.log('');
     console.log('========================================');
     console.log('PawBandhan Server Running');
     console.log('========================================');
-    console.log(`http://localhost:${PORT}`);
+    console.log(`Listening on ${HOST}:${PORT}`);
+    console.log('DATABASE_URL:', dbUrl ? 'set' : 'MISSING — add in hosting dashboard');
     console.log('========================================');
     console.log('');
+    initDB().catch((err) => console.error('Database init error:', err.message));
 });
-initDB();
+
+process.on('unhandledRejection', (err) => console.error('Unhandled rejection:', err));

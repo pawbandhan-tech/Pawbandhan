@@ -46,18 +46,37 @@ Current push (if created under your user): https://github.com/vdgogatememorialfo
 
 ## Deploy API + Neon (Render)
 
-1. Push this repo to **GitHub** (`pawbandhan-tech/Pawbandhan`).
-2. In [Render](https://render.com): **New → Blueprint** or **Web Service** → connect the repo.
-3. Use `render.yaml` (root dir `backend_api`, start `npm start`).
-4. Set environment variable **`DATABASE_URL`** to your Neon URL (Dashboard → Connection string, pooler).
-5. After deploy, open `https://YOUR-SERVICE.onrender.com/admin_portal.html`.
+1. Push this repo to **GitHub**.
+2. [Render](https://render.com) → **New → Blueprint** (uses `render.yaml`) or **Web Service**:
+   - **Root directory:** `.` (repo root)
+   - **Build:** `cd backend_api && npm install --omit=dev`
+   - **Start:** `node backend_api/server.js`
+   - **Health check path:** `/health`
+3. **Environment** (required):
+   - `DATABASE_URL` = Neon connection string (pooler, `sslmode=require`)
+   - Do **not** set `PORT` manually — Render assigns it automatically.
+4. After deploy succeeds, open:
+   - `https://YOUR-SERVICE.onrender.com/health` → should show `{"ok":true,...}`
+   - `https://YOUR-SERVICE.onrender.com/admin_portal.html`
 
-**Do not** commit `.env` or database passwords to GitHub. Rotate Neon credentials if they were ever shared in chat or code.
+### “Production domain is not serving traffic”
+
+Usually one of these:
+
+| Cause | Fix |
+|-------|-----|
+| Deploy failed / service stopped | Render → **Logs** → fix build or runtime errors |
+| `DATABASE_URL` missing | Add in **Environment** → redeploy |
+| Wrong health check | Use `/health` (not a path that needs the DB at boot) |
+| Service sleeping (free tier) | First request after idle takes ~30s — wait and refresh |
+| Custom domain not linked | Render → **Settings → Custom Domains** → add DNS records |
+
+**Do not** commit `.env` or database passwords to GitHub. Rotate Neon credentials if they were ever exposed.
 
 ## Environment variables
 
 | Variable | Required | Description |
 |----------|----------|-------------|
 | `DATABASE_URL` | Yes | Neon PostgreSQL connection string |
-| `PORT` | No | Default `5000` (Render sets `10000`) |
+| `PORT` | No | Set by Render automatically — do not override |
 | `SMTP_USER` / `SMTP_PASS` | No | Email for OTP/notifications |

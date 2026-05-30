@@ -1,16 +1,16 @@
-# Deploy on https://render.com — connect repo pawbandhan-tech/Pawbandhan
+# Render Blueprint — https://render.com
+# After connect: set DATABASE_URL in the service Environment tab (Neon pooler URL).
 services:
   - type: web
     name: pawbandhan-api
     runtime: node
-    rootDir: backend_api
-    buildCommand: npm install
-    startCommand: npm start
-    healthCheckPath: /api/stats
+    plan: free
+    rootDir: .
+    buildCommand: cd backend_api && npm install --omit=dev
+    startCommand: node backend_api/server.js
+    healthCheckPath: /health
     envVars:
       - key: NODE_VERSION
         value: "20"
       - key: DATABASE_URL
         sync: false
-      - key: PORT
-        value: "10000"

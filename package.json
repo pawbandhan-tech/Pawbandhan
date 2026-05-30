@@ -1,0 +1,13 @@
+{
+  "name": "pawbandhan",
+  "version": "1.0.0",
+  "private": true,
+  "description": "PawBandhan — API + web portals",
+  "scripts": {
+    "start": "node backend_api/server.js",
+    "build": "cd backend_api && npm install --omit=dev"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}
