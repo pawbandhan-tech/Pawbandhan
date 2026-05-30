@@ -73,6 +73,23 @@ Usually one of these:
 
 **Do not** commit `.env` or database passwords to GitHub. Rotate Neon credentials if they were ever exposed.
 
+## Deploy frontend to Vercel
+
+Project: [pawbandhan-techs-projects/pawbandhan](https://vercel.com/pawbandhan-techs-projects/pawbandhan)
+
+1. Install CLI: `npm i -g vercel`
+2. From repo root: `vercel link` → select team **pawbandhan-tech** and project **pawbandhan**
+3. In Vercel **Settings → Environment Variables**, optional override if API is not on Render default URL.
+4. Deploy: `vercel --prod`
+
+`vercel.json` serves `web_app/` and proxies `/api/*` to your Render backend. **Update** the `destination` URL in `vercel.json` if your Render service name differs from `pawbandhan-api.onrender.com`.
+
+After deploy:
+
+- `https://pawbandhan.vercel.app/` (or your custom domain)
+- `https://YOUR-VERCEL-URL/customer_auth.html`
+- `https://YOUR-VERCEL-URL/admin_auth.html`
+
 ## Environment variables
 
 | Variable | Required | Description |
