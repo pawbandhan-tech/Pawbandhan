@@ -61,6 +61,60 @@ async function ensureProfileSchema() {
     profileSchemaReady = true;
 }
 
+const DEFAULT_STATS = {
+    totalRescues: 2400,
+    totalNGOs: 245,
+    totalDoctors: 1200,
+    totalRiders: 5600
+};
+
+async function ensureStatsSchema() {
+    await ensureProfileSchema();
+    const p = getPool();
+    await p.query(`
+        CREATE TABLE IF NOT EXISTS site_config (
+            key VARCHAR(100) PRIMARY KEY,
+            value TEXT,
+            updated_at TIMESTAMP DEFAULT NOW()
+        );
+        CREATE TABLE IF NOT EXISTS incidents (
+            id SERIAL PRIMARY KEY,
+            status VARCHAR(50) DEFAULT 'pending'
+        );
+        CREATE TABLE IF NOT EXISTS ngos (id SERIAL PRIMARY KEY, status VARCHAR(20) DEFAULT 'pending');
+        CREATE TABLE IF NOT EXISTS doctors (id SERIAL PRIMARY KEY, status VARCHAR(20) DEFAULT 'pending');
+        CREATE TABLE IF NOT EXISTS riders (id SERIAL PRIMARY KEY, status VARCHAR(20) DEFAULT 'pending');
+    `);
+}
+
+async function getPublicStats() {
+    const p = getPool();
+    if (!p) return { ...DEFAULT_STATS, offline: true };
+    try {
+        await ensureStatsSchema();
+        const configRes = await p.query("SELECT key, value FROM site_config WHERE key LIKE 'stat_%'");
+        const config = {};
+        configRes.rows.forEach((r) => { config[r.key] = r.value; });
+
+        const [rescues, ngos, doctors, riders] = await Promise.all([
+            p.query("SELECT COUNT(*)::int AS c FROM incidents WHERE status = 'resolved'").catch(() => ({ rows: [{ c: 0 }] })),
+            p.query('SELECT COUNT(*)::int AS c FROM ngos').catch(() => ({ rows: [{ c: 0 }] })),
+            p.query('SELECT COUNT(*)::int AS c FROM doctors').catch(() => ({ rows: [{ c: 0 }] })),
+            p.query('SELECT COUNT(*)::int AS c FROM riders').catch(() => ({ rows: [{ c: 0 }] }))
+        ]);
+
+        return {
+            totalRescues: parseInt(config.stat_rescues_override, 10) || rescues.rows[0]?.c || DEFAULT_STATS.totalRescues,
+            totalNGOs: parseInt(config.stat_ngos_override, 10) || ngos.rows[0]?.c || DEFAULT_STATS.totalNGOs,
+            totalDoctors: parseInt(config.stat_doctors_override, 10) || doctors.rows[0]?.c || DEFAULT_STATS.totalDoctors,
+            totalRiders: parseInt(config.stat_riders_override, 10) || riders.rows[0]?.c || DEFAULT_STATS.totalRiders
+        };
+    } catch (err) {
+        console.warn('getPublicStats:', err.message);
+        return { ...DEFAULT_STATS, fallback: true };
+    }
+}
+
 function generateCode(prefix) {
     return prefix + Date.now() + Math.floor(Math.random() * 10000);
 }
@@ -152,4 +206,4 @@ async function upsertCustomerProfile(uid, body) {
     }
 }
 
-module.exports = { getPool, ensureProfileSchema, getCustomerProfile, upsertCustomerProfile };
+module.exports = { getPool, ensureProfileSchema, getCustomerProfile, upsertCustomerProfile, getPublicStats };

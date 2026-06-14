@@ -3,7 +3,27 @@ import { Link, useNavigate } from 'react-router-dom';
 import { createUserWithEmailAndPassword, signInWithEmailAndPassword, updateProfile } from 'firebase/auth';
 import { auth } from '../../lib/firebase';
 import { postJson } from '../../lib/api';
-import { setCustomerUid } from '../../lib/session';
+import { applyProfile, nameFromEmail, setCustomerUid } from '../../lib/session';
+
+async function syncProfileAfterAuth(user) {
+  if (!user?.uid) return;
+  const email = user.email || '';
+  const name = (user.displayName || '').trim() || nameFromEmail(email);
+  if (email) sessionStorage.setItem('user_email', email);
+  if (name) sessionStorage.setItem('portal_customer_name', name);
+  if (!name && !email) return;
+  try {
+    await postJson(`/api/customers/${encodeURIComponent(user.uid)}/profile`, {
+      name: name || nameFromEmail(email) || 'Customer',
+      email: email || null,
+      phone: null,
+      gender: null
+    }, { timeoutMs: 15000 });
+    applyProfile({ name, email });
+  } catch {
+    /* profile route may fail — dashboard will retry */
+  }
+}
 
 export default function CustomerAuth() {
   const navigate = useNavigate();
@@ -20,7 +40,7 @@ export default function CustomerAuth() {
     try {
       const cred = await signInWithEmailAndPassword(auth, email, password);
       setCustomerUid(cred.user.uid);
-      if (cred.user.displayName) sessionStorage.setItem('portal_customer_name', cred.user.displayName);
+      await syncProfileAfterAuth(cred.user);
       navigate('/dashboard');
     } catch (err) {
       try {
@@ -28,6 +48,7 @@ export default function CustomerAuth() {
         if (data.uid) {
           setCustomerUid(data.uid);
           sessionStorage.setItem('portal_customer_name', data.name || 'Customer');
+          sessionStorage.setItem('user_email', email);
           navigate('/dashboard');
           return;
         }
@@ -49,9 +70,10 @@ export default function CustomerAuth() {
     const email = e.target.email.value.trim();
     const phone = e.target.phone.value.trim();
     const password = e.target.password.value;
+    const fullName = `${firstName} ${lastName}`.trim();
     try {
       const cred = await createUserWithEmailAndPassword(auth, email, password);
-      await updateProfile(cred.user, { displayName: `${firstName} ${lastName}`.trim() });
+      await updateProfile(cred.user, { displayName: fullName });
       await postJson('/api/users/register', {
         uid: cred.user.uid,
         firstName,
@@ -59,9 +81,12 @@ export default function CustomerAuth() {
         email,
         phoneNo: phone,
         role: 'customer'
-      });
+      }).catch(() => {});
       setCustomerUid(cred.user.uid);
-      sessionStorage.setItem('portal_customer_name', `${firstName} ${lastName}`.trim());
+      sessionStorage.setItem('portal_customer_name', fullName);
+      sessionStorage.setItem('user_email', email);
+      sessionStorage.setItem('user_phone', phone);
+      await syncProfileAfterAuth({ ...cred.user, displayName: fullName });
       navigate('/dashboard');
     } catch (err) {
       setError(err.message || 'Signup failed');

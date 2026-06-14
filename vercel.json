@@ -10,6 +10,11 @@
       "memory": 512,
       "includeFiles": "api/lib/**"
     },
+    "api/stats.js": {
+      "maxDuration": 15,
+      "memory": 256,
+      "includeFiles": "api/lib/**"
+    },
     "api/health.js": {
       "maxDuration": 10,
       "memory": 256,

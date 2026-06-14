@@ -41,13 +41,27 @@ export function getProfileFromSession() {
   };
 }
 
-export function displayName(name) {
-  return (name || '').trim() || 'Friend';
+export function nameFromEmail(email) {
+  if (!email || !String(email).includes('@')) return '';
+  let local = String(email).split('@')[0];
+  local = local.replace(/\d+/g, ' ').replace(/[._-]+/g, ' ').trim();
+  if (!local) return '';
+  return local
+    .split(/\s+/)
+    .filter(Boolean)
+    .map((w) => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase())
+    .join(' ');
 }
 
-export function initials(name) {
-  const d = displayName(name);
-  return d.split(' ').map((n) => n[0]).join('').toUpperCase().slice(0, 2) || '—';
+export function displayName(name, email) {
+  const n = (name || '').trim() || nameFromEmail(email);
+  return n || 'Friend';
+}
+
+export function initials(name, email) {
+  const d = displayName(name, email);
+  if (d === 'Friend') return '?';
+  return d.split(' ').map((n) => n[0]).join('').toUpperCase().slice(0, 2) || '?';
 }
 
 export { KEYS };

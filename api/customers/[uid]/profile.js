@@ -29,6 +29,13 @@ async function readBody(req) {
     });
 }
 
+function resolveUid(req) {
+    if (req.query?.uid) return String(req.query.uid);
+    const url = req.url || '';
+    const match = url.match(/\/customers\/([^/?]+)\/profile/i);
+    return match ? decodeURIComponent(match[1]) : null;
+}
+
 module.exports = async (req, res) => {
     if (req.method === 'OPTIONS') {
         cors(res);
@@ -36,7 +43,7 @@ module.exports = async (req, res) => {
         return res.end();
     }
 
-    const uid = req.query.uid;
+    const uid = resolveUid(req);
     if (!uid) return json(res, 400, { error: 'Missing customer uid' });
 
     try {

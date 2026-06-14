@@ -10,18 +10,27 @@ import {
   getCustomerUid,
   getProfileFromSession,
   initials,
+  nameFromEmail,
   setCustomerUid
 } from '../../lib/session';
 import '../../styles/customer-portal.css';
 import '../../styles/customer-dashboard-v2.css';
 import '../../styles/customer-rescue-mobile.css';
 
+const DEFAULT_STATS = {
+  totalRescues: 2400,
+  totalNGOs: 245,
+  totalRiders: 5600,
+  totalDoctors: 1200
+};
+
 function hydrateFromFirebase(user) {
   const cached = getProfileFromSession();
+  const email = cached.email || user?.email || '';
   return {
-    name: cached.name || user?.displayName || '',
+    name: cached.name || user?.displayName || nameFromEmail(email) || '',
     phone: cached.phone || '',
-    email: cached.email || user?.email || '',
+    email,
     gender: cached.gender || ''
   };
 }
@@ -55,18 +64,28 @@ export default function CustomerDashboard() {
 
   const loadProfile = useCallback(async (customerUid, firebaseUser) => {
     if (!customerUid || customerUid === 'demo') return;
+    const emailHint = firebaseUser?.email || getProfileFromSession().email || '';
     try {
-      const p = await fetchJson(`/api/customers/${encodeURIComponent(customerUid)}/profile`);
-      applyProfile(p);
-      const merged = {
-        name: p.name || firebaseUser?.displayName || '',
+      const p = await fetchJson(`/api/customers/${encodeURIComponent(customerUid)}/profile`, { timeoutMs: 15000 });
+      let merged = {
+        name: p.name || firebaseUser?.displayName || nameFromEmail(p.email || emailHint) || '',
         phone: p.phone || '',
-        email: p.email || firebaseUser?.email || '',
+        email: p.email || emailHint || '',
         gender: p.gender || ''
       };
+      if (p.isNew && merged.email && merged.name) {
+        try {
+          const saved = await postJson(
+            `/api/customers/${encodeURIComponent(customerUid)}/profile`,
+            { name: merged.name, email: merged.email, phone: merged.phone || null, gender: null },
+            { timeoutMs: 15000 }
+          );
+          merged = { ...merged, name: saved.name || merged.name, email: saved.email || merged.email };
+        } catch { /* user can save manually */ }
+      }
+      applyProfile(merged);
       setProfile(merged);
       if (merged.name) setName(merged.name);
-      else if (firebaseUser?.displayName) setName(firebaseUser.displayName);
     } catch {
       const fallback = hydrateFromFirebase(firebaseUser);
       setProfile(fallback);
@@ -95,7 +114,9 @@ export default function CustomerDashboard() {
   }, []);
 
   useEffect(() => {
-    fetchJson('/api/stats').then(setStats).catch(() => setStats({}));
+    fetchJson('/api/stats', { timeoutMs: 10000 })
+      .then(setStats)
+      .catch(() => setStats(DEFAULT_STATS));
   }, []);
 
   useEffect(() => {
@@ -109,9 +130,19 @@ export default function CustomerDashboard() {
       await Promise.all([
         loadProfile(customerUid, firebaseUser),
         loadCases(customerUid),
-        loadNotifs(customerUid)
+        loadNotifs(customerUid),
+        fetchJson('/api/stats', { timeoutMs: 10000 })
+          .then((s) => { if (active) setStats(s); })
+          .catch(() => { if (active) setStats(DEFAULT_STATS); })
       ]);
-      if (active) setLoading(false);
+      if (active) {
+        setLoading(false);
+        const p = getProfileFromSession();
+        if (!p.name && !sessionStorage.getItem('profile_prompt_shown')) {
+          sessionStorage.setItem('profile_prompt_shown', '1');
+          setProfileOpen(true);
+        }
+      }
     }
 
     const existing = getCustomerUid();
@@ -243,14 +274,14 @@ export default function CustomerDashboard() {
   }
 
   const unread = notifs.filter((n) => !n.is_read).length;
+  const userEmail = profile.email || auth.currentUser?.email || '';
+  const resolvedName = displayName(name, userEmail);
+  const greetName = resolvedName.split(' ')[0];
   const fmt = (n) => {
-    if (stats == null) return '—';
+    if (stats == null) return '…';
     const x = Number(n) || 0;
     return x >= 1000 ? `${(x / 1000).toFixed(1).replace(/\.0$/, '')}k` : String(x);
   };
-
-  const greetName = displayName(name).split(' ')[0] || 'friend';
-  const showName = displayName(name) || 'Set your name';
 
   if (loading) {
     return (
@@ -277,8 +308,8 @@ export default function CustomerDashboard() {
               {unread > 0 ? <span className="pb-notif-badge show">{unread > 9 ? '9+' : unread}</span> : null}
             </button>
             <button type="button" className="cd-user-chip" onClick={() => setProfileOpen(true)}>
-              <div className="cd-user-avatar">{initials(name || 'U')}</div>
-              <span>{showName}</span>
+              <div className="cd-user-avatar">{initials(name, userEmail)}</div>
+              <span>{resolvedName}</span>
             </button>
             <button type="button" className="cd-btn-logout" onClick={logout}>
               <i className="fas fa-right-from-bracket" /> <span>Sign out</span>
@@ -307,7 +338,7 @@ export default function CustomerDashboard() {
       <main className="cd-main">
         <section className="cd-hero-card">
           <div className="cd-hero-top">
-            <div className="cd-hero-avatar">{initials(name || 'U')}</div>
+            <div className="cd-hero-avatar">{initials(name, userEmail)}</div>
             <div className="cd-hero-text">
               <p className="cd-hero-label">Your rescue hub</p>
               <h1>Hi, <em>{greetName}</em> 🐾</h1>
