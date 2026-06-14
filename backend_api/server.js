@@ -48,16 +48,68 @@ app.get('/health', (req, res) => {
 if (!fs.existsSync(UPLOAD_DIR)) fs.mkdirSync(UPLOAD_DIR, { recursive: true });
 
 // Database connection (Neon / PostgreSQL via DATABASE_URL)
-const dbUrl = process.env.DATABASE_URL;
+function normalizeDatabaseUrl(url) {
+    if (!url) return url;
+    return url
+        .replace(/([?&])channel_binding=[^&]*&?/gi, '$1')
+        .replace(/[?&]$/, '')
+        .replace(/\?&/, '?');
+}
+
+const dbUrl = normalizeDatabaseUrl(process.env.DATABASE_URL);
 if (!dbUrl) {
     console.warn('WARNING: DATABASE_URL is not set. Copy backend_api/.env.example to backend_api/.env');
 }
 const pool = dbUrl
     ? new Pool({
         connectionString: dbUrl,
-        ssl: !dbUrl.includes('localhost') ? { rejectUnauthorized: false } : false
+        ssl: !dbUrl.includes('localhost') ? { rejectUnauthorized: false } : false,
+        max: IS_VERCEL ? 1 : 10,
+        idleTimeoutMillis: IS_VERCEL ? 5000 : 30000,
+        connectionTimeoutMillis: 15000
     })
     : null;
+
+let profileSchemaReady = false;
+let fullDbInitScheduled = false;
+
+async function ensureProfileSchema() {
+    if (!pool || profileSchemaReady) return;
+    await pool.query(`
+        CREATE TABLE IF NOT EXISTS users (
+            id SERIAL PRIMARY KEY,
+            uid VARCHAR(255) UNIQUE,
+            first_name VARCHAR(100),
+            middle_name VARCHAR(100),
+            last_name VARCHAR(100),
+            phone_no VARCHAR(20),
+            email VARCHAR(255),
+            account_no VARCHAR(50),
+            address TEXT,
+            role VARCHAR(20) DEFAULT 'customer',
+            status VARCHAR(20) DEFAULT 'active',
+            created_at TIMESTAMP DEFAULT NOW()
+        );
+        CREATE TABLE IF NOT EXISTS customers (
+            id SERIAL PRIMARY KEY,
+            uid VARCHAR(255) UNIQUE,
+            name VARCHAR(255),
+            email VARCHAR(255),
+            phone VARCHAR(50),
+            created_at TIMESTAMP DEFAULT NOW()
+        );
+    `);
+    await pool.query('ALTER TABLE users ADD COLUMN IF NOT EXISTS gender VARCHAR(30)');
+    await pool.query('ALTER TABLE users ADD COLUMN IF NOT EXISTS portal_access_code VARCHAR(20)');
+    await pool.query('ALTER TABLE customers ADD COLUMN IF NOT EXISTS gender VARCHAR(30)');
+    profileSchemaReady = true;
+}
+
+function scheduleFullDbInit() {
+    if (!pool || fullDbInitScheduled || !IS_VERCEL) return;
+    fullDbInitScheduled = true;
+    initDB().catch((err) => console.error('Background DB init:', err.message));
+}
 
 // Email configuration (optional — set SMTP_USER / SMTP_PASS in .env)
 const transporter = nodemailer.createTransport(
@@ -243,7 +295,25 @@ app.post('/api/otp/verify', (req, res) => {
 });
 
 // Health check
-app.get('/api/health', (req, res) => res.json({ status: 'OK', message: 'Server running' }));
+app.get('/api/health', async (req, res) => {
+    const out = {
+        status: 'OK',
+        message: 'Server running',
+        database: Boolean(pool),
+        profileSchemaReady,
+        vercel: IS_VERCEL
+    };
+    if (pool) {
+        try {
+            await pool.query('SELECT 1');
+            out.databaseConnected = true;
+        } catch (e) {
+            out.databaseConnected = false;
+            out.databaseError = e.message;
+        }
+    }
+    res.json(out);
+});
 
 // User registration
 app.post('/api/users/register', async (req, res) => {
@@ -793,8 +863,8 @@ async function upsertCustomerProfile(uid, body) {
     } else {
         await pool.query(
             `UPDATE users SET first_name = $1, last_name = $2, phone_no = COALESCE($3, phone_no),
-             gender = COALESCE($4, gender) WHERE uid = $5`,
-            [firstName, lastName, phone, gender, uid]
+             gender = COALESCE($4, gender), email = COALESCE($5, email) WHERE uid = $6`,
+            [firstName, lastName, phone, gender, emailIn, uid]
         );
     }
 
@@ -817,16 +887,27 @@ async function upsertCustomerProfile(uid, body) {
 
 app.get('/api/customers/:uid/profile', async (req, res) => {
     try {
+        await ensureProfileSchema();
         res.json(await getCustomerProfile(req.params.uid));
-    } catch (error) { res.status(500).json({ error: error.message }); }
+    } catch (error) {
+        console.error('Profile load error:', error.message, req.params.uid);
+        res.status(error.status || 500).json({ error: error.message });
+    }
 });
 
 async function handleCustomerProfileUpdate(req, res) {
     try {
-        res.json(await upsertCustomerProfile(req.params.uid, req.body || {}));
+        await ensureProfileSchema();
+        const result = await upsertCustomerProfile(req.params.uid, req.body || {});
+        console.log('Profile saved:', req.params.uid);
+        res.json(result);
     } catch (error) {
+        console.error('Profile save error:', error.message, req.params.uid);
         const code = error.status || 500;
-        res.status(code).json({ error: error.message || 'Update failed' });
+        res.status(code).json({
+            error: error.message || 'Update failed',
+            code: error.code || undefined
+        });
     }
 }
 
@@ -1216,8 +1297,12 @@ async function initDB() {
         await ensureIncidentsSchema();
         await pool.query("ALTER TABLE users ADD COLUMN IF NOT EXISTS role VARCHAR(20) DEFAULT 'customer'");
         await pool.query("ALTER TABLE users ADD COLUMN IF NOT EXISTS status VARCHAR(20) DEFAULT 'active'");
+        await pool.query('ALTER TABLE users ADD COLUMN IF NOT EXISTS gender VARCHAR(30)');
+        await pool.query('ALTER TABLE users ADD COLUMN IF NOT EXISTS portal_access_code VARCHAR(20)');
+        await pool.query('ALTER TABLE customers ADD COLUMN IF NOT EXISTS gender VARCHAR(30)');
         await pool.query("UPDATE users SET role = 'customer' WHERE role IS NULL");
-        
+        profileSchemaReady = true;
+
         if (workflowApi?.initWorkflowSchema) await workflowApi.initWorkflowSchema();
         if (repApi?.initRepSchema) await repApi.initRepSchema();
         console.log('Database initialized'); 
@@ -1661,12 +1746,19 @@ const HOST = process.env.HOST || '0.0.0.0';
 let dbInitPromise = null;
 function getDbReady() {
     if (!dbInitPromise) {
-        dbInitPromise = pool
-            ? initDB().catch((err) => {
-                console.error('Database init error:', err.message);
-                throw err;
-            })
-            : Promise.resolve();
+        dbInitPromise = (async () => {
+            if (!pool) return;
+            await ensureProfileSchema();
+            if (IS_VERCEL) {
+                scheduleFullDbInit();
+            } else {
+                await initDB();
+            }
+        })().catch((err) => {
+            dbInitPromise = null;
+            console.error('Database ready error:', err.message);
+            throw err;
+        });
     }
     return dbInitPromise;
 }
@@ -1687,4 +1779,4 @@ if (!IS_VERCEL) {
 
 process.on('unhandledRejection', (err) => console.error('Unhandled rejection:', err));
 
-module.exports = { app, server, io, pool, initDB, getDbReady, IS_VERCEL };
+module.exports = { app, server, io, pool, initDB, getDbReady, ensureProfileSchema, IS_VERCEL };

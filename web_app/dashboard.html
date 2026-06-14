@@ -1622,7 +1622,9 @@
             if (btn) btn.disabled = true;
             if (status) { status.textContent = 'Saving…'; status.className = 'profile-save-status'; }
             var path = '/api/customers/' + encodeURIComponent(uid) + '/profile';
+            var newEmail = (document.getElementById('editEmail') && document.getElementById('editEmail').value.trim()) || '';
             var payload = { name: newName, phone: newPhone, gender: newGender || null };
+            if (newEmail) payload.email = newEmail;
             try {
                 var data;
                 try {

@@ -1,0 +1,69 @@
+/* PawBandhan shared portal design */
+@import url('https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Nunito:wght@400;600;700;800&display=swap');
+
+:root {
+    --pb-primary: #E86B3A;
+    --pb-primary-light: #FF9A6C;
+    --pb-green: #5BA87C;
+    --pb-green-light: #A8D5BA;
+    --pb-cream: #FFF8F0;
+    --pb-sage: #EEF6F0;
+    --pb-dark: #2D4A3E;
+    --pb-text: #2C2419;
+    --pb-muted: #6B5E52;
+    --pb-card: #FFFFFF;
+    --pb-border: rgba(45, 74, 62, 0.12);
+    --pb-shadow: 0 12px 40px rgba(44, 36, 25, 0.08);
+    --pb-radius: 20px;
+    --pb-radius-lg: 28px;
+}
+
+body.pb-portal {
+    font-family: 'Nunito', sans-serif !important;
+    background: var(--pb-cream) !important;
+    color: var(--pb-text) !important;
+}
+
+.pb-portal aside {
+    background: var(--pb-card) !important;
+    border-right: 1px solid var(--pb-border) !important;
+}
+
+.pb-portal .logo, .pb-portal .logo-box, .pb-portal h1, .pb-portal h2 {
+    font-family: 'Fredoka', sans-serif !important;
+}
+
+.pb-portal .nav-btn.active, .pb-portal .nav-group a.active,
+.pb-portal .nav-links a.active {
+    background: var(--pb-sage) !important;
+    color: var(--pb-dark) !important;
+}
+
+.pb-portal .btn-primary, .pb-portal .nav-btn-primary {
+    background: linear-gradient(135deg, var(--pb-primary), var(--pb-primary-light)) !important;
+    border: none !important;
+    border-radius: 14px !important;
+    font-weight: 800 !important;
+}
+
+.pb-portal .card, .pb-portal .stat-card {
+    border-radius: var(--pb-radius) !important;
+    border: 1px solid var(--pb-border) !important;
+    box-shadow: var(--pb-shadow) !important;
+}
+
+.pb-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 14px;
+    border-radius: 999px;
+    font-size: 0.75rem;
+    font-weight: 800;
+}
+
+.pb-badge-green { background: var(--pb-sage); color: var(--pb-green); }
+.pb-badge-orange { background: #FFE8D6; color: var(--pb-primary); }
+.pb-badge-red { background: #FEE2E2; color: #DC2626; }
+
+.pb-case-modal img { max-width: 100%; border-radius: 12px; }

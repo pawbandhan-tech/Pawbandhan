@@ -1,5 +1,5 @@
 /**
- * Vercel serverless API — Express + Neon (set DATABASE_URL in Vercel env).
+ * Express catch-all for /api/* (profile + health use dedicated faster routes).
  */
 const path = require('path');
 const serverless = require('serverless-http');
@@ -24,7 +24,7 @@ function sendError(res, status, message, detail) {
         error: message,
         detail: detail || undefined,
         hint: status === 503
-            ? 'Add DATABASE_URL in Vercel → Settings → Environment Variables (Neon connection string).'
+            ? 'Add DATABASE_URL in Vercel → pawbandhan-tech → Environment Variables.'
             : undefined
     }));
 }
@@ -32,14 +32,21 @@ function sendError(res, status, message, detail) {
 module.exports = async (req, res) => {
     try {
         loadApp();
-        await getDbReady();
-        const orig = req.headers['x-vercel-original-url'] || req.headers['x-original-url'];
-        if (orig && typeof orig === 'string' && (!req.url || req.url === '/' || req.url === '/api')) {
-            req.url = orig.startsWith('/') ? orig : '/' + orig;
+        // Only wait for minimal schema — full initDB runs in background on Vercel
+        const ready = getDbReady();
+        const timeout = new Promise((_, reject) =>
+            setTimeout(() => reject(new Error('API warm-up timed out')), 12000)
+        );
+        await Promise.race([ready, timeout]);
+
+        const segments = req.query.path;
+        const subPath = Array.isArray(segments) ? segments.join('/') : (segments || '');
+        if (subPath) {
+            req.url = '/api/' + subPath + (req.url?.includes('?') ? req.url.slice(req.url.indexOf('?')) : '');
         }
         return await handler(req, res);
     } catch (err) {
-        console.error('FUNCTION_INVOCATION_FAILED', err);
-        sendError(res, 500, err.message || 'API failed to start', process.env.VERCEL ? String(err.stack || '').split('\n')[0] : undefined);
+        console.error('API_ERROR', err.message);
+        sendError(res, err.status || 500, err.message || 'API failed', process.env.VERCEL ? undefined : err.stack);
     }
 };

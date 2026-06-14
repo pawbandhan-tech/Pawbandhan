@@ -1,0 +1,309 @@
+/**
+ * Customer rescue flow — phones, tablets, notches, landscape
+ */
+html {
+    -webkit-text-size-adjust: 100%;
+    text-size-adjust: 100%;
+}
+
+body.pb-customer {
+    -webkit-tap-highlight-color: transparent;
+    overflow-x: hidden;
+}
+
+body.pb-customer .cd-main,
+body.pb-customer .page-wrap {
+    position: relative;
+    z-index: 1;
+}
+
+/* Touch-friendly controls */
+body.pb-customer button,
+body.pb-customer .btn-submit,
+body.pb-customer .btn-cam,
+body.pb-customer .btn-report-live,
+body.pb-customer .loc-retry-btn {
+    touch-action: manipulation;
+    -webkit-touch-callout: none;
+}
+
+body.pb-customer .form-group input,
+body.pb-customer .form-group select,
+body.pb-customer .form-group textarea {
+    font-size: 16px;
+}
+
+/* ─── Camera overlay (full-screen on mobile) ─── */
+.camera-overlay {
+    height: 100%;
+    height: 100dvh;
+    max-height: 100dvh;
+    padding: max(12px, env(safe-area-inset-top)) max(12px, env(safe-area-inset-right))
+        max(12px, env(safe-area-inset-bottom)) max(12px, env(safe-area-inset-left));
+    overflow-y: auto;
+    overflow-x: hidden;
+    -webkit-overflow-scrolling: touch;
+    justify-content: flex-start;
+    padding-top: max(16px, env(safe-area-inset-top));
+}
+
+.camera-overlay > p:first-of-type {
+    flex-shrink: 0;
+    margin-bottom: 10px !important;
+}
+
+.cam-box {
+    width: 100%;
+    max-width: min(100%, 520px);
+    flex-shrink: 0;
+    border-radius: 24px;
+    border-width: 3px;
+}
+
+.cam-viewport {
+    aspect-ratio: 3 / 4;
+    max-height: min(52dvh, 420px);
+    overflow: hidden;
+    background: #0f172a;
+}
+
+#video {
+    width: 100%;
+    height: 100%;
+    min-height: 0;
+    max-height: none;
+    object-fit: cover;
+}
+
+#detectOverlay {
+    width: 100% !important;
+    height: 100% !important;
+}
+
+.ai-badge {
+    bottom: max(12px, env(safe-area-inset-bottom));
+    left: 50%;
+    transform: translateX(-50%);
+    max-width: calc(100% - 24px);
+    white-space: normal;
+    text-align: center;
+    line-height: 1.35;
+    font-size: 0.78rem;
+    padding: 8px 14px;
+}
+
+.live-animal-feed {
+    width: 100%;
+    max-width: min(100%, 520px);
+    flex-shrink: 0;
+}
+
+.btn-report-live {
+    width: 100%;
+    max-width: min(100%, 520px);
+    justify-content: center;
+    min-height: 48px;
+    padding: 14px 20px;
+}
+
+.cam-btns {
+    margin-top: 20px;
+    gap: 16px;
+    flex-shrink: 0;
+}
+
+.btn-cam {
+    width: 56px;
+    height: 56px;
+    min-width: 48px;
+    min-height: 48px;
+}
+
+.btn-cam.main {
+    width: 72px;
+    height: 72px;
+    min-width: 56px;
+    min-height: 56px;
+    font-size: 1.5rem;
+}
+
+.camera-overlay > p:last-of-type {
+    flex-shrink: 0;
+    padding-bottom: env(safe-area-inset-bottom);
+}
+
+/* ─── Report & case modals ─── */
+.modal-bg {
+    padding: max(12px, env(safe-area-inset-top)) max(12px, env(safe-area-inset-right))
+        max(12px, env(safe-area-inset-bottom)) max(12px, env(safe-area-inset-left));
+    align-items: flex-end;
+}
+
+.modal-bg.open {
+    align-items: flex-end;
+}
+
+.modal-panel {
+    max-height: min(92dvh, 900px);
+    padding: 28px 20px max(24px, env(safe-area-inset-bottom));
+    border-radius: 24px 24px 0 0;
+    -webkit-overflow-scrolling: touch;
+}
+
+.modal-panel h2 {
+    font-size: 1.35rem;
+}
+
+.modal-panel .sub-text {
+    font-size: 0.9rem;
+    margin-bottom: 20px;
+}
+
+.form-row {
+    grid-template-columns: 1fr;
+}
+
+.btn-submit {
+    min-height: 48px;
+    padding: 16px;
+}
+
+#trackModal .track-panel {
+    max-height: 92dvh;
+    padding-bottom: env(safe-area-inset-bottom);
+}
+
+/* Bottom nav stays below camera */
+body.pb-camera-open .pb-bottom-nav {
+    visibility: hidden;
+    pointer-events: none;
+}
+
+@media (min-width: 601px) {
+    .modal-bg.open {
+        align-items: center;
+    }
+
+    .modal-panel {
+        border-radius: 32px;
+        padding: 40px 36px;
+    }
+
+    .cam-viewport {
+        aspect-ratio: 4 / 3;
+        max-height: min(60vh, 480px);
+    }
+}
+
+@media (max-width: 600px) {
+    body.pb-customer .cd-header-inner {
+        padding: 10px 12px;
+        gap: 8px;
+    }
+
+    body.pb-customer .cd-brand strong {
+        font-size: 1rem;
+    }
+
+    body.pb-customer .cd-brand small {
+        display: none;
+    }
+
+    body.pb-customer .cd-user-chip span {
+        display: none;
+    }
+
+    body.pb-customer .cd-btn-icon {
+        width: 40px;
+        height: 40px;
+        min-width: 44px;
+        min-height: 44px;
+    }
+
+    body.pb-customer .cd-welcome h1 {
+        font-size: 1.45rem;
+    }
+
+    body.pb-customer .cd-action-primary {
+        min-height: 120px;
+    }
+
+    .detail-grid {
+        grid-template-columns: 1fr !important;
+    }
+
+    .modal-panel.wide {
+        padding: 24px 16px;
+    }
+}
+
+@media (max-width: 380px) {
+    .cam-viewport {
+        max-height: min(48dvh, 360px);
+    }
+
+    .btn-cam.main {
+        width: 64px;
+        height: 64px;
+    }
+
+    .live-feed-chip {
+        font-size: 0.72rem;
+        padding: 6px 10px;
+    }
+}
+
+/* Landscape phones */
+@media (max-height: 500px) and (orientation: landscape) {
+    .camera-overlay {
+        flex-direction: row;
+        flex-wrap: wrap;
+        justify-content: center;
+        align-content: flex-start;
+        gap: 8px;
+    }
+
+    .camera-overlay > p:first-of-type,
+    .camera-overlay > p:last-of-type {
+        width: 100%;
+        margin: 0 !important;
+    }
+
+    .cam-box {
+        width: 55%;
+        max-width: none;
+    }
+
+    .cam-viewport {
+        aspect-ratio: 16 / 10;
+        max-height: 70dvh;
+    }
+
+    .live-animal-feed,
+    .btn-report-live {
+        width: 40%;
+        max-width: none;
+        margin-top: 0;
+        align-self: center;
+    }
+
+    .cam-btns {
+        width: 100%;
+        margin-top: 8px;
+    }
+}
+
+/* Reduce motion / low GPU */
+@media (prefers-reduced-motion: reduce) {
+    .scan-bar {
+        animation: none;
+    }
+}
+
+@supports not (backdrop-filter: blur(12px)) {
+    .camera-overlay,
+    .modal-bg {
+        backdrop-filter: none;
+        background: rgba(15, 23, 42, 0.98);
+    }
+}

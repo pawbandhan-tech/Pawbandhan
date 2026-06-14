@@ -1,12 +1,21 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
-  "name": "pawbandhan",
   "installCommand": "npm install --omit=dev",
   "buildCommand": "npm run vercel-build",
-  "outputDirectory": "web_app",
+  "outputDirectory": "frontend/dist",
   "framework": null,
   "functions": {
-    "api/index.js": {
+    "api/customers/[uid]/profile.js": {
+      "maxDuration": 30,
+      "memory": 512,
+      "includeFiles": "api/lib/**"
+    },
+    "api/health.js": {
+      "maxDuration": 10,
+      "memory": 256,
+      "includeFiles": "api/lib/**"
+    },
+    "api/[...path].js": {
       "maxDuration": 60,
       "memory": 1024,
       "includeFiles": "backend_api/**"
@@ -14,8 +23,8 @@
   },
   "rewrites": [
     {
-      "source": "/api/:path*",
-      "destination": "/api"
+      "source": "/((?!api/).*)",
+      "destination": "/index.html"
     }
   ],
   "headers": [

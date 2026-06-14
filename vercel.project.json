@@ -2,6 +2,10 @@
   "projectId": "prj_7Ulm0bcjhPlDolg7S4gbYie4vOpT",
   "projectName": "pawbandhan",
   "vercelTeam": "pawbandhan-techs-projects",
+  "vercelScope": "pawbandhan-techs-projects",
   "vercelUrl": "https://vercel.com/pawbandhan-techs-projects/pawbandhan",
-  "githubUrl": "https://github.com/pawbandhan-tech/Pawbandhan"
+  "githubUrl": "https://github.com/pawbandhan-tech/Pawbandhan",
+  "doNotDeployTo": "vdgogatememorialfoundation-4559s-projects",
+  "linkCommand": "powershell -ExecutionPolicy Bypass -File scripts/link-pawbandhan-vercel.ps1",
+  "deployCommand": "npx vercel deploy --prod --scope pawbandhan-techs-projects"
 }
