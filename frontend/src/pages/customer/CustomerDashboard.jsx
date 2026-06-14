@@ -13,15 +13,24 @@ import {
   setCustomerUid
 } from '../../lib/session';
 import '../../styles/customer-portal.css';
-import '../../styles/customer-dashboard.css';
 import '../../styles/customer-dashboard-v2.css';
 import '../../styles/customer-rescue-mobile.css';
 
+function hydrateFromFirebase(user) {
+  const cached = getProfileFromSession();
+  return {
+    name: cached.name || user?.displayName || '',
+    phone: cached.phone || '',
+    email: cached.email || user?.email || '',
+    gender: cached.gender || ''
+  };
+}
+
 export default function CustomerDashboard() {
   const navigate = useNavigate();
-  const [uid, setUid] = useState(getCustomerUid());
-  const [name, setName] = useState(getProfileFromSession().name || 'Guest');
-  const [stats, setStats] = useState({});
+  const [uid, setUid] = useState(null);
+  const [name, setName] = useState('');
+  const [stats, setStats] = useState(null);
   const [cases, setCases] = useState([]);
   const [notifs, setNotifs] = useState([]);
   const [notifOpen, setNotifOpen] = useState(false);
@@ -29,6 +38,7 @@ export default function CustomerDashboard() {
   const [profile, setProfile] = useState(getProfileFromSession());
   const [saveStatus, setSaveStatus] = useState('');
   const [saving, setSaving] = useState(false);
+  const [loading, setLoading] = useState(true);
   const [cameraOpen, setCameraOpen] = useState(false);
   const [reportOpen, setReportOpen] = useState(false);
   const [detectedAnimal, setDetectedAnimal] = useState('');
@@ -38,19 +48,30 @@ export default function CustomerDashboard() {
   const streamRef = useRef(null);
   const captureRef = useRef(null);
 
-  const loadProfile = useCallback(async (customerUid) => {
+  useEffect(() => {
+    document.body.classList.add('pb-customer');
+    return () => document.body.classList.remove('pb-customer');
+  }, []);
+
+  const loadProfile = useCallback(async (customerUid, firebaseUser) => {
     if (!customerUid || customerUid === 'demo') return;
     try {
       const p = await fetchJson(`/api/customers/${encodeURIComponent(customerUid)}/profile`);
       applyProfile(p);
-      if (p.name) setName(p.name);
-      setProfile({
-        name: p.name || '',
+      const merged = {
+        name: p.name || firebaseUser?.displayName || '',
         phone: p.phone || '',
-        email: p.email || '',
+        email: p.email || firebaseUser?.email || '',
         gender: p.gender || ''
-      });
-    } catch { /* optional */ }
+      };
+      setProfile(merged);
+      if (merged.name) setName(merged.name);
+      else if (firebaseUser?.displayName) setName(firebaseUser.displayName);
+    } catch {
+      const fallback = hydrateFromFirebase(firebaseUser);
+      setProfile(fallback);
+      if (fallback.name) setName(fallback.name);
+    }
   }, []);
 
   const loadCases = useCallback(async (customerUid) => {
@@ -74,31 +95,45 @@ export default function CustomerDashboard() {
   }, []);
 
   useEffect(() => {
-    fetchJson('/api/stats').then(setStats).catch(() => {});
+    fetchJson('/api/stats').then(setStats).catch(() => setStats({}));
   }, []);
 
   useEffect(() => {
-    let current = getCustomerUid();
-    if (current) {
-      setUid(current);
-      loadProfile(current);
-      loadCases(current);
-      loadNotifs(current);
-      return undefined;
+    let active = true;
+
+    async function bootWithUid(customerUid, firebaseUser) {
+      setUid(customerUid);
+      const local = hydrateFromFirebase(firebaseUser);
+      if (local.name) setName(local.name);
+      setProfile(local);
+      await Promise.all([
+        loadProfile(customerUid, firebaseUser),
+        loadCases(customerUid),
+        loadNotifs(customerUid)
+      ]);
+      if (active) setLoading(false);
     }
+
+    const existing = getCustomerUid();
+    if (existing) {
+      setCustomerUid(existing);
+      bootWithUid(existing, auth.currentUser);
+      return () => { active = false; };
+    }
+
     const unsub = onAuthStateChanged(auth, (user) => {
       if (!user) {
         navigate('/auth/customer');
         return;
       }
-      current = user.uid;
-      setCustomerUid(current);
-      setUid(current);
-      loadProfile(current);
-      loadCases(current);
-      loadNotifs(current);
+      setCustomerUid(user.uid);
+      bootWithUid(user.uid, user);
     });
-    return () => unsub();
+
+    return () => {
+      active = false;
+      unsub();
+    };
   }, [navigate, loadProfile, loadCases, loadNotifs]);
 
   async function saveProfile(e) {
@@ -118,7 +153,7 @@ export default function CustomerDashboard() {
       applyProfile(data);
       setName(data.name || profile.name);
       if (auth.currentUser) {
-        try { await updateProfile(auth.currentUser, { displayName: data.name }); } catch { /* optional */ }
+        try { await updateProfile(auth.currentUser, { displayName: data.name || profile.name }); } catch { /* optional */ }
       }
       setSaveStatus('Profile saved');
       setTimeout(() => { setProfileOpen(false); setSaveStatus(''); }, 600);
@@ -209,9 +244,24 @@ export default function CustomerDashboard() {
 
   const unread = notifs.filter((n) => !n.is_read).length;
   const fmt = (n) => {
+    if (stats == null) return '—';
     const x = Number(n) || 0;
     return x >= 1000 ? `${(x / 1000).toFixed(1).replace(/\.0$/, '')}k` : String(x);
   };
+
+  const greetName = displayName(name).split(' ')[0] || 'friend';
+  const showName = displayName(name) || 'Set your name';
+
+  if (loading) {
+    return (
+      <div className="pb-portal pb-customer">
+        <div className="cd-loading">
+          <i className="fas fa-paw fa-spin" />
+          <span>Loading your rescue hub…</span>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="pb-portal pb-customer">
@@ -227,10 +277,12 @@ export default function CustomerDashboard() {
               {unread > 0 ? <span className="pb-notif-badge show">{unread > 9 ? '9+' : unread}</span> : null}
             </button>
             <button type="button" className="cd-user-chip" onClick={() => setProfileOpen(true)}>
-              <div className="cd-user-avatar">{initials(name)}</div>
-              <span style={{ fontWeight: 700, fontSize: '0.9rem' }}>{displayName(name)}</span>
+              <div className="cd-user-avatar">{initials(name || 'U')}</div>
+              <span>{showName}</span>
             </button>
-            <button type="button" className="cd-btn-logout" onClick={logout}><i className="fas fa-right-from-bracket" /> Sign out</button>
+            <button type="button" className="cd-btn-logout" onClick={logout}>
+              <i className="fas fa-right-from-bracket" /> <span>Sign out</span>
+            </button>
           </div>
         </div>
       </header>
@@ -238,10 +290,12 @@ export default function CustomerDashboard() {
       <div className={`pb-notif-drawer${notifOpen ? ' open' : ''}`}>
         <header>
           <h3><i className="fas fa-bell" /> Notifications</h3>
-          <button type="button" onClick={() => setNotifOpen(false)}>&times;</button>
+          <button type="button" onClick={() => setNotifOpen(false)} aria-label="Close">&times;</button>
         </header>
         <div className="pb-notif-list">
-          {!notifs.length ? <p style={{ padding: 20, color: 'var(--pb-muted)' }}>No notifications yet</p> : notifs.map((n) => (
+          {!notifs.length ? (
+            <p style={{ padding: 20, color: 'var(--cd-muted)' }}>No notifications yet</p>
+          ) : notifs.map((n) => (
             <div key={n.id} className={`pb-notif-item${n.is_read ? '' : ' unread'}`}>
               <strong>{n.title || 'Update'}</strong>
               <p>{n.message}</p>
@@ -250,56 +304,88 @@ export default function CustomerDashboard() {
         </div>
       </div>
 
-      <main className="cd-main page-wrap">
+      <main className="cd-main">
         <section className="cd-hero-card">
           <div className="cd-hero-top">
-            <div className="cd-hero-avatar">{initials(name)}</div>
+            <div className="cd-hero-avatar">{initials(name || 'U')}</div>
             <div className="cd-hero-text">
               <p className="cd-hero-label">Your rescue hub</p>
-              <h1>Hi, <em>{displayName(name).split(' ')[0]}</em> 🐾</h1>
-              <p className="cd-hero-sub">Report injured animals and track every rescue step.</p>
+              <h1>Hi, <em>{greetName}</em> 🐾</h1>
+              <p className="cd-hero-sub">Report injured animals with live camera AI and track every rescue step.</p>
             </div>
-            <button type="button" className="cd-btn-profile" onClick={() => setProfileOpen(true)}><i className="fas fa-user-pen" /> Profile</button>
+            <button type="button" className="cd-btn-profile" onClick={() => setProfileOpen(true)}>
+              <i className="fas fa-user-pen" /> Profile
+            </button>
           </div>
           <div className="cd-hero-stats">
-            <div className="cd-hero-stat"><strong>{fmt(stats.totalRescues)}</strong> Rescues</div>
-            <div className="cd-hero-stat"><strong>{fmt(stats.totalNGOs)}</strong> NGOs</div>
-            <div className="cd-hero-stat"><strong>{fmt(stats.totalRiders)}</strong> Heroes</div>
-            <div className="cd-hero-stat"><strong>{fmt(stats.totalDoctors)}</strong> Vets</div>
+            <div className="cd-hero-stat"><strong>{fmt(stats?.totalRescues)}</strong> Rescues</div>
+            <div className="cd-hero-stat"><strong>{fmt(stats?.totalNGOs)}</strong> NGOs</div>
+            <div className="cd-hero-stat"><strong>{fmt(stats?.totalRiders)}</strong> Heroes</div>
+            <div className="cd-hero-stat"><strong>{fmt(stats?.totalDoctors)}</strong> Vets</div>
           </div>
         </section>
 
         <div className="cd-quick-grid">
           <button type="button" className="cd-qbtn cd-qbtn-emergency" onClick={openCamera}>
             <span className="cd-qicon"><i className="fas fa-camera" /></span>
-            <div><h3>Report emergency</h3><p>Camera capture + GPS dispatch</p></div>
-            <i className="fas fa-chevron-right" style={{ marginLeft: 'auto', opacity: 0.8 }} />
+            <div>
+              <h3>Report emergency</h3>
+              <p>Live camera detects animals — dispatches nearest NGO</p>
+            </div>
+            <i className="fas fa-chevron-right" style={{ marginLeft: 'auto', opacity: 0.85, fontSize: '1.1rem' }} />
           </button>
           <button type="button" className="cd-qbtn" onClick={() => loadCases(uid)}>
             <span className="cd-qicon"><i className="fas fa-route" /></span>
-            <strong>Track rescues</strong><span>Live timeline</span>
+            <div className="cd-qbtn-text">
+              <strong>Track rescues</strong>
+              <span>Live timeline &amp; GPS</span>
+            </div>
+          </button>
+          <button type="button" className="cd-qbtn" onClick={openCamera}>
+            <span className="cd-qicon"><i className="fas fa-map-location-dot" /></span>
+            <div className="cd-qbtn-text">
+              <strong>NGOs near me</strong>
+              <span>Map &amp; shelters</span>
+            </div>
           </button>
           <button type="button" className="cd-qbtn" onClick={() => setProfileOpen(true)}>
             <span className="cd-qicon"><i className="fas fa-id-card" /></span>
-            <strong>My profile</strong><span>Name &amp; phone</span>
+            <div className="cd-qbtn-text">
+              <strong>My profile</strong>
+              <span>Name, phone &amp; gender</span>
+            </div>
           </button>
           <button type="button" className="cd-qbtn" onClick={() => setNotifOpen(true)}>
             <span className="cd-qicon"><i className="fas fa-bell" /></span>
-            <strong>Alerts</strong><span>Case updates</span>
+            <div className="cd-qbtn-text">
+              <strong>Alerts</strong>
+              <span>Case updates</span>
+            </div>
+          </button>
+          <button type="button" className="cd-qbtn" onClick={() => navigate('/#how')}>
+            <span className="cd-qicon"><i className="fas fa-circle-info" /></span>
+            <div className="cd-qbtn-text">
+              <strong>Help</strong>
+              <span>How it works</span>
+            </div>
           </button>
         </div>
 
         <div className="cd-cases-panel">
           <div className="cd-section-head">
             <h2>Your rescue cases</h2>
-            <button type="button" onClick={() => loadCases(uid)}><i className="fas fa-rotate" /> Refresh</button>
+            <button type="button" onClick={() => loadCases(uid)}>
+              <i className="fas fa-rotate" /> Refresh
+            </button>
           </div>
           {!cases.length ? (
             <div className="empty-cases-card">
               <i className="fas fa-paw" />
               <h3>No rescues yet</h3>
-              <p>Report an injured animal to see live tracking.</p>
-              <button type="button" className="btn-track-primary" onClick={openCamera}>Report emergency</button>
+              <p>Report an injured animal to see live tracking with date and time on every step.</p>
+              <button type="button" className="btn-track-primary" onClick={openCamera}>
+                Report emergency
+              </button>
             </div>
           ) : cases.map((c) => (
             <article key={c.incident_code || c.id} className="cd-case-card track-card">
@@ -320,19 +406,20 @@ export default function CustomerDashboard() {
       {profileOpen ? (
         <div className="modal-bg open" onClick={(e) => e.target === e.currentTarget && setProfileOpen(false)}>
           <div className="modal-panel">
-            <h2>Edit profile</h2>
+            <h2><i className="fas fa-user-pen" style={{ marginRight: 10, color: 'var(--cd-brand)' }} />Edit profile</h2>
+            <p className="sub-text" style={{ marginBottom: 20, color: 'var(--cd-muted)' }}>Saved to your PawBandhan account on every device.</p>
             <form onSubmit={saveProfile}>
               <div className="form-group">
                 <label>Name</label>
-                <input value={profile.name} onChange={(e) => setProfile({ ...profile, name: e.target.value })} required />
+                <input value={profile.name} onChange={(e) => setProfile({ ...profile, name: e.target.value })} required placeholder="Your full name" />
               </div>
               <div className="form-group">
                 <label>Phone</label>
-                <input value={profile.phone} onChange={(e) => setProfile({ ...profile, phone: e.target.value })} />
+                <input value={profile.phone} onChange={(e) => setProfile({ ...profile, phone: e.target.value })} placeholder="+91 …" />
               </div>
               <div className="form-group">
                 <label>Email</label>
-                <input type="email" value={profile.email} onChange={(e) => setProfile({ ...profile, email: e.target.value })} />
+                <input type="email" value={profile.email} onChange={(e) => setProfile({ ...profile, email: e.target.value })} placeholder="you@email.com" />
               </div>
               <div className="form-group">
                 <label>Gender</label>
@@ -343,7 +430,9 @@ export default function CustomerDashboard() {
                   <option value="Other">Other</option>
                 </select>
               </div>
-              {saveStatus ? <p className={`profile-save-status${saveStatus.includes('saved') ? ' ok' : saveStatus === 'Saving…' ? '' : ' err'}`}>{saveStatus}</p> : null}
+              {saveStatus ? (
+                <p className={`profile-save-status${saveStatus.includes('saved') ? ' ok' : saveStatus === 'Saving…' ? '' : ' err'}`}>{saveStatus}</p>
+              ) : null}
               <button type="submit" className="btn-submit" disabled={saving}>{saving ? 'Saving…' : 'Save profile'}</button>
               <button type="button" className="btn-ghost" onClick={() => setProfileOpen(false)}>Cancel</button>
             </form>
@@ -356,10 +445,10 @@ export default function CustomerDashboard() {
           <div className="modal-panel" style={{ maxWidth: 520, textAlign: 'center' }}>
             <h2>Point camera at the animal</h2>
             <div className="cam-box cam-ready">
-              <video ref={videoRef} autoPlay playsInline muted style={{ width: '100%', borderRadius: 16 }} />
+              <video ref={videoRef} autoPlay playsInline muted style={{ width: '100%', borderRadius: 16, maxHeight: '50vh', objectFit: 'cover' }} />
             </div>
             <canvas ref={captureRef} style={{ display: 'none' }} />
-            <div style={{ marginTop: 20, display: 'flex', gap: 12, justifyContent: 'center' }}>
+            <div style={{ marginTop: 20, display: 'flex', gap: 12, justifyContent: 'center', flexWrap: 'wrap' }}>
               <button type="button" className="btn-submit" onClick={captureAndReport}>Capture &amp; report</button>
               <button type="button" className="btn-ghost" onClick={closeCamera}>Cancel</button>
             </div>
@@ -374,7 +463,7 @@ export default function CustomerDashboard() {
             <p className="sub-text">Animal: <strong>{detectedAnimal || 'Animal'}</strong></p>
             <div className="form-group">
               <label>What happened?</label>
-              <textarea value={reportDesc} onChange={(e) => setReportDesc(e.target.value)} placeholder="Injured, stuck, bleeding…" />
+              <textarea value={reportDesc} onChange={(e) => setReportDesc(e.target.value)} placeholder="Injured, stuck, bleeding…" rows={4} />
             </div>
             <button type="button" className="btn-submit" onClick={submitReport} disabled={reportSubmitting}>
               {reportSubmitting ? 'Submitting…' : 'Submit & dispatch help'}

@@ -1,7 +1,7 @@
 /* Customer portal — header, dashboard shell, case cards */
 @import url('https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,400;0,9..40,600;0,9..40,700;0,9..40,800&family=Fraunces:opsz,wght@9..144,600&display=swap');
 
-body.pb-customer {
+.pb-customer {
     --cd-brand: #0d9488;
     --cd-brand-dark: #0f766e;
     --cd-accent: #f97316;
@@ -17,7 +17,7 @@ body.pb-customer {
     padding-bottom: 88px;
 }
 
-body.pb-customer::before {
+.pb-customer::before {
     content: '';
     position: fixed;
     inset: 0;
@@ -413,13 +413,13 @@ button.cd-user-chip {
 }
 
 /* Live hero refresh */
-body.pb-customer .pb-live-hero {
+.pb-customer .pb-live-hero {
     background: linear-gradient(145deg, #0f3d38, var(--cd-brand));
     border-radius: 24px;
     border: none;
 }
 
-body.pb-customer .pb-map-placeholder {
+.pb-customer .pb-map-placeholder {
     background: rgba(0, 0, 0, 0.15);
     border: 1px dashed rgba(255, 255, 255, 0.25);
 }
@@ -493,24 +493,24 @@ body.pb-customer .pb-map-placeholder {
     z-index: 2;
 }
 
-body.pb-customer .pb-bottom-nav {
+.pb-customer .pb-bottom-nav {
     background: rgba(255, 255, 255, 0.96);
     backdrop-filter: blur(12px);
     border-top: 1px solid var(--cd-border);
     max-width: 100%;
 }
 
-body.pb-customer .pb-bottom-nav button.active {
+.pb-customer .pb-bottom-nav button.active {
     color: var(--cd-brand);
 }
 
 /* Hide legacy dashboard chrome */
-body.pb-customer .topbar,
-body.pb-customer .greeting,
-body.pb-customer .xp-bar-wrap,
-body.pb-customer .quick-grid,
-body.pb-customer .two-col .community-card,
-body.pb-customer .leader-banner {
+.pb-customer .topbar,
+.pb-customer .greeting,
+.pb-customer .xp-bar-wrap,
+.pb-customer .quick-grid,
+.pb-customer .two-col .community-card,
+.pb-customer .leader-banner {
     display: none !important;
 }
 

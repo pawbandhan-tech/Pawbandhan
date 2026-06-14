@@ -6,30 +6,28 @@ html {
     text-size-adjust: 100%;
 }
 
-body.pb-customer {
+.pb-customer {
     -webkit-tap-highlight-color: transparent;
     overflow-x: hidden;
 }
 
-body.pb-customer .cd-main,
-body.pb-customer .page-wrap {
+.pb-customer .cd-main {
     position: relative;
     z-index: 1;
 }
 
-/* Touch-friendly controls */
-body.pb-customer button,
-body.pb-customer .btn-submit,
-body.pb-customer .btn-cam,
-body.pb-customer .btn-report-live,
-body.pb-customer .loc-retry-btn {
+.pb-customer button,
+.pb-customer .btn-submit,
+.pb-customer .btn-cam,
+.pb-customer .btn-report-live,
+.pb-customer .loc-retry-btn {
     touch-action: manipulation;
     -webkit-touch-callout: none;
 }
 
-body.pb-customer .form-group input,
-body.pb-customer .form-group select,
-body.pb-customer .form-group textarea {
+.pb-customer .form-group input,
+.pb-customer .form-group select,
+.pb-customer .form-group textarea {
     font-size: 16px;
 }
 
@@ -173,7 +171,6 @@ body.pb-customer .form-group textarea {
     padding-bottom: env(safe-area-inset-bottom);
 }
 
-/* Bottom nav stays below camera */
 body.pb-camera-open .pb-bottom-nav {
     visibility: hidden;
     pointer-events: none;
@@ -196,36 +193,24 @@ body.pb-camera-open .pb-bottom-nav {
 }
 
 @media (max-width: 600px) {
-    body.pb-customer .cd-header-inner {
+    .pb-customer .cd-header-inner {
         padding: 10px 12px;
         gap: 8px;
     }
 
-    body.pb-customer .cd-brand strong {
+    .pb-customer .cd-brand strong {
         font-size: 1rem;
     }
 
-    body.pb-customer .cd-brand small {
+    .pb-customer .cd-brand small {
         display: none;
     }
 
-    body.pb-customer .cd-user-chip span {
-        display: none;
-    }
-
-    body.pb-customer .cd-btn-icon {
+    .pb-customer .cd-btn-icon {
         width: 40px;
         height: 40px;
         min-width: 44px;
         min-height: 44px;
-    }
-
-    body.pb-customer .cd-welcome h1 {
-        font-size: 1.45rem;
-    }
-
-    body.pb-customer .cd-action-primary {
-        min-height: 120px;
     }
 
     .detail-grid {
@@ -253,7 +238,6 @@ body.pb-camera-open .pb-bottom-nav {
     }
 }
 
-/* Landscape phones */
 @media (max-height: 500px) and (orientation: landscape) {
     .camera-overlay {
         flex-direction: row;
@@ -293,7 +277,6 @@ body.pb-camera-open .pb-bottom-nav {
     }
 }
 
-/* Reduce motion / low GPU */
 @media (prefers-reduced-motion: reduce) {
     .scan-bar {
         animation: none;
