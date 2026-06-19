@@ -12,6 +12,7 @@ import {
   getProfileFromSession,
   initials,
   isProfileIncomplete,
+  resolveDisplayName,
   setCustomerUid
 } from '../../lib/session';
 import '../../styles/customer-portal.css';
@@ -53,6 +54,7 @@ export default function CustomerDashboard() {
   const videoRef = useRef(null);
   const streamRef = useRef(null);
   const captureRef = useRef(null);
+  const profileEpochRef = useRef(0);
 
   useEffect(() => {
     document.body.classList.add('pb-customer');
@@ -61,19 +63,24 @@ export default function CustomerDashboard() {
 
   const loadProfile = useCallback(async (customerUid, firebaseUser) => {
     if (!customerUid || customerUid === 'demo') return;
+    const epochAtStart = profileEpochRef.current;
     const emailHint = firebaseUser?.email || getProfileFromSession().email || '';
     try {
       const p = await fetchJson(`/api/customers/${encodeURIComponent(customerUid)}/profile`, { timeoutMs: 15000 });
+      if (epochAtStart !== profileEpochRef.current) return;
+      const rawName = p.name || firebaseUser?.displayName || '';
+      const email = p.email || emailHint || '';
       const merged = {
-        name: p.name || firebaseUser?.displayName || '',
+        name: resolveDisplayName(rawName, email),
         phone: p.phone || '',
-        email: p.email || emailHint || '',
+        email,
         gender: p.gender || ''
       };
       applyProfile(merged);
       setProfile(merged);
       setName(merged.name);
     } catch {
+      if (epochAtStart !== profileEpochRef.current) return;
       const fallback = hydrateFromFirebase(firebaseUser);
       setProfile(fallback);
       setName(fallback.name);
@@ -156,7 +163,8 @@ export default function CustomerDashboard() {
 
   function openProfileModal() {
     const email = profile.email || auth.currentUser?.email || '';
-    if (isProfileIncomplete(name, email)) {
+    const currentName = profile.name || name;
+    if (isProfileIncomplete(currentName, email)) {
       setProfile({
         name: '',
         phone: profile.phone || '',
@@ -181,16 +189,19 @@ export default function CustomerDashboard() {
         { name: profile.name, phone: profile.phone, gender: profile.gender || null, email: profile.email || null },
         { timeoutMs: 20000 }
       );
-      applyProfile(data);
-      setName(data.name || profile.name);
-      setProfile({
-        name: data.name || profile.name,
+      const savedName = (data.name || profile.name || '').trim();
+      const savedProfile = {
+        name: savedName,
         phone: data.phone ?? profile.phone,
         email: data.email ?? profile.email,
         gender: data.gender ?? profile.gender
-      });
+      };
+      profileEpochRef.current += 1;
+      applyProfile(savedProfile);
+      setName(savedName);
+      setProfile(savedProfile);
       if (auth.currentUser) {
-        try { await updateProfile(auth.currentUser, { displayName: data.name || profile.name }); } catch { /* optional */ }
+        try { await updateProfile(auth.currentUser, { displayName: savedName }); } catch { /* optional */ }
       }
       setSaveStatus('Profile saved');
       setTimeout(() => { setProfileOpen(false); setSaveStatus(''); }, 600);
@@ -281,9 +292,10 @@ export default function CustomerDashboard() {
 
   const unread = notifs.filter((n) => !n.is_read).length;
   const userEmail = profile.email || auth.currentUser?.email || '';
-  const resolvedName = displayNameOrFriend(name, userEmail);
-  const greetName = displayName(name, userEmail) || 'there';
-  const profileIncomplete = isProfileIncomplete(name, userEmail);
+  const nameForDisplay = profile.name || name;
+  const resolvedName = displayNameOrFriend(nameForDisplay, userEmail);
+  const greetName = displayName(nameForDisplay, userEmail) || 'there';
+  const profileIncomplete = isProfileIncomplete(nameForDisplay, userEmail);
   const fmt = (n) => {
     if (stats == null) return '…';
     const x = Number(n) || 0;
@@ -315,7 +327,7 @@ export default function CustomerDashboard() {
               {unread > 0 ? <span className="pb-notif-badge show">{unread > 9 ? '9+' : unread}</span> : null}
             </button>
             <button type="button" className="cd-user-chip" onClick={openProfileModal}>
-              <div className="cd-user-avatar">{initials(name, userEmail)}</div>
+              <div className="cd-user-avatar">{initials(nameForDisplay, userEmail)}</div>
               <span>{resolvedName}</span>
             </button>
             <button type="button" className="cd-btn-logout" onClick={logout}>
@@ -362,7 +374,7 @@ export default function CustomerDashboard() {
 
         <section className="cd-hero-card">
           <div className="cd-hero-top">
-            <div className="cd-hero-avatar">{initials(name, userEmail)}</div>
+            <div className="cd-hero-avatar">{initials(nameForDisplay, userEmail)}</div>
             <div className="cd-hero-text">
               <p className="cd-hero-label">Your rescue hub</p>
               <h1>Hi, <em>{greetName}</em> 🐾</h1>

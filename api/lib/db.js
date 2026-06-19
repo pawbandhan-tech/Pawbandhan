@@ -143,11 +143,11 @@ async function getCustomerProfile(uid) {
     const row = u.rows[0];
     const fromUser = `${row.first_name || ''} ${row.last_name || ''}`.trim();
     const fromCustomer = (row.customer_name || '').trim();
-    let fullName = fromUser || fromCustomer;
-    if (fromCustomer && !looksLikeEmailUsername(fromCustomer, row.email)) {
-        fullName = fromCustomer;
-    } else if (fromUser) {
+    let fullName = '';
+    if (fromUser) {
         fullName = fromUser;
+    } else if (fromCustomer && !looksLikeEmailUsername(fromCustomer, row.email)) {
+        fullName = fromCustomer;
     } else if (fromCustomer) {
         fullName = fromCustomer;
     }
@@ -228,7 +228,8 @@ async function upsertCustomerProfile(uid, body) {
         }
 
         await client.query('COMMIT');
-        return { success: true, uid, name: displayName, email, phone, gender };
+        const fresh = await getCustomerProfile(uid);
+        return { success: true, uid, name: fresh.name || displayName, email: fresh.email || email, phone: fresh.phone ?? phone, gender: fresh.gender ?? gender };
     } catch (err) {
         await client.query('ROLLBACK').catch(() => {});
         throw err;

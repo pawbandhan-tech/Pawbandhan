@@ -836,11 +836,11 @@ async function getCustomerProfile(uid) {
     const row = u.rows[0];
     const fromUser = `${row.first_name || ''} ${row.last_name || ''}`.trim();
     const fromCustomer = (row.customer_name || '').trim();
-    let fullName = fromUser || fromCustomer;
-    if (fromCustomer && !looksLikeEmailUsername(fromCustomer, row.email)) {
-        fullName = fromCustomer;
-    } else if (fromUser) {
+    let fullName = '';
+    if (fromUser) {
         fullName = fromUser;
+    } else if (fromCustomer && !looksLikeEmailUsername(fromCustomer, row.email)) {
+        fullName = fromCustomer;
     } else if (fromCustomer) {
         fullName = fromCustomer;
     }
