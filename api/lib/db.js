@@ -119,6 +119,14 @@ function generateCode(prefix) {
     return prefix + Date.now() + Math.floor(Math.random() * 10000);
 }
 
+function looksLikeEmailUsername(name, email) {
+    if (!name || !email) return false;
+    const n = String(name).trim().toLowerCase();
+    const local = String(email).split('@')[0].replace(/\d+/g, '').toLowerCase();
+    if (!local) return false;
+    return n === local || n.replace(/\s/g, '') === local;
+}
+
 async function getCustomerProfile(uid) {
     const p = getPool();
     if (!p) throw Object.assign(new Error('Database not configured.'), { status: 503 });
@@ -133,7 +141,16 @@ async function getCustomerProfile(uid) {
         return { uid, name: '', email: null, phone: null, gender: null, accountNo: null, hasPortalAccess: false, isNew: true };
     }
     const row = u.rows[0];
-    const fullName = (row.customer_name || `${row.first_name || ''} ${row.last_name || ''}`.trim()) || '';
+    const fromUser = `${row.first_name || ''} ${row.last_name || ''}`.trim();
+    const fromCustomer = (row.customer_name || '').trim();
+    let fullName = fromUser || fromCustomer;
+    if (fromCustomer && !looksLikeEmailUsername(fromCustomer, row.email)) {
+        fullName = fromCustomer;
+    } else if (fromUser) {
+        fullName = fromUser;
+    } else if (fromCustomer) {
+        fullName = fromCustomer;
+    }
     return {
         uid: row.uid,
         name: fullName,
@@ -154,17 +171,20 @@ async function upsertCustomerProfile(uid, body) {
     const name = body.name != null ? String(body.name).trim() : '';
     const phone = body.phone != null ? String(body.phone).trim() : null;
     const gender = body.gender != null ? String(body.gender).trim() : null;
-    if (!name) throw Object.assign(new Error('Name is required'), { status: 400 });
-
-    const parts = name.split(/\s+/).filter(Boolean);
-    const firstName = parts[0] || name;
-    const lastName = parts.slice(1).join(' ') || '';
     const emailIn = body.email != null ? String(body.email).trim().toLowerCase() : null;
 
     const client = await p.connect();
     try {
         await client.query('BEGIN');
-        let existing = await client.query('SELECT uid, email FROM users WHERE uid = $1', [uid]);
+        let existing = await client.query('SELECT uid, email, first_name, last_name FROM users WHERE uid = $1', [uid]);
+
+        if (!name && !existing.rows.length) {
+            throw Object.assign(new Error('Name is required for new profiles'), { status: 400 });
+        }
+
+        const parts = name ? name.split(/\s+/).filter(Boolean) : [];
+        const firstName = parts[0] || '';
+        const lastName = parts.slice(1).join(' ') || '';
 
         if (!existing.rows.length) {
             const accountNo = generateCode('PB');
@@ -173,31 +193,42 @@ async function upsertCustomerProfile(uid, body) {
                  VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9)`,
                 [uid, firstName, lastName, phone, emailIn || `customer-${uid.slice(0, 8)}@pawbandhan.local`, accountNo, 'customer', 'active', gender]
             );
-            existing = await client.query('SELECT uid, email FROM users WHERE uid = $1', [uid]);
-        } else {
+            existing = await client.query('SELECT uid, email, first_name, last_name FROM users WHERE uid = $1', [uid]);
+        } else if (name) {
             await client.query(
                 `UPDATE users SET first_name = $1, last_name = $2, phone_no = COALESCE($3, phone_no),
                  gender = COALESCE($4, gender), email = COALESCE($5, email) WHERE uid = $6`,
                 [firstName, lastName, phone, gender, emailIn, uid]
             );
+        } else {
+            await client.query(
+                `UPDATE users SET phone_no = COALESCE($1, phone_no), gender = COALESCE($2, gender),
+                 email = COALESCE($3, email) WHERE uid = $4`,
+                [phone, gender, emailIn, uid]
+            );
         }
 
         const email = emailIn || existing.rows[0].email;
-        const cust = await client.query('SELECT id FROM customers WHERE uid = $1', [uid]);
-        if (cust.rows.length) {
-            await client.query(
-                `UPDATE customers SET name = $1, phone = COALESCE($2, phone), email = COALESCE($3, email),
-                 gender = COALESCE($4, gender) WHERE uid = $5`,
-                [name, phone, email, gender, uid]
-            );
-        } else {
-            await client.query(
-                'INSERT INTO customers (uid, name, email, phone, gender) VALUES ($1, $2, $3, $4, $5)',
-                [uid, name, email, phone, gender]
-            );
+        const displayName = name || `${existing.rows[0].first_name || ''} ${existing.rows[0].last_name || ''}`.trim();
+
+        if (name) {
+            const cust = await client.query('SELECT id FROM customers WHERE uid = $1', [uid]);
+            if (cust.rows.length) {
+                await client.query(
+                    `UPDATE customers SET name = $1, phone = COALESCE($2, phone), email = COALESCE($3, email),
+                     gender = COALESCE($4, gender) WHERE uid = $5`,
+                    [name, phone, email, gender, uid]
+                );
+            } else {
+                await client.query(
+                    'INSERT INTO customers (uid, name, email, phone, gender) VALUES ($1, $2, $3, $4, $5)',
+                    [uid, name, email, phone, gender]
+                );
+            }
         }
+
         await client.query('COMMIT');
-        return { success: true, uid, name, email, phone, gender };
+        return { success: true, uid, name: displayName, email, phone, gender };
     } catch (err) {
         await client.query('ROLLBACK').catch(() => {});
         throw err;

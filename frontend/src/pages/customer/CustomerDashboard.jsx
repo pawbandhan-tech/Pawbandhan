@@ -7,10 +7,11 @@ import {
   applyProfile,
   clearCustomerSession,
   displayName,
+  displayNameOrFriend,
   getCustomerUid,
   getProfileFromSession,
   initials,
-  nameFromEmail,
+  isProfileIncomplete,
   setCustomerUid
 } from '../../lib/session';
 import '../../styles/customer-portal.css';
@@ -27,12 +28,8 @@ const DEFAULT_STATS = {
 function hydrateFromFirebase(user) {
   const cached = getProfileFromSession();
   const email = cached.email || user?.email || '';
-  return {
-    name: cached.name || user?.displayName || nameFromEmail(email) || '',
-    phone: cached.phone || '',
-    email,
-    gender: cached.gender || ''
-  };
+  const name = cached.name || user?.displayName || '';
+  return { name, phone: cached.phone || '', email, gender: cached.gender || '' };
 }
 
 export default function CustomerDashboard() {
@@ -67,29 +64,19 @@ export default function CustomerDashboard() {
     const emailHint = firebaseUser?.email || getProfileFromSession().email || '';
     try {
       const p = await fetchJson(`/api/customers/${encodeURIComponent(customerUid)}/profile`, { timeoutMs: 15000 });
-      let merged = {
-        name: p.name || firebaseUser?.displayName || nameFromEmail(p.email || emailHint) || '',
+      const merged = {
+        name: p.name || firebaseUser?.displayName || '',
         phone: p.phone || '',
         email: p.email || emailHint || '',
         gender: p.gender || ''
       };
-      if (p.isNew && merged.email && merged.name) {
-        try {
-          const saved = await postJson(
-            `/api/customers/${encodeURIComponent(customerUid)}/profile`,
-            { name: merged.name, email: merged.email, phone: merged.phone || null, gender: null },
-            { timeoutMs: 15000 }
-          );
-          merged = { ...merged, name: saved.name || merged.name, email: saved.email || merged.email };
-        } catch { /* user can save manually */ }
-      }
       applyProfile(merged);
       setProfile(merged);
-      if (merged.name) setName(merged.name);
+      setName(merged.name);
     } catch {
       const fallback = hydrateFromFirebase(firebaseUser);
       setProfile(fallback);
-      if (fallback.name) setName(fallback.name);
+      setName(fallback.name);
     }
   }, []);
 
@@ -138,8 +125,8 @@ export default function CustomerDashboard() {
       if (active) {
         setLoading(false);
         const p = getProfileFromSession();
-        if (!p.name && !sessionStorage.getItem('profile_prompt_shown')) {
-          sessionStorage.setItem('profile_prompt_shown', '1');
+        const email = p.email || firebaseUser?.email || '';
+        if (isProfileIncomplete(p.name, email)) {
           setProfileOpen(true);
         }
       }
@@ -183,6 +170,12 @@ export default function CustomerDashboard() {
       );
       applyProfile(data);
       setName(data.name || profile.name);
+      setProfile({
+        name: data.name || profile.name,
+        phone: data.phone ?? profile.phone,
+        email: data.email ?? profile.email,
+        gender: data.gender ?? profile.gender
+      });
       if (auth.currentUser) {
         try { await updateProfile(auth.currentUser, { displayName: data.name || profile.name }); } catch { /* optional */ }
       }
@@ -275,8 +268,9 @@ export default function CustomerDashboard() {
 
   const unread = notifs.filter((n) => !n.is_read).length;
   const userEmail = profile.email || auth.currentUser?.email || '';
-  const resolvedName = displayName(name, userEmail);
-  const greetName = resolvedName.split(' ')[0];
+  const resolvedName = displayNameOrFriend(name, userEmail);
+  const greetName = displayName(name, userEmail) || 'there';
+  const profileIncomplete = isProfileIncomplete(name, userEmail);
   const fmt = (n) => {
     if (stats == null) return '…';
     const x = Number(n) || 0;
@@ -336,6 +330,16 @@ export default function CustomerDashboard() {
       </div>
 
       <main className="cd-main">
+        {profileIncomplete ? (
+          <div className="cd-profile-banner" role="status">
+            <div>
+              <strong><i className="fas fa-user-pen" /> Complete your profile</strong>
+              <p>Add your name and phone so rescuers can reach you.</p>
+            </div>
+            <button type="button" className="cd-btn-profile" onClick={() => setProfileOpen(true)}>Set up now</button>
+          </div>
+        ) : null}
+
         <section className="cd-hero-card">
           <div className="cd-hero-top">
             <div className="cd-hero-avatar">{initials(name, userEmail)}</div>

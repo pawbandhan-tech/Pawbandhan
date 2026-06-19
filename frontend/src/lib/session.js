@@ -41,6 +41,7 @@ export function getProfileFromSession() {
   };
 }
 
+/** @deprecated Only for internal checks — never save this to the database */
 export function nameFromEmail(email) {
   if (!email || !String(email).includes('@')) return '';
   let local = String(email).split('@')[0];
@@ -53,15 +54,33 @@ export function nameFromEmail(email) {
     .join(' ');
 }
 
+export function isEmailDerivedName(name, email) {
+  const n = (name || '').trim();
+  if (!n || !email) return !n;
+  const derived = nameFromEmail(email);
+  if (derived && n.toLowerCase() === derived.toLowerCase()) return true;
+  const local = String(email).split('@')[0].replace(/\d+/g, '').toLowerCase();
+  return local && n.toLowerCase().replace(/\s/g, '') === local;
+}
+
 export function displayName(name, email) {
-  const n = (name || '').trim() || nameFromEmail(email);
-  return n || 'Friend';
+  const n = (name || '').trim();
+  if (n && !isEmailDerivedName(n, email)) return n;
+  return '';
+}
+
+export function displayNameOrFriend(name, email) {
+  return displayName(name, email) || 'Friend';
 }
 
 export function initials(name, email) {
   const d = displayName(name, email);
-  if (d === 'Friend') return '?';
+  if (!d) return '?';
   return d.split(' ').map((n) => n[0]).join('').toUpperCase().slice(0, 2) || '?';
+}
+
+export function isProfileIncomplete(name, email) {
+  return !displayName(name, email);
 }
 
 export { KEYS };

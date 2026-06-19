@@ -814,6 +814,14 @@ app.patch('/api/notifications/:id/read', async (req, res) => {
     } catch (error) { res.status(500).json({ error: error.message }); }
 });
 
+function looksLikeEmailUsername(name, email) {
+    if (!name || !email) return false;
+    const n = String(name).trim().toLowerCase();
+    const local = String(email).split('@')[0].replace(/\d+/g, '').toLowerCase();
+    if (!local) return false;
+    return n === local || n.replace(/\s/g, '') === local;
+}
+
 async function getCustomerProfile(uid) {
     if (!pool) throw Object.assign(new Error('Database not configured. Add DATABASE_URL in Vercel environment variables.'), { status: 503 });
     const u = await pool.query(
@@ -826,7 +834,16 @@ async function getCustomerProfile(uid) {
         return { uid, name: '', email: null, phone: null, gender: null, accountNo: null, hasPortalAccess: false, isNew: true };
     }
     const row = u.rows[0];
-    const fullName = (row.customer_name || `${row.first_name || ''} ${row.last_name || ''}`.trim()) || '';
+    const fromUser = `${row.first_name || ''} ${row.last_name || ''}`.trim();
+    const fromCustomer = (row.customer_name || '').trim();
+    let fullName = fromUser || fromCustomer;
+    if (fromCustomer && !looksLikeEmailUsername(fromCustomer, row.email)) {
+        fullName = fromCustomer;
+    } else if (fromUser) {
+        fullName = fromUser;
+    } else if (fromCustomer) {
+        fullName = fromCustomer;
+    }
     return {
         uid: row.uid,
         name: fullName,

@@ -291,6 +291,38 @@
     color: var(--cd-brand);
 }
 
+.pb-customer .cd-profile-banner {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    flex-wrap: wrap;
+    background: linear-gradient(135deg, #fff7ed, #ffedd5);
+    border: 1px solid #fdba74;
+    border-radius: 16px;
+    padding: 16px 20px;
+    margin-bottom: 20px;
+}
+
+.pb-customer .cd-profile-banner strong {
+    display: block;
+    color: #c2410c;
+    margin-bottom: 4px;
+}
+
+.pb-customer .cd-profile-banner p {
+    margin: 0;
+    font-size: 0.88rem;
+    color: #9a3412;
+}
+
+.pb-customer .cd-profile-banner .cd-btn-profile {
+    background: #ea580c;
+    border-color: #ea580c;
+    color: #fff;
+    flex-shrink: 0;
+}
+
 .pb-customer .cd-case-pill {
     padding: 6px 12px;
     border-radius: 999px;

@@ -3,25 +3,22 @@ import { Link, useNavigate } from 'react-router-dom';
 import { createUserWithEmailAndPassword, signInWithEmailAndPassword, updateProfile } from 'firebase/auth';
 import { auth } from '../../lib/firebase';
 import { postJson } from '../../lib/api';
-import { applyProfile, nameFromEmail, setCustomerUid } from '../../lib/session';
+import { applyProfile, setCustomerUid } from '../../lib/session';
 
 async function syncProfileAfterAuth(user) {
   if (!user?.uid) return;
   const email = user.email || '';
-  const name = (user.displayName || '').trim() || nameFromEmail(email);
+  const displayName = (user.displayName || '').trim();
   if (email) sessionStorage.setItem('user_email', email);
-  if (name) sessionStorage.setItem('portal_customer_name', name);
-  if (!name && !email) return;
+  if (displayName) sessionStorage.setItem('portal_customer_name', displayName);
+  if (!email && !displayName) return;
   try {
-    await postJson(`/api/customers/${encodeURIComponent(user.uid)}/profile`, {
-      name: name || nameFromEmail(email) || 'Customer',
-      email: email || null,
-      phone: null,
-      gender: null
-    }, { timeoutMs: 15000 });
-    applyProfile({ name, email });
+    const payload = { email: email || null, phone: null, gender: null };
+    if (displayName) payload.name = displayName;
+    await postJson(`/api/customers/${encodeURIComponent(user.uid)}/profile`, payload, { timeoutMs: 15000 });
+    applyProfile({ name: displayName, email });
   } catch {
-    /* profile route may fail — dashboard will retry */
+    /* dashboard will load profile */
   }
 }
 
