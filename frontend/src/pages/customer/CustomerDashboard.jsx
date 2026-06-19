@@ -154,6 +154,19 @@ export default function CustomerDashboard() {
     };
   }, [navigate, loadProfile, loadCases, loadNotifs]);
 
+  function openProfileModal() {
+    const email = profile.email || auth.currentUser?.email || '';
+    if (isProfileIncomplete(name, email)) {
+      setProfile({
+        name: '',
+        phone: profile.phone || '',
+        email,
+        gender: profile.gender || ''
+      });
+    }
+    setProfileOpen(true);
+  }
+
   async function saveProfile(e) {
     e.preventDefault();
     if (!profile.name.trim()) {
@@ -301,7 +314,7 @@ export default function CustomerDashboard() {
               <i className="fas fa-bell" />
               {unread > 0 ? <span className="pb-notif-badge show">{unread > 9 ? '9+' : unread}</span> : null}
             </button>
-            <button type="button" className="cd-user-chip" onClick={() => setProfileOpen(true)}>
+            <button type="button" className="cd-user-chip" onClick={openProfileModal}>
               <div className="cd-user-avatar">{initials(name, userEmail)}</div>
               <span>{resolvedName}</span>
             </button>
@@ -312,7 +325,14 @@ export default function CustomerDashboard() {
         </div>
       </header>
 
-      <div className={`pb-notif-drawer${notifOpen ? ' open' : ''}`}>
+      <button
+        type="button"
+        className={`pb-notif-backdrop${notifOpen ? ' open' : ''}`}
+        aria-label="Close notifications"
+        onClick={() => setNotifOpen(false)}
+      />
+
+      <div className={`pb-notif-drawer${notifOpen ? ' open' : ''}`} aria-hidden={!notifOpen}>
         <header>
           <h3><i className="fas fa-bell" /> Notifications</h3>
           <button type="button" onClick={() => setNotifOpen(false)} aria-label="Close">&times;</button>
@@ -336,7 +356,7 @@ export default function CustomerDashboard() {
               <strong><i className="fas fa-user-pen" /> Complete your profile</strong>
               <p>Add your name and phone so rescuers can reach you.</p>
             </div>
-            <button type="button" className="cd-btn-profile" onClick={() => setProfileOpen(true)}>Set up now</button>
+            <button type="button" className="cd-btn-profile" onClick={openProfileModal}>Set up now</button>
           </div>
         ) : null}
 
@@ -348,7 +368,7 @@ export default function CustomerDashboard() {
               <h1>Hi, <em>{greetName}</em> 🐾</h1>
               <p className="cd-hero-sub">Report injured animals with live camera AI and track every rescue step.</p>
             </div>
-            <button type="button" className="cd-btn-profile" onClick={() => setProfileOpen(true)}>
+            <button type="button" className="cd-btn-profile" onClick={openProfileModal}>
               <i className="fas fa-user-pen" /> Profile
             </button>
           </div>
@@ -383,7 +403,7 @@ export default function CustomerDashboard() {
               <span>Map &amp; shelters</span>
             </div>
           </button>
-          <button type="button" className="cd-qbtn" onClick={() => setProfileOpen(true)}>
+          <button type="button" className="cd-qbtn" onClick={openProfileModal}>
             <span className="cd-qicon"><i className="fas fa-id-card" /></span>
             <div className="cd-qbtn-text">
               <strong>My profile</strong>

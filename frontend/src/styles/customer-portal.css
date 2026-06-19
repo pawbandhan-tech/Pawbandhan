@@ -151,6 +151,124 @@ button.cd-user-chip {
     font-family: inherit;
 }
 
+/* Notification bell badge */
+.pb-notif-badge {
+    position: absolute;
+    top: 2px;
+    right: 2px;
+    min-width: 18px;
+    height: 18px;
+    padding: 0 5px;
+    background: var(--cd-accent);
+    color: #fff;
+    font-size: 0.65rem;
+    font-weight: 800;
+    border-radius: 999px;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    line-height: 1;
+}
+
+.pb-notif-badge.show { display: flex; }
+
+/* Notifications slide-out drawer */
+.pb-notif-drawer {
+    position: fixed;
+    top: 0;
+    right: -100%;
+    width: min(380px, 100vw);
+    height: 100%;
+    height: 100dvh;
+    background: #fff;
+    z-index: 6000;
+    box-shadow: -8px 0 40px rgba(0, 0, 0, 0.15);
+    transition: right 0.35s ease, visibility 0.35s ease;
+    display: flex;
+    flex-direction: column;
+    visibility: hidden;
+    pointer-events: none;
+}
+
+.pb-notif-drawer.open {
+    right: 0;
+    visibility: visible;
+    pointer-events: auto;
+}
+
+.pb-notif-drawer header {
+    padding: 20px 24px;
+    border-bottom: 1px solid var(--cd-border);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-shrink: 0;
+}
+
+.pb-notif-drawer header h3 {
+    font-family: 'Fraunces', Georgia, serif;
+    margin: 0;
+    font-size: 1.1rem;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.pb-notif-drawer header button {
+    border: none;
+    background: var(--cd-bg);
+    width: 36px;
+    height: 36px;
+    border-radius: 10px;
+    font-size: 1.25rem;
+    cursor: pointer;
+    line-height: 1;
+}
+
+.pb-notif-list {
+    flex: 1;
+    overflow-y: auto;
+    padding: 12px 16px;
+    -webkit-overflow-scrolling: touch;
+}
+
+.pb-notif-item {
+    padding: 14px 16px;
+    border-radius: 14px;
+    margin-bottom: 8px;
+    background: var(--cd-bg);
+    cursor: pointer;
+    border: 1px solid var(--cd-border);
+}
+
+.pb-notif-item.unread {
+    background: #fff7ed;
+    border-color: rgba(249, 115, 22, 0.25);
+}
+
+.pb-notif-item strong { display: block; font-size: 0.9rem; margin-bottom: 4px; }
+.pb-notif-item p { font-size: 0.8rem; color: var(--cd-muted); margin: 0; }
+
+.pb-notif-backdrop {
+    position: fixed;
+    inset: 0;
+    background: rgba(15, 23, 42, 0.45);
+    z-index: 5999;
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none;
+    transition: opacity 0.3s ease, visibility 0.3s ease;
+    border: none;
+    padding: 0;
+    cursor: pointer;
+}
+
+.pb-notif-backdrop.open {
+    opacity: 1;
+    visibility: visible;
+    pointer-events: auto;
+}
+
 .cd-main {
     position: relative;
     z-index: 1;
