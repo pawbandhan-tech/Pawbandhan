@@ -19,14 +19,14 @@
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         :root {
-            --primary: #10b981; /* Emerald */
-            --primary-light: rgba(16, 185, 129, 0.15);
-            --primary-dark: #059669;
-            --secondary: #f8fafc;
-            --text-gray: #94a3b8;
-            --bg: #0f172a;
-            --white: rgba(30, 41, 59, 0.7);
-            --shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+            --primary: #f97316; /* Vibrant Orange */
+            --primary-light: rgba(249, 115, 22, 0.1);
+            --primary-dark: #ea580c;
+            --secondary: #1c1917; /* Dark Slate */
+            --text-gray: #57534e; /* Warm Gray */
+            --bg: #fafaf9; /* Off-white */
+            --white: rgba(255, 255, 255, 0.85);
+            --shadow: 0 8px 30px rgba(0,0,0,0.05);
         }
 
         body {
@@ -34,15 +34,15 @@
             background: var(--bg);
             color: var(--secondary);
             min-height: 100vh;
-            background-image: radial-gradient(circle at 10% 20%, rgba(16, 185, 129, 0.05) 0%, transparent 40%),
+            background-image: radial-gradient(circle at 10% 20%, rgba(249, 115, 22, 0.05) 0%, transparent 40%),
                               radial-gradient(circle at 90% 80%, rgba(14, 165, 233, 0.05) 0%, transparent 40%);
         }
 
         /* ─── TOP NAV BAR ─── */
         .topbar {
-            background: rgba(15, 23, 42, 0.5);
+            background: rgba(255, 255, 255, 0.7);
             backdrop-filter: blur(12px);
-            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            border-bottom: 1px solid rgba(255, 255, 255, 1);
             padding: 16px 50px;
             display: flex;
             justify-content: space-between;
@@ -154,7 +154,7 @@
             box-shadow: var(--shadow);
             cursor: pointer;
             transition: all 0.35s cubic-bezier(0.4, 0, 0.2, 1);
-            border: 1px solid rgba(255, 255, 255, 0.1);
+            border: 1px solid #fff;
             text-align: center;
             display: flex;
             flex-direction: column;
@@ -165,7 +165,7 @@
         .q-card:hover {
             transform: translateY(-8px);
             border-color: var(--primary);
-            box-shadow: 0 20px 50px rgba(16, 185, 129, 0.15);
+            box-shadow: 0 20px 50px rgba(249, 115, 22, 0.15);
         }
 
         .q-card.hero-card {
@@ -231,10 +231,10 @@
             align-items: center;
             gap: 22px;
             margin-bottom: 18px;
-            border: 1px solid rgba(255, 255, 255, 0.1);
+            border: 1px solid #fff;
             transition: 0.3s;
         }
-        .case-card:hover { border-color: var(--primary); transform: translateX(6px); background: rgba(30, 41, 59, 0.9); }
+        .case-card:hover { border-color: var(--primary); transform: translateX(6px); background: #fff; }
 
         .case-icon {
             width: 70px; height: 70px;
@@ -496,9 +496,9 @@
         .btn-cam.sub { background: #334155; }
 
         /* ─── MODALS ─── */
-        .modal-bg { position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(15,23,42,0.85);backdrop-filter:blur(12px);z-index:3000;display:none;align-items:center;justify-content:center;padding:30px; }
+        .modal-bg { position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(255,255,255,0.7);backdrop-filter:blur(12px);z-index:3000;display:none;align-items:center;justify-content:center;padding:30px; }
         .modal-bg.open { display:flex; }
-        .modal-panel { background:var(--white);backdrop-filter:blur(16px);border:1px solid rgba(255,255,255,0.1);border-radius:32px;width:100%;max-width:600px;max-height:90vh;overflow-y:auto;padding:45px;box-shadow:0 40px 100px rgba(0,0,0,0.5);animation:slideUp .4s ease; color: #fff; }
+        .modal-panel { background:var(--white);backdrop-filter:blur(16px);border:1px solid #fff;border-radius:32px;width:100%;max-width:600px;max-height:90vh;overflow-y:auto;padding:45px;box-shadow:0 40px 100px rgba(0,0,0,0.1);animation:slideUp .4s ease; color: var(--secondary); }
         @keyframes slideUp { from{opacity:0;transform:translateY(40px)} to{opacity:1;transform:translateY(0)} }
         .modal-panel h2 { font-size:1.6rem;font-weight:800;margin-bottom:8px; }
         .modal-panel .sub-text { color:var(--text-gray);margin-bottom:30px; }

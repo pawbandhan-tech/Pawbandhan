@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en" data-theme="dark">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -23,25 +23,25 @@
             position: relative;
         }
         .auth-container-glass {
-            background: var(--bg-surface);
+            background: rgba(255, 255, 255, 0.9);
             backdrop-filter: blur(20px);
             -webkit-backdrop-filter: blur(20px);
-            border: 1px solid var(--glass-border);
+            border: 1px solid #fff;
             border-radius: var(--radius-lg);
             padding: 3rem;
             width: 100%;
             max-width: 500px;
-            box-shadow: var(--glass-shadow);
+            box-shadow: 0 10px 40px rgba(0,0,0,0.08);
             position: relative;
             z-index: 10;
         }
         .pb-auth-tabs {
             display: flex;
-            background: rgba(255, 255, 255, 0.05);
+            background: #f3f4f6;
             border-radius: var(--radius-sm);
-            padding: 0.25rem;
+            padding: 0.35rem;
             margin-bottom: 2rem;
-            border: 1px solid var(--glass-border);
+            border: 1px solid #e5e7eb;
         }
         .pb-auth-tab {
             flex: 1;
@@ -49,21 +49,21 @@
             padding: 0.75rem;
             border-radius: var(--radius-sm);
             cursor: pointer;
-            font-weight: 600;
+            font-weight: 700;
             color: var(--text-muted);
             transition: all 0.3s;
         }
         .pb-auth-tab.active {
-            background: var(--brand-primary);
-            color: #fff;
-            box-shadow: 0 4px 15px rgba(16, 185, 129, 0.3);
+            background: #fff;
+            color: var(--brand-primary);
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
         }
         .pb-field {
             width: 100%;
             padding: 1rem 1.25rem;
             margin-bottom: 1rem;
-            background: rgba(15, 23, 42, 0.6);
-            border: 1px solid var(--glass-border);
+            background: #fff;
+            border: 1px solid #e5e7eb;
             border-radius: var(--radius-sm);
             color: var(--text-main);
             font-family: var(--font-body);
@@ -73,12 +73,11 @@
         .pb-field:focus {
             outline: none;
             border-color: var(--brand-primary);
-            box-shadow: 0 0 0 2px rgba(16, 185, 129, 0.2);
-            background: rgba(15, 23, 42, 0.8);
+            box-shadow: 0 0 0 3px rgba(249, 115, 22, 0.15);
         }
         .auth-form-title {
             font-size: 1.8rem;
-            font-weight: 700;
+            font-weight: 800;
             margin-bottom: 0.5rem;
             color: var(--text-main);
         }
@@ -149,7 +148,7 @@
         </form>
 
         <p style="text-align:center;margin-top:2rem;font-size:0.9rem;color:var(--text-muted);">
-            NGO or Vet? <a href="index.html#portals" class="hover-underline" style="color:var(--brand-primary);font-weight:600;">Partner Portals</a>
+            <a href="index.html" class="hover-underline" style="color:var(--brand-primary);font-weight:700;">&larr; Back to Home</a>
         </p>
     </div>
 
