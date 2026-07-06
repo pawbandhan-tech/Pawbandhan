@@ -321,7 +321,11 @@ app.post('/api/users/register', async (req, res) => {
         const { uid, firstName, middleName, lastName, phoneNo, email, role, orgName } = req.body;
         const accountNo = generateCode('PB');
         const result = await pool.query(
-            'INSERT INTO users (uid, first_name, middle_name, last_name, phone_no, email, account_no, role, status) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9) RETURNING *',
+            `INSERT INTO users (uid, first_name, middle_name, last_name, phone_no, email, account_no, role, status) 
+             VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9) 
+             ON CONFLICT (email) DO UPDATE 
+             SET uid = EXCLUDED.uid, first_name = EXCLUDED.first_name, last_name = EXCLUDED.last_name, phone_no = EXCLUDED.phone_no 
+             RETURNING *`,
             [uid, firstName, middleName, lastName, phoneNo, email, accountNo, role || 'customer', 'pending']
         );
         
