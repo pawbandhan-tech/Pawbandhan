@@ -1,49 +1,155 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-theme="dark">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Customer sign in | PawBandhan</title>
-    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;600;700;800&family=Fraunces:wght@600&display=swap" rel="stylesheet">
+    <title>Customer Sign In | PawBandhan</title>
+    
+    <!-- Modern Typography -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+    
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="pb-public.css">
     <script src="config.js"></script>
+    <style>
+        body.pb-auth-page {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            padding: 2rem;
+            position: relative;
+        }
+        .auth-container-glass {
+            background: var(--bg-surface);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid var(--glass-border);
+            border-radius: var(--radius-lg);
+            padding: 3rem;
+            width: 100%;
+            max-width: 500px;
+            box-shadow: var(--glass-shadow);
+            position: relative;
+            z-index: 10;
+        }
+        .pb-auth-tabs {
+            display: flex;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: var(--radius-sm);
+            padding: 0.25rem;
+            margin-bottom: 2rem;
+            border: 1px solid var(--glass-border);
+        }
+        .pb-auth-tab {
+            flex: 1;
+            text-align: center;
+            padding: 0.75rem;
+            border-radius: var(--radius-sm);
+            cursor: pointer;
+            font-weight: 600;
+            color: var(--text-muted);
+            transition: all 0.3s;
+        }
+        .pb-auth-tab.active {
+            background: var(--brand-primary);
+            color: #fff;
+            box-shadow: 0 4px 15px rgba(16, 185, 129, 0.3);
+        }
+        .pb-field {
+            width: 100%;
+            padding: 1rem 1.25rem;
+            margin-bottom: 1rem;
+            background: rgba(15, 23, 42, 0.6);
+            border: 1px solid var(--glass-border);
+            border-radius: var(--radius-sm);
+            color: var(--text-main);
+            font-family: var(--font-body);
+            font-size: 1rem;
+            transition: all 0.3s;
+        }
+        .pb-field:focus {
+            outline: none;
+            border-color: var(--brand-primary);
+            box-shadow: 0 0 0 2px rgba(16, 185, 129, 0.2);
+            background: rgba(15, 23, 42, 0.8);
+        }
+        .auth-form-title {
+            font-size: 1.8rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+            color: var(--text-main);
+        }
+        .auth-form-subtitle {
+            color: var(--text-muted);
+            margin-bottom: 2rem;
+            font-size: 0.95rem;
+        }
+    </style>
 </head>
 <body class="pb-public pb-auth-page">
 
-    <div class="pb-auth-card">
-        <a href="index.html" class="pb-brand" style="margin-bottom:24px;">
-            <span class="pb-brand-icon"><i class="fas fa-paw"></i></span> PawBandhan
+    <!-- Ambient Background Elements -->
+    <div class="ambient-bg">
+        <div class="glow-orb orb-1"></div>
+        <div class="glow-orb orb-2"></div>
+        <div class="glow-orb orb-3"></div>
+    </div>
+    <div class="pb-paw-bg" aria-hidden="true"></div>
+
+    <div class="auth-container-glass">
+        <a href="index.html" class="pb-brand" style="margin-bottom:2rem; justify-content: center;">
+            <span class="brand-icon-glass"><i class="fas fa-paw"></i></span>
+            <span class="pb-brand-text">
+                <strong>PawBandhan</strong>
+                <small>Rescue Network</small>
+            </span>
         </a>
+        
         <div class="pb-auth-tabs">
-            <div class="pb-auth-tab active" id="tab-login" onclick="showAuthTab('login')">Sign in</div>
-            <div class="pb-auth-tab" id="tab-signup" onclick="showAuthTab('signup')">Create account</div>
+            <div class="pb-auth-tab active" id="tab-login" onclick="showAuthTab('login')">Sign In</div>
+            <div class="pb-auth-tab" id="tab-signup" onclick="showAuthTab('signup')">Create Account</div>
         </div>
 
+        <!-- Login Form -->
         <form id="loginForm" class="auth-form active" onsubmit="return handleLogin(event)">
-            <h2 class="pb-display" style="font-size:1.5rem;margin-bottom:8px;">Welcome back</h2>
-            <p style="color:var(--pb-muted);margin-bottom:20px;font-size:0.9rem;">Report and track animal rescues near you.</p>
-            <input type="email" id="loginEmail" class="pb-field" placeholder="Email" required>
+            <h2 class="auth-form-title">Welcome back</h2>
+            <p class="auth-form-subtitle">Report and track animal rescues near you.</p>
+            
+            <input type="email" id="loginEmail" class="pb-field" placeholder="Email address" required>
             <input type="password" id="loginPassword" class="pb-field" placeholder="Password or access code" required>
-            <p style="font-size:0.75rem;color:var(--pb-muted);margin-bottom:16px;">Admin-created accounts: use your access code as the first password.</p>
-            <button type="submit" class="pb-btn pb-btn-primary" style="width:100%;">Sign in</button>
+            
+            <p style="font-size:0.8rem;color:var(--text-muted);margin-bottom:1.5rem;">
+                <i class="fas fa-info-circle"></i> Admin-created accounts: use your access code as the first password.
+            </p>
+            
+            <button type="submit" class="btn-glass-primary" style="width:100%; justify-content: center;">
+                Sign in to Dashboard <i class="fas fa-arrow-right"></i>
+            </button>
         </form>
 
+        <!-- Signup Form -->
         <form id="signupForm" class="auth-form" style="display:none;" onsubmit="return handleSignup(event)">
-            <h2 class="pb-display" style="font-size:1.5rem;margin-bottom:8px;">Join the network</h2>
-            <p style="color:var(--pb-muted);margin-bottom:20px;font-size:0.9rem;">Start helping animals in your community.</p>
-            <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+            <h2 class="auth-form-title">Join the network</h2>
+            <p class="auth-form-subtitle">Start helping animals in your community.</p>
+            
+            <div style="display:flex; gap:1rem;">
                 <input type="text" id="firstName" class="pb-field" placeholder="First name" required>
                 <input type="text" id="lastName" class="pb-field" placeholder="Last name" required>
             </div>
-            <input type="email" id="email" class="pb-field" placeholder="Email" required>
-            <input type="tel" id="phone" class="pb-field" placeholder="Phone" required>
-            <input type="password" id="password" class="pb-field" placeholder="Password" required>
-            <button type="submit" class="pb-btn pb-btn-primary" style="width:100%;">Create account</button>
+            <input type="email" id="email" class="pb-field" placeholder="Email address" required>
+            <input type="tel" id="phone" class="pb-field" placeholder="Phone number" required>
+            <input type="password" id="password" class="pb-field" placeholder="Create password" required>
+            
+            <button type="submit" class="btn-glass-primary" style="width:100%; justify-content: center;">
+                Create Account <i class="fas fa-arrow-right"></i>
+            </button>
         </form>
 
-        <p style="text-align:center;margin-top:24px;font-size:0.85rem;color:var(--pb-muted);">
-            <a href="index.html#portals" style="color:var(--pb-brand);font-weight:700;">NGO or vet?</a> Partner portals
+        <p style="text-align:center;margin-top:2rem;font-size:0.9rem;color:var(--text-muted);">
+            NGO or Vet? <a href="index.html#portals" class="hover-underline" style="color:var(--brand-primary);font-weight:600;">Partner Portals</a>
         </p>
     </div>
 

@@ -1,138 +1,151 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-theme="dark">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Admin sign in | PawBandhan</title>
-    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;600;700&family=Fraunces:opsz,wght@9..144,600&display=swap" rel="stylesheet">
+    <title>Admin Sign In | PawBandhan</title>
+    
+    <!-- Modern Typography -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+    
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="pb-public.css">
     <script src="config.js"></script>
     <script src="paw-api.js"></script>
     <style>
         body.pb-public {
+            display: flex;
+            align-items: center;
+            justify-content: center;
             min-height: 100vh;
-            display: grid;
-            place-items: center;
-            padding: 24px;
-            background: linear-gradient(160deg, #0f172a 0%, #134e4a 55%, #f0fdfa 100%);
+            padding: 2rem;
+            position: relative;
         }
         .admin-auth-card {
+            background: var(--bg-surface);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid var(--glass-border);
+            border-radius: var(--radius-lg);
+            padding: 3rem;
             width: 100%;
-            max-width: 420px;
-            background: #fff;
-            border-radius: 28px;
-            padding: 44px 40px;
-            box-shadow: 0 40px 100px -24px rgba(15, 23, 42, 0.45);
-            border: 1px solid rgba(255, 255, 255, 0.2);
+            max-width: 450px;
+            box-shadow: var(--glass-shadow);
+            position: relative;
+            z-index: 10;
         }
         .admin-auth-icon {
             width: 56px;
             height: 56px;
-            border-radius: 16px;
-            background: #f0fdfa;
-            color: var(--pb-brand);
+            border-radius: var(--radius-md);
+            background: rgba(16, 185, 129, 0.1);
+            color: var(--brand-primary);
             display: grid;
             place-items: center;
-            font-size: 1.4rem;
-            margin-bottom: 20px;
+            font-size: 1.5rem;
+            margin-bottom: 2rem;
+            border: 1px solid rgba(16, 185, 129, 0.2);
+            box-shadow: 0 4px 15px rgba(16, 185, 129, 0.15);
         }
         .admin-auth-card h1 {
-            font-family: var(--pb-display);
-            font-size: 1.6rem;
-            color: var(--pb-ink);
-            margin-bottom: 8px;
+            font-size: 1.8rem;
+            font-weight: 700;
+            color: var(--text-main);
+            margin-bottom: 0.5rem;
         }
         .admin-auth-card .lead {
-            color: var(--pb-muted);
+            color: var(--text-muted);
             font-size: 0.95rem;
-            margin-bottom: 28px;
-            line-height: 1.5;
+            margin-bottom: 2rem;
         }
         .admin-field {
-            margin-bottom: 18px;
+            margin-bottom: 1.25rem;
         }
         .admin-field label {
             display: block;
             font-weight: 600;
             font-size: 0.85rem;
-            margin-bottom: 8px;
-            color: var(--pb-ink);
+            margin-bottom: 0.5rem;
+            color: var(--text-main);
         }
         .admin-field input {
             width: 100%;
-            padding: 14px 16px;
-            border: 1px solid var(--pb-border);
-            border-radius: 12px;
+            padding: 1rem 1.25rem;
+            background: rgba(15, 23, 42, 0.6);
+            border: 1px solid var(--glass-border);
+            border-radius: var(--radius-sm);
+            color: var(--text-main);
+            font-family: var(--font-body);
             font-size: 1rem;
-            font-family: inherit;
+            transition: all 0.3s;
         }
         .admin-field input:focus {
             outline: none;
-            border-color: var(--pb-brand);
-            box-shadow: 0 0 0 3px rgba(20, 184, 166, 0.2);
+            border-color: var(--brand-primary);
+            box-shadow: 0 0 0 2px rgba(16, 185, 129, 0.2);
+            background: rgba(15, 23, 42, 0.8);
         }
         .admin-error {
             display: none;
-            margin-bottom: 16px;
-            padding: 12px 14px;
-            border-radius: 12px;
-            background: #fef2f2;
-            color: #b91c1c;
-            font-size: 0.88rem;
+            margin-bottom: 1rem;
+            padding: 1rem;
+            border-radius: var(--radius-sm);
+            background: rgba(239, 68, 68, 0.1);
+            color: #fca5a5;
+            border: 1px solid rgba(239, 68, 68, 0.2);
+            font-size: 0.9rem;
+            font-weight: 500;
         }
         .admin-error.visible { display: block; }
-        .admin-submit {
-            width: 100%;
-            margin-top: 8px;
-            padding: 16px;
-            border: none;
-            border-radius: 14px;
-            background: #0f172a;
-            color: #fff;
-            font-weight: 700;
-            font-size: 1rem;
-            cursor: pointer;
-            font-family: inherit;
-        }
-        .admin-submit:hover { background: #1e293b; }
-        .admin-submit:disabled { opacity: 0.6; cursor: not-allowed; }
+        
         .admin-back {
             display: block;
             text-align: center;
-            margin-top: 24px;
-            color: var(--pb-muted);
-            font-size: 0.88rem;
+            margin-top: 2rem;
+            color: var(--text-muted);
+            font-size: 0.9rem;
             text-decoration: none;
+            transition: color 0.3s;
         }
-        .admin-back:hover { color: var(--pb-brand); }
+        .admin-back:hover { color: var(--brand-primary); }
     </style>
 </head>
 <body class="pb-public">
 
+    <!-- Ambient Background Elements -->
+    <div class="ambient-bg">
+        <div class="glow-orb orb-1"></div>
+        <div class="glow-orb orb-2"></div>
+        <div class="glow-orb orb-3"></div>
+    </div>
+    <div class="pb-paw-bg" aria-hidden="true"></div>
+
     <div class="admin-auth-card">
         <div class="admin-auth-icon"><i class="fas fa-shield-halved"></i></div>
-        <h1>Admin command</h1>
-        <p class="lead">Sign in with your PawBandhan administrator account. Access is verified on the server.</p>
+        <h1>Admin Command Center</h1>
+        <p class="lead">Secure access for verified PawBandhan administrators and NGO partners.</p>
 
         <div id="adminError" class="admin-error" role="alert"></div>
 
         <form id="adminForm">
             <div class="admin-field">
-                <label for="adminEmail">Email</label>
+                <label for="adminEmail">Email Address</label>
                 <input type="email" id="adminEmail" name="email" autocomplete="username" required placeholder="admin@pawbandhan.com">
             </div>
             <div class="admin-field">
-                <label for="adminPassword">Password</label>
-                <input type="password" id="adminPassword" name="password" autocomplete="current-password" required>
+                <label for="adminPassword">Security Password</label>
+                <input type="password" id="adminPassword" name="password" autocomplete="current-password" required placeholder="••••••••">
             </div>
-            <button type="submit" class="admin-submit" id="adminSubmit">Sign in</button>
+            <button type="submit" class="btn-glass-primary" id="adminSubmit" style="width:100%; justify-content:center; margin-top:1rem;">
+                Authenticate <i class="fas fa-lock"></i>
+            </button>
         </form>
 
-        <a href="index.html" class="admin-back"><i class="fas fa-arrow-left"></i> Back to public site</a>
+        <a href="index.html" class="admin-back"><i class="fas fa-arrow-left"></i> Return to main site</a>
     </div>
 
-    <script src="config.js"></script>
     <script src="paw-admin-auth.js"></script>
     <script>
         (async function () {
@@ -151,7 +164,7 @@
                 errEl.classList.remove('visible');
                 errEl.textContent = '';
                 btn.disabled = true;
-                btn.textContent = 'Signing in…';
+                btn.innerHTML = 'Authenticating… <i class="fas fa-spinner fa-spin"></i>';
                 try {
                     await PawAdminAuth.login(
                         document.getElementById('adminEmail').value.trim(),
@@ -159,10 +172,10 @@
                     );
                     window.location.href = 'admin_portal.html';
                 } catch (err) {
-                    errEl.textContent = err.message || 'Sign in failed';
+                    errEl.textContent = err.message || 'Authentication failed. Please verify credentials.';
                     errEl.classList.add('visible');
                     btn.disabled = false;
-                    btn.textContent = 'Sign in';
+                    btn.innerHTML = 'Authenticate <i class="fas fa-lock"></i>';
                 }
             });
         })();

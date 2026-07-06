@@ -1,297 +1,160 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-theme="dark">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>PawBandhan | India's kindest animal rescue network</title>
-    <meta name="description" content="Report injured animals, track live rescues, and connect with verified NGOs, vets, and field heroes across India.">
-    <meta name="paw-api" content="">
+    <title>PawBandhan | Premium Animal Rescue Network</title>
+    <meta name="description" content="Report injured animals, track live rescues, and connect with verified NGOs across India.">
+    
+    <!-- Modern Typography -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,600;0,9..40,700;0,9..40,800;1,9..40,400&family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&display=swap" rel="stylesheet">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+    
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="pb-public.css">
     <script src="config.js"></script>
 </head>
 <body class="pb-public">
+    <!-- Dynamic Background Elements -->
+    <div class="ambient-bg">
+        <div class="glow-orb orb-1"></div>
+        <div class="glow-orb orb-2"></div>
+        <div class="glow-orb orb-3"></div>
+    </div>
+    
     <div class="pb-paw-bg" aria-hidden="true"></div>
-    <span class="pb-deco pb-deco-1" aria-hidden="true">🐕</span>
-    <span class="pb-deco pb-deco-2" aria-hidden="true">🐈</span>
-    <span class="pb-deco pb-deco-3" aria-hidden="true">🐾</span>
 
-    <header class="pb-site-header" id="pbNav">
+    <header class="glass-header" id="pbNav">
         <div class="pb-header-inner">
             <a href="index.html" class="pb-brand">
-                <span class="pb-brand-icon"><i class="fas fa-paw"></i></span>
+                <span class="brand-icon-glass"><i class="fas fa-paw"></i></span>
                 <span class="pb-brand-text">
                     <strong id="siteNameNav">PawBandhan</strong>
-                    <small id="siteTaglineNav">Rescue network</small>
+                    <small id="siteTaglineNav">Rescue Network</small>
                 </span>
             </a>
-            <button class="pb-nav-toggle" id="pbNavToggle" aria-label="Menu" aria-expanded="false">
-                <span></span><span></span><span></span>
-            </button>
+            
             <nav class="pb-nav-links" id="pbNavLinks">
-                <a href="#impact"><i class="fas fa-chart-line"></i> Impact</a>
-                <a href="#how"><i class="fas fa-route"></i> How it works</a>
-                <a href="#portals"><i class="fas fa-grid-2"></i> Portals</a>
-                <a href="#stories"><i class="fas fa-heart"></i> Stories</a>
+                <a href="#impact" class="hover-underline">Impact</a>
+                <a href="#how" class="hover-underline">How it works</a>
+                <a href="#portals" class="hover-underline">Portals</a>
+                <a href="#stories" class="hover-underline">Stories</a>
                 <div class="pb-nav-cta">
-                    <a href="customer_auth.html" class="pb-btn pb-btn-ghost">Sign in</a>
-                    <a href="customer_auth.html" class="pb-btn pb-btn-primary"><i class="fas fa-location-dot"></i> Report rescue</a>
+                    <a href="customer_auth.html" class="btn-glass-ghost">Sign in</a>
+                    <a href="customer_auth.html" class="btn-glass-primary">
+                        <i class="fas fa-location-crosshairs"></i> Report rescue
+                    </a>
                 </div>
             </nav>
         </div>
-        <div class="pb-header-glow" aria-hidden="true"></div>
     </header>
 
     <section class="pb-hero pb-reveal">
-        <div>
-            <span class="pb-hero-badge" id="heroBadge"><i class="fas fa-shield-heart"></i> Verified NGOs &amp; live tracking</span>
-            <h1 class="pb-display" id="heroTitle">Every life deserves a <em>helping paw</em></h1>
-            <p class="pb-hero-lead" id="heroSubtitle">India's rescue network connects caring citizens with shelters, veterinarians, and field heroes — from alert to safe recovery.</p>
-            <div class="pb-hero-actions">
-                <a href="customer_auth.html" class="pb-btn pb-btn-primary btn-lg"><i class="fas fa-location-dot"></i> Report a case</a>
-                <a href="#portals" class="pb-btn pb-btn-outline">Partner with us</a>
+        <div class="hero-content">
+            <div class="hero-badge-glass">
+                <span class="pulse-dot"></span> Verified NGOs & Live tracking
             </div>
-            <div class="pb-hero-meta">
-                <span><i class="fas fa-check-circle"></i> Free to report</span>
-                <span><i class="fas fa-map-location-dot"></i> Live GPS tracking</span>
-                <span><i class="fas fa-envelope"></i> <a href="mailto:pawbandhan@gmail.com" id="heroHotline">pawbandhan@gmail.com</a></span>
+            <h1 class="hero-title-gradient">Every life deserves a <br/><span>helping paw</span></h1>
+            <p class="pb-hero-lead">India's most advanced rescue network connects caring citizens with shelters, veterinarians, and field heroes — from alert to safe recovery in real-time.</p>
+            <div class="pb-hero-actions">
+                <a href="customer_auth.html" class="btn-glass-primary btn-lg">
+                    <i class="fas fa-location-dot"></i> Report a Case
+                </a>
+                <a href="#portals" class="btn-glass-outline btn-lg">Partner with us</a>
             </div>
         </div>
         <div class="pb-hero-visual">
-            <div class="pb-hero-ring" aria-hidden="true"></div>
-            <img class="pb-hero-img" id="heroBannerImg" src="https://images.unsplash.com/photo-1587300003388-59208cc962cb?w=900&q=85" alt="Rescued animal receiving care">
-            <div class="pb-float-card pb-float-1"><i class="fas fa-heart"></i> <span id="heroRescues">2,400+</span> rescues</div>
-            <div class="pb-float-card pb-float-2"><i class="fas fa-motorcycle"></i> Field hero en route</div>
-            <div class="pb-hero-paw-trail" aria-hidden="true">
-                <span>🐾</span><span>🐾</span><span>🐾</span><span>🐾</span>
+            <div class="glass-image-card">
+                <img class="hero-img-main" src="https://images.unsplash.com/photo-1596492784531-6e6eb5ea9993?q=80&w=900&auto=format&fit=crop" alt="Indian Street Dog rescued">
+                <div class="glass-floating-badge badge-top">
+                    <i class="fas fa-heart text-pink"></i> <span>2,400+ Rescues</span>
+                </div>
+                <div class="glass-floating-badge badge-bottom">
+                    <i class="fas fa-motorcycle text-cyan"></i> <span>Hero en route</span>
+                </div>
             </div>
         </div>
     </section>
 
-    <section class="pb-animals pb-reveal" aria-label="Animals we help">
-        <span class="pb-label" style="display:block;text-align:center;color:var(--pb-brand);font-weight:800;font-size:0.75rem;text-transform:uppercase;letter-spacing:0.08em;">Every creature counts</span>
-        <h2 class="pb-display" style="text-align:center;font-size:1.6rem;margin-top:10px;">Dogs, cats, birds &amp; more</h2>
-        <div class="pb-animals-marquee">
-            <div class="pb-animal-chip"><span class="emoji">🐕</span><span>Street dogs</span></div>
-            <div class="pb-animal-chip"><span class="emoji">🐈</span><span>Cats</span></div>
-            <div class="pb-animal-chip"><span class="emoji">🐄</span><span>Cattle</span></div>
-            <div class="pb-animal-chip"><span class="emoji">🦜</span><span>Birds</span></div>
-            <div class="pb-animal-chip"><span class="emoji">🐇</span><span>Small animals</span></div>
-        </div>
-    </section>
-
-    <section class="pb-journey pb-reveal" id="journey" aria-label="How tracking works">
+    <section class="pb-journey pb-reveal glass-panel" id="journey">
         <div class="pb-journey-intro">
-            <span class="pb-label">Live transparency</span>
-            <h2 class="pb-display">Follow the full rescue journey</h2>
-            <p>From your first alert to safe recovery — every milestone is timestamped and visible in your customer portal.</p>
+            <span class="section-subtitle-gradient">Live Transparency</span>
+            <h2 class="section-title">Follow the full rescue journey</h2>
+            <p>From your first alert to safe recovery — every milestone is timestamped and visible in real-time.</p>
         </div>
-        <div class="pb-journey-track" id="pbJourneyTrack">
-            <article class="pb-journey-step active" data-step="0">
-                <div class="pb-journey-icon"><i class="fas fa-camera"></i></div>
+        
+        <div class="journey-track-glass">
+            <div class="journey-step-glass active">
+                <div class="step-icon"><i class="fas fa-camera"></i></div>
                 <h3>You report</h3>
-                <p>Photo, GPS, and animal details reach the network in seconds.</p>
-            </article>
-            <article class="pb-journey-step" data-step="1">
-                <div class="pb-journey-icon"><i class="fas fa-hand-holding-heart"></i></div>
+                <p>Photo, GPS, and animal details reach the network instantly.</p>
+            </div>
+            <div class="journey-line"></div>
+            <div class="journey-step-glass">
+                <div class="step-icon"><i class="fas fa-hand-holding-heart"></i></div>
                 <h3>NGO accepts</h3>
-                <p>A verified shelter takes ownership and plans the response.</p>
-            </article>
-            <article class="pb-journey-step" data-step="2">
-                <div class="pb-journey-icon"><i class="fas fa-motorcycle"></i></div>
+                <p>A verified shelter takes ownership and plans response.</p>
+            </div>
+            <div class="journey-line"></div>
+            <div class="journey-step-glass">
+                <div class="step-icon"><i class="fas fa-motorcycle"></i></div>
                 <h3>Hero dispatched</h3>
-                <p>Field executive en route with live location on your map.</p>
-            </article>
-            <article class="pb-journey-step" data-step="3">
-                <div class="pb-journey-icon"><i class="fas fa-stethoscope"></i></div>
+                <p>Field executive en route with live map tracking.</p>
+            </div>
+            <div class="journey-line"></div>
+            <div class="journey-step-glass">
+                <div class="step-icon"><i class="fas fa-stethoscope"></i></div>
                 <h3>Vet care</h3>
                 <p>Treatment updates, photos, and handover when care begins.</p>
-            </article>
-            <article class="pb-journey-step" data-step="4">
-                <div class="pb-journey-icon"><i class="fas fa-house-chimney"></i></div>
-                <h3>Safe &amp; home</h3>
-                <p>Release, foster, or adoption — you see the happy outcome.</p>
-            </article>
-        </div>
-        <div class="pb-journey-foot">
-            <div class="pb-journey-perks">
-                <span><i class="fas fa-bell"></i> Push alerts at each step</span>
-                <span><i class="fas fa-map"></i> GPS when hero is active</span>
-                <span><i class="fas fa-images"></i> Photos from the field</span>
             </div>
-            <a href="customer_auth.html" class="pb-btn pb-btn-primary"><i class="fas fa-route"></i> Track a rescue in the app</a>
-        </div>
-    </section>
-
-    <section id="impact" class="pb-section">
-        <div class="pb-section-head pb-reveal">
-            <span class="pb-label">Our impact</span>
-            <h2 class="pb-display">Hearts we've helped</h2>
-            <p>Real numbers from NGOs, vets, and volunteers on the PawBandhan network.</p>
-        </div>
-        <div class="pb-stats pb-reveal">
-            <div class="pb-stat">
-                <div class="pb-stat-icon" style="background:#ffedd5;color:#ea580c;"><i class="fas fa-dog"></i></div>
-                <h3 id="statRescues">—</h3>
-                <p>Rescues completed</p>
-            </div>
-            <div class="pb-stat">
-                <div class="pb-stat-icon" style="background:#d1fae5;color:#059669;"><i class="fas fa-house-chimney"></i></div>
-                <h3 id="statNgos">—</h3>
-                <p>NGO partners</p>
-            </div>
-            <div class="pb-stat">
-                <div class="pb-stat-icon" style="background:#dbeafe;color:#2563eb;"><i class="fas fa-motorcycle"></i></div>
-                <h3 id="statHeroes">—</h3>
-                <p>Field heroes</p>
-            </div>
-            <div class="pb-stat">
-                <div class="pb-stat-icon" style="background:#e0e7ff;color:#4f46e5;"><i class="fas fa-user-doctor"></i></div>
-                <h3 id="statVets">—</h3>
-                <p>Veterinarians</p>
-            </div>
-        </div>
-    </section>
-
-    <section id="how" class="pb-section">
-        <div class="pb-section-head pb-reveal">
-            <span class="pb-label">How it works</span>
-            <h2 class="pb-display">Three steps to save a life</h2>
-        </div>
-        <div class="pb-steps pb-reveal">
-            <article class="pb-step">
-                <div class="pb-step-num">1</div>
-                <h3>Snap &amp; report</h3>
-                <p>Photo, location, and animal details — under a minute from your phone.</p>
-            </article>
-            <article class="pb-step">
-                <div class="pb-step-num">2</div>
-                <h3>NGO accepts &amp; dispatches</h3>
-                <p>Nearest shelter accepts the case and alerts a verified rescue hero.</p>
-            </article>
-            <article class="pb-step">
-                <div class="pb-step-num">3</div>
-                <h3>Track recovery live</h3>
-                <p>Follow progress through treatment until the animal is safe.</p>
-            </article>
         </div>
     </section>
 
     <section id="portals" class="pb-section">
         <div class="pb-section-head pb-reveal">
-            <span class="pb-label">Portals</span>
-            <h2 class="pb-display">Built for every role</h2>
-            <p>Portals for citizens, shelter partners, field heroes, and veterinarians — one connected rescue network.</p>
+            <span class="section-subtitle-gradient">Portals</span>
+            <h2 class="section-title">Built for every role</h2>
+            <p>Dedicated glassmorphism interfaces for citizens, shelter partners, field heroes, and veterinarians.</p>
         </div>
-        <div class="pb-portals pb-reveal">
-            <article class="pb-portal-card">
-                <i class="portal-icon fas fa-user" style="background:#dbeafe;color:#2563eb;"></i>
+        <div class="portals-grid pb-reveal">
+            <div class="glass-card hover-glow-blue">
+                <div class="card-icon blue"><i class="fas fa-user"></i></div>
                 <h3>Customer</h3>
                 <p>Report cases and track your rescue with live updates and photos.</p>
-                <a href="customer_auth.html" class="pb-btn pb-btn-primary">Customer portal</a>
-            </article>
-            <article class="pb-portal-card">
-                <i class="portal-icon fas fa-building" style="background:#d1fae5;color:#059669;"></i>
-                <h3>NGO partner</h3>
-                <p>Accept assignments, manage cases, dispatch heroes, and run your shelter desk.</p>
-                <a href="ngo_auth.html" class="pb-btn pb-btn-outline">NGO login</a>
-            </article>
-            <article class="pb-portal-card">
-                <i class="portal-icon fas fa-motorcycle" style="background:#ffedd5;color:#ea580c;"></i>
-                <h3>Field executive</h3>
-                <p>Live dispatch, GPS tracking, check-in, photos, and handover to vets — all from your phone.</p>
-                <a href="representative_auth.html" class="pb-btn pb-btn-outline">Field portal</a>
-            </article>
-            <article class="pb-portal-card">
-                <i class="portal-icon fas fa-stethoscope" style="background:#fce7f3;color:#db2777;"></i>
-                <h3>Veterinarian</h3>
-                <p>Receive handovers, treatment workflows, and clinical records.</p>
-                <a href="doctor_auth.html" class="pb-btn pb-btn-outline">Vet login</a>
-            </article>
-            <article class="pb-portal-card pb-portal-card-hotline">
-                <i class="portal-icon fas fa-heart" style="background:#ccfbf1;color:#0f766e;"></i>
-                <h3>Emergency hotline</h3>
-                <p>24/7 support for urgent animal distress across India.</p>
-                <a href="customer_auth.html" class="pb-btn pb-btn-ghost">Get help now</a>
-            </article>
-        </div>
-    </section>
-
-    <section class="pb-cta pb-reveal">
-        <div>
-            <h2 class="pb-display">See an animal in distress?</h2>
-            <p style="color:var(--pb-muted);margin-top:8px;">Your report can start a rescue in minutes.</p>
-        </div>
-        <a href="customer_auth.html" class="pb-btn pb-btn-primary"><i class="fas fa-plus-circle"></i> Start a rescue report</a>
-    </section>
-
-    <section id="stories" class="pb-section pb-stories-section">
-        <div class="pb-stories-intro pb-reveal">
-            <div class="pb-section-head" style="margin-bottom:0;text-align:left;">
-                <span class="pb-label">Success stories</span>
-                <h2 class="pb-display" id="storiesSectionTitle">Tails of hope</h2>
-                <p class="pb-stories-lead" id="storiesSectionLead">Real rescues published by our team from the PawBandhan network — every tail has a second chance.</p>
+                <a href="customer_auth.html" class="btn-glass-ghost">Customer portal &rarr;</a>
             </div>
-            <span class="pb-stories-admin-pill" id="storiesAdminNote"><i class="fas fa-shield-halved"></i> Curated in admin portal</span>
-        </div>
-        <div id="storiesGrid" class="pb-stories pb-reveal" aria-live="polite" aria-busy="true"></div>
-        <div id="storiesEmpty" class="pb-stories-empty" style="display:none;">
-            <i class="fas fa-paw"></i>
-            <p id="storiesEmptyMsg">Success stories will appear here once your team publishes them from the website editor.</p>
+            <div class="glass-card hover-glow-green">
+                <div class="card-icon green"><i class="fas fa-building"></i></div>
+                <h3>NGO Partner</h3>
+                <p>Accept assignments, dispatch heroes, and run your shelter desk.</p>
+                <a href="admin_auth.html" class="btn-glass-ghost">Admin/NGO login &rarr;</a>
+            </div>
+            <div class="glass-card hover-glow-orange">
+                <div class="card-icon orange"><i class="fas fa-motorcycle"></i></div>
+                <h3>Field Executive</h3>
+                <p>Live dispatch, GPS tracking, and handover to vets.</p>
+                <a href="representative_auth.html" class="btn-glass-ghost">Field portal &rarr;</a>
+            </div>
         </div>
     </section>
 
-    <footer class="pb-site-footer">
-        <div class="pb-footer-wave" aria-hidden="true">
-            <svg viewBox="0 0 1440 80" preserveAspectRatio="none"><path fill="currentColor" d="M0,40 C360,80 720,0 1080,40 C1260,60 1380,50 1440,40 L1440,80 L0,80 Z"/></svg>
-        </div>
-        <div class="pb-footer-inner">
-            <div class="pb-footer-top">
-                <div class="pb-footer-brand">
-                    <a href="index.html" class="pb-brand pb-brand-footer">
-                        <span class="pb-brand-icon"><i class="fas fa-paw"></i></span>
-                        <span class="pb-brand-text"><strong id="footerSiteName">PawBandhan</strong><small id="footerSiteTagline">Every paw matters</small></span>
-                    </a>
-                    <p>India's connected rescue network — report, track, and save street animals with verified NGOs, field teams, and vets.</p>
-                    <div class="pb-footer-social">
-                        <a href="mailto:pawbandhan@gmail.com" aria-label="Email"><i class="fas fa-envelope"></i></a>
-                        <a href="customer_auth.html" aria-label="Report"><i class="fas fa-bell"></i></a>
-                    </div>
-                </div>
-                <div class="pb-footer-col">
-                    <h4>Get help</h4>
-                    <ul>
-                        <li><a href="customer_auth.html">Report an emergency</a></li>
-                        <li><a href="customer_auth.html">Customer portal</a></li>
-                        <li><a href="mailto:pawbandhan@gmail.com" id="footerHotline">pawbandhan@gmail.com</a></li>
-                    </ul>
-                </div>
-                <div class="pb-footer-col">
-                    <h4>Partners</h4>
-                    <ul>
-                        <li><a href="ngo_auth.html">NGO login</a></li>
-                        <li><a href="representative_auth.html">Field executive</a></li>
-                        <li><a href="doctor_auth.html">Veterinarian</a></li>
-                    </ul>
-                </div>
-                <div class="pb-footer-col">
-                    <h4>Explore</h4>
-                    <ul>
-                        <li><a href="#how">How it works</a></li>
-                        <li><a href="#impact">Our impact</a></li>
-                        <li><a href="#stories">Success stories</a></li>
-                    </ul>
-                </div>
+    <footer class="glass-footer">
+        <div class="footer-inner">
+            <div class="footer-brand">
+                <h3><i class="fas fa-paw"></i> PawBandhan</h3>
+                <p>India's premium animal rescue network.</p>
             </div>
-            <div class="pb-footer-bottom">
-                <span id="footerCopyright">&copy; 2026 PawBandhan · Mumbai, India</span>
-                <span class="pb-footer-tag"><i class="fas fa-paw"></i> Made with care for every paw</span>
+            <div class="footer-links">
+                <a href="customer_auth.html">Report Emergency</a>
+                <a href="admin_auth.html">Admin Portal</a>
+                <a href="https://github.com">GitHub Repository</a>
+            </div>
+            <div class="footer-bottom">
+                <p>&copy; 2026 PawBandhan. Made with care for every paw.</p>
             </div>
         </div>
     </footer>
-
     <script src="pb-public.js"></script>
 </body>
 </html>
