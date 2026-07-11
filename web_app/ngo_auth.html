@@ -3,220 +3,143 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>NGO Command Center | PawBandhan</title>
-    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;800&display=swap" rel="stylesheet">
+    <title>NGO Partner | PawBandhan</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link rel="stylesheet" href="style.css">
-    <link rel="stylesheet" href="pb-public.css">
-    <script src="config.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="pb-design-system.css">
+    <style>
+        .auth-page { min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 2rem; position: relative; }
+        .auth-card { background: var(--pb-white); border-radius: var(--pb-radius-2xl); padding: 3rem; width: 100%; max-width: 480px; box-shadow: var(--pb-shadow-xl); position: relative; z-index: 1; }
+        .auth-logo { width: 64px; height: 64px; background: linear-gradient(135deg, var(--pb-teal), var(--pb-teal-light)); border-radius: var(--pb-radius-xl); display: flex; align-items: center; justify-content: center; margin: 0 auto 1.5rem; color: white; font-size: 1.75rem; box-shadow: var(--pb-shadow-glow-teal); }
+        .auth-title { text-align: center; font-size: 1.75rem; font-weight: 800; margin-bottom: 0.5rem; }
+        .auth-subtitle { text-align: center; color: var(--pb-text-muted); margin-bottom: 2rem; }
+        .auth-tabs { display: flex; gap: 0.5rem; background: var(--pb-cream); padding: 0.375rem; border-radius: var(--pb-radius-lg); margin-bottom: 1.5rem; }
+        .auth-tab { flex: 1; padding: 0.75rem; border: none; background: transparent; border-radius: var(--pb-radius-md); font-family: inherit; font-weight: 600; cursor: pointer; transition: all 0.2s ease; color: var(--pb-text-muted); }
+        .auth-tab.active { background: var(--pb-white); color: var(--pb-teal); box-shadow: var(--pb-shadow-sm); }
+        .auth-form { display: none; }
+        .auth-form.active { display: block; animation: fadeIn 0.3s ease; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        .demo-notice { background: var(--pb-teal-soft); border: 1px solid rgba(32, 201, 151, 0.3); border-radius: var(--pb-radius-lg); padding: 1rem; margin-bottom: 1.5rem; font-size: 0.875rem; color: var(--pb-teal-dark); }
+        .demo-notice strong { display: block; margin-bottom: 0.25rem; }
+        .pb-input-icon { position: relative; }
+        .pb-input-icon i { position: absolute; left: 1rem; top: 50%; transform: translateY(-50%); color: var(--pb-text-muted); }
+        .pb-input-icon .pb-input { padding-left: 2.75rem; }
+        .auth-footer { text-align: center; margin-top: 1.5rem; color: var(--pb-text-muted); font-size: 0.875rem; }
+        .auth-footer a { color: var(--pb-teal); font-weight: 600; }
+        .feature-list { margin-top: 1.5rem; padding: 1.5rem; background: var(--pb-cream); border-radius: var(--pb-radius-xl); }
+        .feature-list h4 { font-size: 0.9rem; font-weight: 700; margin-bottom: 1rem; color: var(--pb-text); }
+        .feature-list ul { list-style: none; }
+        .feature-list li { display: flex; align-items: center; gap: 0.75rem; padding: 0.5rem 0; font-size: 0.875rem; color: var(--pb-text-secondary); }
+        .feature-list li i { color: var(--pb-teal); width: 20px; }
+    </style>
 </head>
-<body class="pb-public">
-
+<body>
+    <div class="pb-ambient-bg">
+        <div class="pb-orb pb-orb-teal pb-orb-1"></div>
+        <div class="pb-orb pb-orb-gold pb-orb-2"></div>
+    </div>
     <div class="auth-page">
-        <div class="auth-split">
-            <div class="auth-visual">
-                <a href="index.html" style="color: #fff; text-decoration: none; margin-bottom: 60px; font-weight: 800; font-size: 1.2rem; display: block;"><i class="fas fa-arrow-left"></i> Main Site</a>
-                <h1 style="font-size: 4rem; line-height: 1.1; margin-bottom: 24px;">Empower Your <br><span style="color: var(--primary);">Rescue Mission</span></h1>
-                <p style="font-size: 1.2rem; opacity: 0.8; margin-bottom: 40px; max-width: 500px;">Access the nationwide rescue network, manage cases in real-time, and coordinate with verified vets and riders.</p>
-                
-                <div style="display: grid; gap: 30px;">
-                    <div style="display: flex; gap: 20px; align-items: center;">
-                        <div style="width: 50px; height: 50px; background: rgba(255,255,255,0.1); border-radius: 15px; display: flex; align-items: center; justify-content: center;"><i class="fas fa-chart-line" style="color: var(--primary);"></i></div>
-                        <div><h4 style="margin: 0;">Operational Analytics</h4><p style="margin: 0; font-size: 0.9rem; opacity: 0.6;">Track your shelter's impact data.</p></div>
-                    </div>
-                    <div style="display: flex; gap: 20px; align-items: center;">
-                        <div style="width: 50px; height: 50px; background: rgba(255,255,255,0.1); border-radius: 15px; display: flex; align-items: center; justify-content: center;"><i class="fas fa-shield-halved" style="color: var(--accent);"></i></div>
-                        <div><h4 style="margin: 0;">Verified Logistics</h4><p style="margin: 0; font-size: 0.9rem; opacity: 0.6;">Secure transport and medical links.</p></div>
-                    </div>
-                </div>
+        <div class="auth-card">
+            <div class="auth-logo"><i class="fas fa-building-ngo"></i></div>
+            <h1 class="auth-title">NGO Partner Portal</h1>
+            <p class="auth-subtitle">Join India's largest animal rescue network</p>
+            <div class="auth-tabs">
+                <button class="auth-tab active" data-tab="login">Sign In</button>
+                <button class="auth-tab" data-tab="register">Register</button>
             </div>
-
-            <div class="auth-form-side">
-                <div class="auth-card-premium">
-                    <div class="auth-tabs">
-                        <div class="auth-tab active" id="tab-login" onclick="showTab('login')">NGO Login</div>
-                        <div class="auth-tab" id="tab-signup" onclick="showTab('signup')">Register Shelter</div>
+            <div class="demo-notice">
+                <strong><i class="fas fa-info-circle"></i> Demo Mode</strong>
+                Use any credentials to explore the NGO dashboard.
+            </div>
+            <form class="auth-form active" id="loginForm">
+                <div class="pb-form-group">
+                    <label class="pb-label">Organization Email</label>
+                    <div class="pb-input-icon">
+                        <i class="fas fa-envelope"></i>
+                        <input type="email" class="pb-input" id="loginEmail" placeholder="contact@yourorg.org" required>
                     </div>
-
-                    <!-- Login -->
-                    <form id="loginForm" class="auth-form active" style="display: block;">
-                        <div class="form-floating">
-                            <label style="display: block; font-weight: 700; margin-bottom: 10px; font-size: 0.9rem; color: var(--text-gray);">Official Email</label>
-                            <input type="email" id="loginEmail" placeholder="rescue@foundation.org" required style="width: 100%;">
-                        </div>
-                        <div class="form-floating">
-                            <label style="display: block; font-weight: 700; margin-bottom: 10px; font-size: 0.9rem; color: var(--text-gray);">Password</label>
-                            <input type="password" id="loginPassword" placeholder="••••••••" required style="width: 100%;">
-                        </div>
-                        <button type="submit" class="nav-btn nav-btn-primary" style="width: 100%; padding: 18px; border-radius: 18px;">Access Dashboard</button>
-                    </form>
-
-                    <button type="button" class="nav-btn nav-btn-outline" style="width:100%; padding:14px; margin-top:16px; border-radius:18px;" onclick="loginWithDemo()">
-                        <i class="fas fa-bolt"></i> Login with Demo NGO
-                    </button>
-                    <div style="margin-top: 16px; padding: 15px; background: #fff7ed; border-radius: 16px; border: 1px dashed var(--primary); font-size: 0.8rem; color: var(--primary); text-align: center;">
-                        <strong>Demo:</strong> rescue@foundation.org / Rescue@123
-                    </div>
-
-                    <!-- Signup -->
-                    <form id="signupForm" class="auth-form" style="display: none;">
-                        <div id="signupStep1">
-                            <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px;">
-                                <div class="form-floating"><label style="display: block; font-weight: 700; margin-bottom: 10px; font-size: 0.8rem;">First Name</label><input type="text" id="firstName" required style="width: 100%;"></div>
-                                <div class="form-floating"><label style="display: block; font-weight: 700; margin-bottom: 10px; font-size: 0.8rem;">Middle Name</label><input type="text" id="middleName" style="width: 100%;"></div>
-                                <div class="form-floating"><label style="display: block; font-weight: 700; margin-bottom: 10px; font-size: 0.8rem;">Last Name</label><input type="text" id="lastName" required style="width: 100%;"></div>
-                            </div>
-                            <div class="form-floating">
-                                <label style="display: block; font-weight: 700; margin-bottom: 10px; font-size: 0.9rem; color: var(--text-gray);">Shelter / NGO Name</label>
-                                <input type="text" id="orgName" placeholder="Rescue Foundation" required style="width: 100%;">
-                            </div>
-                            <div class="form-floating">
-                                <label style="display: block; font-weight: 700; margin-bottom: 10px; font-size: 0.9rem; color: var(--text-gray);">Official Email</label>
-                                <input type="email" id="email" placeholder="contact@ngo.org" required style="width: 100%;">
-                            </div>
-                            <div class="form-floating">
-                                <label style="display: block; font-weight: 700; margin-bottom: 10px; font-size: 0.9rem; color: var(--text-gray);">Phone Number</label>
-                                <input type="tel" id="phone" placeholder="+91 98765 43210" required style="width: 100%;">
-                            </div>
-                            <div class="form-floating">
-                                <label style="display: block; font-weight: 700; margin-bottom: 10px; font-size: 0.9rem; color: var(--text-gray);">Password</label>
-                                <input type="password" id="password" required style="width: 100%;">
-                            </div>
-                            <button type="button" class="nav-btn nav-btn-primary" style="width: 100%; padding: 18px; border-radius: 18px;" onclick="requestOTP()">Send Verification Code</button>
-                        </div>
-
-                        <div id="signupStep2" style="display: none; text-align: center;">
-                            <p style="color: var(--text-gray); margin-bottom: 20px;">Enter the verification code sent to your email.</p>
-                            <div class="form-floating">
-                                <input type="text" id="otpInput" maxlength="6" style="width: 100%; text-align: center; letter-spacing: 5px; font-size: 1.5rem;" placeholder="000000">
-                            </div>
-                            <button type="button" class="nav-btn nav-btn-primary" style="width: 100%; padding: 18px; border-radius: 18px;" onclick="verifyAndJoin()">Verify & Join</button>
-                            <button type="button" style="background: none; border: none; color: var(--primary); margin-top: 15px; cursor: pointer;" onclick="backToStep1()">Back</button>
-                        </div>
-                    </form>
                 </div>
+                <div class="pb-form-group">
+                    <label class="pb-label">Password</label>
+                    <div class="pb-input-icon">
+                        <i class="fas fa-lock"></i>
+                        <input type="password" class="pb-input" id="loginPassword" placeholder="Your password" required>
+                    </div>
+                </div>
+                <button type="submit" class="pb-btn pb-btn-teal pb-btn-lg pb-w-full">
+                    <i class="fas fa-sign-in-alt"></i>
+                    Access Dashboard
+                </button>
+            </form>
+            <form class="auth-form" id="registerForm">
+                <div class="pb-form-group">
+                    <label class="pb-label">Organization Name</label>
+                    <div class="pb-input-icon">
+                        <i class="fas fa-building"></i>
+                        <input type="text" class="pb-input" id="regOrg" placeholder="Your NGO name" required>
+                    </div>
+                </div>
+                <div class="pb-form-group">
+                    <label class="pb-label">Contact Email</label>
+                    <div class="pb-input-icon">
+                        <i class="fas fa-envelope"></i>
+                        <input type="email" class="pb-input" id="regEmail" placeholder="contact@ngo.org" required>
+                    </div>
+                </div>
+                <div class="pb-form-group">
+                    <label class="pb-label">Phone</label>
+                    <div class="pb-input-icon">
+                        <i class="fas fa-phone"></i>
+                        <input type="tel" class="pb-input" id="regPhone" placeholder="+91 98765 43210" required>
+                    </div>
+                </div>
+                <div class="pb-form-group">
+                    <label class="pb-label">Registration Number</label>
+                    <div class="pb-input-icon">
+                        <i class="fas fa-id-card"></i>
+                        <input type="text" class="pb-input" id="regNumber" placeholder="NGO Registration No." required>
+                    </div>
+                </div>
+                <button type="submit" class="pb-btn pb-btn-teal pb-btn-lg pb-w-full">
+                    <i class="fas fa-paper-plane"></i>
+                    Apply for Partnership
+                </button>
+            </form>
+            <div class="feature-list">
+                <h4>Partner Benefits</h4>
+                <ul>
+                    <li><i class="fas fa-check-circle"></i> Real-time rescue case management</li>
+                    <li><i class="fas fa-check-circle"></i> GPS-tracked field operations</li>
+                    <li><i class="fas fa-check-circle"></i> Medical report generation</li>
+                    <li><i class="fas fa-check-circle"></i> Community volunteer network</li>
+                </ul>
+            </div>
+            <div class="auth-footer">
+                <a href="index.html"><i class="fas fa-arrow-left"></i> Back to Home</a>
             </div>
         </div>
     </div>
-
-    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
     <script>
-        const firebaseConfig = { apiKey: 'AIzaSyDRuOTikCSLCdb73oYSnrnhoEiKbv-6Ozc', authDomain: 'pawbandhan-29f84.firebaseapp.com', projectId: 'pawbandhan-29f84', storageBucket: 'pawbandhan-29f84.firebasestorage.app', messagingSenderId: '378867729624', appId: '1:378867729624:web:2371a816457fdcfe2303ad' };
-        firebase.initializeApp(firebaseConfig);
-        const auth = firebase.auth();
-
-        function showTab(type) {
-            document.querySelectorAll('.auth-tab').forEach(t => t.classList.remove('active'));
-            document.getElementById('tab-' + type).classList.add('active');
-            document.getElementById('loginForm').style.display = type === 'login' ? 'block' : 'none';
-            document.getElementById('signupForm').style.display = type === 'signup' ? 'block' : 'none';
-        }
-
-        function requestOTP() {
-            document.getElementById('signupStep1').style.display = 'none';
-            document.getElementById('signupStep2').style.display = 'block';
-        }
-
-        function backToStep1() {
-            document.getElementById('signupStep1').style.display = 'block';
-            document.getElementById('signupStep2').style.display = 'none';
-        }
-
-        const DEMO_ACCOUNTS = [
-            { email: 'rescue@foundation.org', password: 'Rescue@123' },
-            { email: 'ngo@pawbandhan.com', password: 'Rescue@123' },
-            { email: 'demo@pawbandhan.com', password: 'Rescue@123' }
-        ];
-
-        function isDemoLogin(email, password) {
-            const e = (email || '').trim().toLowerCase();
-            const p = (password || '').trim();
-            return DEMO_ACCOUNTS.some(d => d.email === e && d.password === p);
-        }
-
-        function loginWithDemo() {
-            document.getElementById('loginEmail').value = 'rescue@foundation.org';
-            document.getElementById('loginPassword').value = 'Rescue@123';
-            enterDemoSession();
-        }
-
-        function enterDemoSession() {
-            sessionStorage.setItem('demo_session', 'true');
-            sessionStorage.setItem('ngo_uid', 'demo-ngo-id');
-            window.location.href = 'ngo_dashboard.html';
-        }
-
-        async function verifyAndJoin() {
-            const email = document.getElementById('email').value.trim();
-            const password = document.getElementById('password').value;
-            const otp = document.getElementById('otpInput').value.trim();
-
-            if (otp !== '000000') {
-                alert('Invalid OTP. Use 000000 for testing.');
-                return;
-            }
-            try {
-                let userCred;
-                try {
-                    userCred = await auth.createUserWithEmailAndPassword(email, password);
-                } catch (e) {
-                    if (e.code === 'auth/email-already-in-use') {
-                        userCred = await auth.signInWithEmailAndPassword(email, password);
-                    } else throw e;
-                }
-                await fetch('/api/users/register', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        uid: userCred.user.uid,
-                        firstName: document.getElementById('firstName').value.trim(),
-                        middleName: document.getElementById('middleName').value.trim(),
-                        lastName: document.getElementById('lastName').value.trim(),
-                        phoneNo: document.getElementById('phone').value.trim(),
-                        email,
-                        role: 'ngo',
-                        orgName: document.getElementById('orgName').value.trim()
-                    })
-                });
-                sessionStorage.removeItem('demo_session');
-                sessionStorage.setItem('ngo_uid', userCred.user.uid);
-                window.location.href = 'ngo_onboarding.html';
-            } catch (e) {
-                alert(e.message || 'Registration failed');
-            }
-        }
-
-        document.getElementById('loginForm').onsubmit = async (e) => {
+        document.querySelectorAll('.auth-tab').forEach(tab => {
+            tab.addEventListener('click', () => {
+                document.querySelectorAll('.auth-tab').forEach(t => t.classList.remove('active'));
+                document.querySelectorAll('.auth-form').forEach(f => f.classList.remove('active'));
+                tab.classList.add('active');
+                document.getElementById(tab.dataset.tab + 'Form').classList.add('active');
+            });
+        });
+        document.getElementById('loginForm').addEventListener('submit', (e) => {
             e.preventDefault();
-            const email = document.getElementById('loginEmail').value.trim();
-            const password = document.getElementById('loginPassword').value;
-
-            if (isDemoLogin(email, password)) {
-                enterDemoSession();
-                return;
-            }
-
-            try {
-                const cred = await auth.signInWithEmailAndPassword(email, password);
-                sessionStorage.removeItem('demo_session');
-                sessionStorage.setItem('ngo_uid', cred.user.uid);
-                window.location.href = 'ngo_dashboard.html';
-            } catch (e) {
-                console.error('Auth Error:', e.code, e.message);
-                if (e.code === 'auth/invalid-login-credentials' || e.code === 'auth/wrong-password' || e.code === 'auth/user-not-found') {
-                    alert(
-                        'Login failed — email or password is wrong.\n\n' +
-                        '• Use "Login with Demo NGO" for instant access (no account needed).\n' +
-                        '• Or register under "Register Shelter", then sign in with that email & password.'
-                    );
-                } else if (e.code === 'auth/invalid-email') {
-                    alert('Please enter a valid email address.');
-                } else {
-                    alert(e.message);
-                }
-            }
-        };
+            sessionStorage.setItem('demo_session', 'true');
+            sessionStorage.setItem('ngo_name', 'Rescue Foundation');
+            window.location.href = 'ngo_dashboard.html';
+        });
+        document.getElementById('registerForm').addEventListener('submit', (e) => {
+            e.preventDefault();
+            sessionStorage.setItem('demo_session', 'true');
+            sessionStorage.setItem('ngo_name', document.getElementById('regOrg').value);
+            window.location.href = 'ngo_dashboard.html';
+        });
     </script>
 </body>
 </html>
