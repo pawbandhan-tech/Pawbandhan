@@ -150,7 +150,7 @@ body.pb-customer .cd-qbtn:hover {
 
 body.pb-customer .cd-qbtn-emergency {
     grid-column: span 3;
-    background: linear-gradient(145deg, #ea580c, #f97316);
+    background: linear-gradient(145deg, #4f46e5, #6366f1);
     border: none;
     color: #fff;
     min-height: auto;

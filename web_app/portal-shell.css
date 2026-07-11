@@ -1,13 +1,13 @@
 /* Shared PawBandhan portal chrome — animal-friendly */
 .pp-shell {
-    --pp-brand: #0d9488;
-    --pp-brand-dark: #0f766e;
-    --pp-accent: #f97316;
+    --pp-brand: #0891b2;
+    --pp-brand-dark: #0e7490;
+    --pp-accent: #06b6d4;
     --pp-bg: #f0fdfa;
     --pp-card: #ffffff;
     --pp-text: #134e4a;
     --pp-muted: #5f8a85;
-    --pp-border: rgba(13, 148, 136, 0.14);
+    --pp-border: rgba(8, 145, 178, 0.14);
     --pp-font: 'DM Sans', system-ui, sans-serif;
     --pp-display: 'Fraunces', Georgia, serif;
 }
@@ -153,7 +153,7 @@
 }
 
 .pp-btn-primary {
-    background: linear-gradient(135deg, var(--pp-accent), #ea580c);
+    background: linear-gradient(135deg, var(--pp-accent), var(--pp-brand-dark));
     color: #fff;
 }
 

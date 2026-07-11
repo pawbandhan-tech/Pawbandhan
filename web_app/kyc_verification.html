@@ -15,18 +15,18 @@
         .step-indicator { display: flex; justify-content: space-between; margin: 30px 0; position: relative; }
         .step { text-align: center; flex: 1; position: relative; z-index: 2; }
         .step-circle { width: 50px; height: 50px; background: white; border: 3px solid #ddd; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; font-weight: bold; font-size: 20px; transition: all 0.3s; }
-        .step.active .step-circle { background: #FF6B35; border-color: #FF6B35; color: white; box-shadow: 0 0 20px rgba(255,107,53,0.5); }
+        .step.active .step-circle { background: #0d9488; border-color: #0d9488; color: white; box-shadow: 0 0 20px rgba(13, 148, 136,0.5); }
         .step.completed .step-circle { background: #28a745; border-color: #28a745; color: white; }
         .step-label { display: block; font-size: 12px; margin-top: 8px; font-weight: 600; color: white; }
         .step-line { position: absolute; top: 25px; left: 0; right: 0; height: 3px; background: rgba(255,255,255,0.3); z-index: 1; }
         .form-section { display: none; }
         .form-section.active { display: block; animation: fadeIn 0.5s ease; }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
-        .btn-gradient { background: linear-gradient(135deg, #FF6B35, #FF8C42); border: none; border-radius: 50px; padding: 12px 30px; color: white; font-weight: 600; transition: all 0.3s; }
-        .btn-gradient:hover { transform: translateY(-2px); box-shadow: 0 10px 25px rgba(255,107,53,0.3); }
+        .btn-gradient { background: linear-gradient(135deg, #0d9488, #14b8a6); border: none; border-radius: 50px; padding: 12px 30px; color: white; font-weight: 600; transition: all 0.3s; }
+        .btn-gradient:hover { transform: translateY(-2px); box-shadow: 0 10px 25px rgba(13, 148, 136,0.3); }
         .btn-outline-secondary { border-radius: 50px; padding: 12px 30px; }
         .upload-area { border: 2px dashed #ddd; border-radius: 12px; padding: 20px; text-align: center; cursor: pointer; transition: all 0.3s; margin-bottom: 15px; }
-        .upload-area:hover { border-color: #FF6B35; background: rgba(255,107,53,0.05); }
+        .upload-area:hover { border-color: #0d9488; background: rgba(13, 148, 136,0.05); }
         .camera-preview { width: 150px; height: 150px; object-fit: cover; border-radius: 50%; margin: 15px auto; border: 4px solid white; box-shadow: 0 10px 30px rgba(0,0,0,0.2); }
         .status-badge { display: inline-block; padding: 5px 12px; border-radius: 20px; font-size: 12px; font-weight: 600; }
         .status-pending { background: #ffc107; color: #000; }

@@ -79,7 +79,7 @@
                 }
                 if (c.workflow_status === 'treatment_in_progress') {
                     actions = `<textarea id="tr_${c.incident_code}" placeholder="Treatment report" style="width:100%;margin-top:8px;padding:10px;border-radius:10px;border:1px solid #e2e8f0;"></textarea>
-                        <button class="pp-btn pp-btn-primary" style="margin-top:8px;background:linear-gradient(135deg,#f97316,#ea580c);color:#fff;border:none;" onclick="DoctorPortal.completeTreatment('${c.incident_code}')">Complete treatment</button>`;
+                        <button class="pp-btn pp-btn-primary" style="margin-top:8px;background:linear-gradient(135deg,#0d9488,#0f766e);color:#fff;border:none;" onclick="DoctorPortal.completeTreatment('${c.incident_code}')">Complete treatment</button>`;
                 }
                 return `<div class="pp-case-card">
                     <h4>${c.incident_code} · ${c.animal_type || 'Animal'}</h4>

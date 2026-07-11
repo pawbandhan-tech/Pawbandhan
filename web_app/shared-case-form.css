@@ -26,8 +26,8 @@
 .paw-case-form .loc-row input { flex: 1; }
 .paw-case-form .btn-locate {
     border: none;
-    background: #fff7ed;
-    color: #ea580c;
+    background: #f0fdfa;
+    color: #0f766e;
     padding: 0 16px;
     border-radius: 12px;
     font-weight: 700;
@@ -54,7 +54,7 @@
 
 .paw-case-form .btn-photo-add {
     border: none;
-    background: #ff6b35;
+    background: #0d9488;
     color: #fff;
     padding: 10px 18px;
     border-radius: 10px;

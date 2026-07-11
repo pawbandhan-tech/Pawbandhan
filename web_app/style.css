@@ -1,32 +1,32 @@
 :root {
-    /* Animal-friendly palette */
-    --primary: #E86B3A;
-    --primary-dark: #C4522A;
-    --primary-light: #FF9A6C;
-    --secondary: #2D4A3E;
-    --accent: #5BA87C;
-    --accent-light: #A8D5BA;
-    --accent-teal: #3DAA9A;
-    --accent-amber: #F4B942;
-    --accent-cream: #FFF8F0;
-    --accent-warm: #FFE8D6;
+    /* Calm & professional — teal/green palette */
+    --primary: #0d9488;
+    --primary-dark: #0f766e;
+    --primary-light: #14b8a6;
+    --secondary: #0f1c1a;
+    --accent: #0ea5a4;
+    --accent-light: #99f6e4;
+    --accent-teal: #14b8a6;
+    --accent-amber: #d6a73a;
+    --accent-cream: #f6f8f8;
+    --accent-warm: #f0fdfa;
     --bg-white: #FFFFFF;
-    --bg-light: #FFF8F0;
-    --bg-sage: #EEF6F0;
-    --text-dark: #2C2419;
-    --text-gray: #6B5E52;
-    --text-muted: #9A8B7E;
-    --border-soft: rgba(45, 74, 62, 0.1);
+    --bg-light: #f6f8f8;
+    --bg-sage: #eef3f2;
+    --text-dark: #0f1c1a;
+    --text-gray: #5b6b69;
+    --text-muted: #8a9896;
+    --border-soft: rgba(15, 28, 26, 0.08);
 
-    --shadow-sm: 0 4px 14px rgba(44, 36, 25, 0.06);
-    --shadow-md: 0 12px 32px rgba(44, 36, 25, 0.08);
-    --shadow-lg: 0 24px 48px rgba(44, 36, 25, 0.12);
-    --shadow-primary: 0 8px 24px rgba(232, 107, 58, 0.28);
+    --shadow-sm: 0 1px 3px rgba(15, 30, 28, 0.06);
+    --shadow-md: 0 12px 32px -10px rgba(15, 30, 28, 0.12);
+    --shadow-lg: 0 24px 60px -18px rgba(15, 30, 28, 0.20);
+    --shadow-primary: 0 8px 24px rgba(13, 148, 136, 0.28);
     --transition: all 0.35s cubic-bezier(0.4, 0, 0.2, 1);
     --radius-sm: 12px;
-    --radius-md: 20px;
-    --radius-lg: 28px;
-    --radius-xl: 40px;
+    --radius-md: 18px;
+    --radius-lg: 24px;
+    --radius-xl: 32px;
     --radius-pill: 999px;
 }
 
@@ -215,7 +215,7 @@ h1, h2, h3, h4 {
 
 .nav-btn-primary:hover {
     transform: translateY(-3px);
-    box-shadow: 0 12px 28px rgba(232, 107, 58, 0.38);
+    box-shadow: 0 12px 28px rgba(13, 148, 136, 0.38);
 }
 
 .nav-btn-outline {
@@ -287,7 +287,7 @@ h1, h2, h3, h4 {
 .hero-blob-2 {
     width: 300px;
     height: 300px;
-    background: rgba(232, 107, 58, 0.15);
+    background: rgba(13, 148, 136, 0.15);
     bottom: 10%;
     left: -60px;
 }
@@ -582,7 +582,7 @@ h1, h2, h3, h4 {
     margin: 0 auto 16px;
 }
 
-.stat-icon-orange { background: rgba(232, 107, 58, 0.2); color: #ffb899; }
+.stat-icon-orange { background: rgba(13, 148, 136, 0.2); color: #99f6e4; }
 .stat-icon-green { background: rgba(91, 168, 124, 0.25); color: var(--accent-light); }
 .stat-icon-amber { background: rgba(244, 185, 66, 0.25); color: var(--accent-amber); }
 .stat-icon-teal { background: rgba(61, 170, 154, 0.25); color: #7ee8d8; }
@@ -1158,7 +1158,7 @@ h1, h2, h3, h4 {
 .form-floating input:focus {
     background: #fff;
     border-color: var(--primary);
-    box-shadow: 0 10px 20px -10px rgba(232, 107, 58, 0.2);
+    box-shadow: 0 10px 20px -10px rgba(13, 148, 136, 0.2);
     outline: none;
 }
 
@@ -1276,3 +1276,9 @@ h1, h2, h3, h4 {
         text-align: center;
     }
 }
+
+/* ─── Per-portal auth accents (distinct identities) ─── */
+body.auth-ngo { --primary: #2563eb; --primary-dark: #1d4ed8; --primary-light: #3b82f6; --accent: #3b82f6; }
+body.auth-doctor { --primary: #0891b2; --primary-dark: #0e7490; --primary-light: #06b6d4; --accent: #06b6d4; }
+body.auth-rider { --primary: #d97706; --primary-dark: #b45309; --primary-light: #f59e0b; --accent: #f59e0b; }
+body.auth-rep { --primary: #16a34a; --primary-dark: #15803d; --primary-light: #22c55e; --accent: #22c55e; }

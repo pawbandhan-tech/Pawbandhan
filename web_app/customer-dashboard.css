@@ -1,21 +1,21 @@
 /* PawBandhan Customer Portal — delivery-style live tracking */
 body.pb-customer {
-    --pb-orange: #E86B3A;
-    --pb-orange-light: #FF9A6C;
-    --pb-green: #2D8F5B;
-    --pb-green-soft: #E8F5EE;
-    --pb-cream: #FFF9F3;
-    --pb-sage: #F0F7F2;
-    --pb-dark: #1A3328;
-    --pb-muted: #6B5E52;
+    --pb-orange: #6366f1;
+    --pb-orange-light: #818cf8;
+    --pb-green: #0f766e;
+    --pb-green-soft: #f0fdfa;
+    --pb-cream: #f6f8f8;
+    --pb-sage: #eef3f2;
+    --pb-dark: #0f1c1a;
+    --pb-muted: #5b6b69;
     --pb-card: #FFFFFF;
-    --pb-shadow: 0 8px 32px rgba(26, 51, 40, 0.08);
+    --pb-shadow: 0 8px 32px rgba(15, 28, 26, 0.08);
     --primary: var(--pb-orange);
-    --primary-light: #FFF0E8;
+    --primary-light: #f0fdfa;
     --bg: var(--pb-cream);
     --secondary: var(--pb-dark);
     --text-gray: var(--pb-muted);
-    font-family: 'Nunito', sans-serif;
+    font-family: 'Outfit', sans-serif;
     background: var(--pb-cream);
     padding-bottom: 88px;
 }
@@ -24,8 +24,8 @@ body.pb-customer::before {
     content: '';
     position: fixed;
     inset: 0;
-    background: radial-gradient(circle at 0% 0%, rgba(168, 213, 186, 0.25), transparent 45%),
-        radial-gradient(circle at 100% 10%, rgba(255, 209, 102, 0.15), transparent 40%);
+    background: radial-gradient(circle at 0% 0%, rgba(99, 102, 241, 0.10), transparent 45%),
+        radial-gradient(circle at 100% 10%, rgba(14, 165, 233, 0.08), transparent 40%);
     pointer-events: none;
     z-index: 0;
 }
@@ -170,7 +170,7 @@ body.pb-customer .topbar-logo {
     height: 12px;
     background: var(--pb-orange);
     border-radius: 50%;
-    box-shadow: 0 0 0 8px rgba(232, 107, 58, 0.3);
+    box-shadow: 0 0 0 8px rgba(99, 102, 241, 0.3);
     animation: mapPulse 2s infinite;
 }
 
@@ -391,13 +391,13 @@ body.pb-customer .topbar-logo {
     background: var(--pb-orange);
     color: #fff;
     transform: scale(1.08);
-    box-shadow: 0 0 0 5px rgba(232, 107, 58, 0.2);
+    box-shadow: 0 0 0 5px rgba(99, 102, 241, 0.2);
     animation: fkPulse 1.5s ease infinite;
 }
 
 @keyframes fkPulse {
-    0%, 100% { box-shadow: 0 0 0 5px rgba(232, 107, 58, 0.2); }
-    50% { box-shadow: 0 0 0 8px rgba(232, 107, 58, 0.35); }
+    0%, 100% { box-shadow: 0 0 0 5px rgba(99, 102, 241, 0.2); }
+    50% { box-shadow: 0 0 0 8px rgba(99, 102, 241, 0.35); }
 }
 
 .fk-step.pending .fk-step-marker { background: #f5f0ea; }
@@ -491,7 +491,7 @@ body.pb-customer .topbar-logo {
     padding: 10px 12px;
     background: #fff7ed;
     border-radius: 10px;
-    border: 1px solid rgba(232, 107, 58, 0.2);
+    border: 1px solid rgba(99, 102, 241, 0.2);
 }
 
 .fk-treatment-report {
@@ -691,7 +691,7 @@ body.pb-customer .topbar-logo {
 
 .pb-notif-item.unread {
     background: #FFF0E8;
-    border-color: rgba(232, 107, 58, 0.2);
+    border-color: rgba(99, 102, 241, 0.2);
 }
 
 .pb-notif-item strong { display: block; font-size: 0.9rem; margin-bottom: 4px; }

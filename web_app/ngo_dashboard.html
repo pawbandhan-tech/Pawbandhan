@@ -11,14 +11,14 @@
     <link rel="stylesheet" href="shared-portal.css">
     <style>
         :root {
-            --primary: #FF6B35;
-            --primary-light: #FFF5F2;
-            --primary-dark: #E65A2B;
-            --bg-main: #F8FAFC;
-            --sidebar-bg: #1E293B;
-            --text-main: #1E293B;
-            --text-dim: #64748B;
-            --card-shadow: 0 10px 30px rgba(0, 0, 0, 0.04);
+            --primary: #2563eb;
+            --primary-light: #eff6ff;
+            --primary-dark: #1d4ed8;
+            --bg-main: #f6f8f8;
+            --sidebar-bg: #0f1c1a;
+            --text-main: #0f1c1a;
+            --text-dim: #5b6b69;
+            --card-shadow: 0 10px 30px rgba(15, 28, 26, 0.06);
             --accent-blue: #3B82F6;
             --accent-green: #22C55E;
         }
@@ -71,7 +71,7 @@
             transition: 0.3s;
         }
         .nav-links a:hover, .nav-links a.active {
-            background: rgba(255, 107, 53, 0.1);
+            background: rgba(37, 99, 235, 0.12);
             color: var(--primary);
         }
         .nav-links a i { font-size: 1.1rem; width: 24px; text-align: center; }
@@ -203,7 +203,7 @@
             text-transform: uppercase;
         }
         .badge-red { background: #FEE2E2; color: #EF4444; }
-        .badge-orange { background: #FFF7ED; color: #F97316; }
+        .badge-orange { background: #f0fdfa; color: #0f766e; }
 
         /* ─── VERIFICATION OVERLAY ─── */
         .overlay {
@@ -270,9 +270,9 @@
             font-size: 1rem;
             cursor: pointer;
             transition: 0.3s;
-            box-shadow: 0 10px 25px rgba(255, 107, 53, 0.2);
+            box-shadow: 0 10px 25px rgba(37, 99, 235, 0.2);
         }
-        .btn-primary:hover { transform: translateY(-3px); box-shadow: 0 15px 30px rgba(255, 107, 53, 0.3); }
+        .btn-primary:hover { transform: translateY(-3px); box-shadow: 0 15px 30px rgba(37, 99, 235, 0.3); }
 
         /* ─── MODALS ─── */
         .modal-bg { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.6); backdrop-filter: blur(10px); z-index: 3000; display: none; align-items: center; justify-content: center; }
@@ -289,7 +289,7 @@
         .form-field textarea { min-height:110px; resize:vertical; }
         .mini-note { font-size:0.75rem; color:var(--text-dim); line-height:1.5; }
         .lookup-chip {
-            display:inline-flex; align-items:center; gap:8px; padding:10px 14px; border-radius:999px; background:#FFF5F2; color:var(--primary); font-weight:800; font-size:0.75rem;
+            display:inline-flex; align-items:center; gap:8px; padding:10px 14px; border-radius:999px; background:#f0fdfa; color:var(--primary); font-weight:800; font-size:0.75rem;
         }
         .case-stack { display:grid; gap:14px; }
         .case-card {
@@ -839,7 +839,7 @@
                 labels: ['Street Dogs', 'Cats', 'Cattle', 'Birds'],
                 datasets: [{
                     data: [65, 20, 10, 5],
-                    backgroundColor: ['#FF6B35', '#3B82F6', '#22C55E', '#94A3B8'],
+                    backgroundColor: ['#0d9488', '#3B82F6', '#22C55E', '#94A3B8'],
                     borderWidth: 0,
                     hoverOffset: 15
                 }]

@@ -2,16 +2,16 @@
 @import url('https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,400;0,9..40,600;0,9..40,700;0,9..40,800&family=Fraunces:opsz,wght@9..144,600&display=swap');
 
 body.pb-customer {
-    --cd-brand: #0d9488;
-    --cd-brand-dark: #0f766e;
-    --cd-accent: #f97316;
-    --cd-bg: #f0fdfa;
+    --cd-brand: #6366f1;
+    --cd-brand-dark: #4f46e5;
+    --cd-accent: #8b5cf6;
+    --cd-bg: #f6f8f8;
     --cd-card: #ffffff;
-    --cd-text: #134e4a;
-    --cd-muted: #5f8a85;
+    --cd-text: #0f1c1a;
+    --cd-muted: #5b6b69;
     --cd-border: rgba(13, 148, 136, 0.12);
     --cd-shadow: 0 12px 40px rgba(15, 118, 110, 0.08);
-    font-family: 'DM Sans', system-ui, sans-serif;
+    font-family: 'Outfit', system-ui, sans-serif;
     background: var(--cd-bg);
     color: var(--cd-text);
     padding-bottom: 88px;
@@ -22,8 +22,8 @@ body.pb-customer::before {
     position: fixed;
     inset: 0;
     background:
-        radial-gradient(circle at 0% 0%, rgba(45, 212, 191, 0.2), transparent 45%),
-        radial-gradient(circle at 100% 20%, rgba(251, 146, 60, 0.12), transparent 40%);
+        radial-gradient(circle at 0% 0%, rgba(45, 212, 191, 0.18), transparent 45%),
+        radial-gradient(circle at 100% 20%, rgba(14, 165, 233, 0.10), transparent 40%);
     pointer-events: none;
     z-index: 0;
 }
@@ -131,7 +131,7 @@ button.cd-user-chip {
     width: 36px;
     height: 36px;
     border-radius: 50%;
-    background: linear-gradient(135deg, var(--cd-accent), #ea580c);
+    background: linear-gradient(135deg, var(--cd-accent), var(--cd-brand-dark));
     color: #fff;
     display: grid;
     place-items: center;

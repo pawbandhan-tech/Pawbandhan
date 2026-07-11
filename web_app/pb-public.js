@@ -23,7 +23,7 @@
     function initReveal() {
         var obs = new IntersectionObserver(function (entries) {
             entries.forEach(function (e) {
-                if (e.isIntersecting) e.target.classList.add('visible');
+                if (e.isIntersecting) { e.target.classList.add('in'); obs.unobserve(e.target); }
             });
         }, { threshold: 0.1 });
         document.querySelectorAll('.pb-reveal').forEach(function (el) { obs.observe(el); });
@@ -253,10 +253,64 @@
         }
     }
 
+    function fmtCount(n) {
+        return (Number(n) || 0).toLocaleString('en-IN');
+    }
+
+    function animateCount(el) {
+        var to = Number(el.getAttribute('data-to')) || 0;
+        var suffix = el.getAttribute('data-suffix') || '';
+        var start = 0, startTime = null, dur = 1500;
+        function step(ts) {
+            if (!startTime) startTime = ts;
+            var p = Math.min((ts - startTime) / dur, 1);
+            var eased = 1 - Math.pow(1 - p, 3);
+            el.textContent = fmtCount(Math.round(start + (to - start) * eased)) + suffix;
+            if (p < 1) requestAnimationFrame(step);
+        }
+        requestAnimationFrame(step);
+    }
+
+    function initCounts() {
+        var els = document.querySelectorAll('.pb-count');
+        if (!els.length) return;
+        if (!('IntersectionObserver' in window)) {
+            els.forEach(animateCount);
+            return;
+        }
+        var obs = new IntersectionObserver(function (entries) {
+            entries.forEach(function (e) {
+                if (e.isIntersecting) { animateCount(e.target); obs.unobserve(e.target); }
+            });
+        }, { threshold: 0.4 });
+        els.forEach(function (el) { obs.observe(el); });
+    }
+
+    var TICKER_MSGS = [
+        'A injured Indie was rescued in Pune — vet care underway.',
+        'Stray pup transported to shelter in Bengaluru.',
+        'NGO accepted a critical case in Hyderabad.',
+        'Field responder en route in Jaipur — ETA 12 min.',
+        'Recovered dog handed over after treatment in Mumbai.'
+    ];
+    function initTicker() {
+        var el = document.getElementById('tickerText');
+        if (!el) return;
+        var i = 0;
+        setInterval(function () {
+            i = (i + 1) % TICKER_MSGS.length;
+            el.style.opacity = '0';
+            setTimeout(function () { el.textContent = TICKER_MSGS[i]; el.style.opacity = '1'; }, 300);
+        }, 4000);
+        el.style.transition = 'opacity 0.3s ease';
+    }
+
     document.addEventListener('DOMContentLoaded', function () {
         initNav();
         initReveal();
         initJourneyHighlight();
+        initCounts();
+        initTicker();
         loadCms();
     });
 })();

@@ -1,16 +1,16 @@
 /* PawBandhan Representative App — warm animal-friendly */
 :root {
-    --rep-orange: #E86B3A;
-    --rep-green: #2D8F5B;
-    --rep-cream: #FFF9F3;
+    --rep-orange: #16a34a;
+    --rep-green: #0f766e;
+    --rep-cream: #f6f8f8;
     --rep-card: #FFFFFF;
-    --rep-dark: #1A3328;
-    --rep-muted: #6B5E52;
-    --rep-shadow: 0 8px 28px rgba(26, 51, 40, 0.1);
+    --rep-dark: #0f1c1a;
+    --rep-muted: #5b6b69;
+    --rep-shadow: 0 8px 28px rgba(15, 28, 26, 0.1);
 }
 
 body.rep-app {
-    font-family: 'Nunito', sans-serif;
+    font-family: 'Outfit', sans-serif;
     background: var(--rep-cream);
     color: var(--rep-dark);
     max-width: 480px;
@@ -104,7 +104,7 @@ body.rep-app {
     font-size: 0.95rem;
 }
 
-.rep-btn-primary { background: linear-gradient(135deg, var(--rep-orange), #FF9A6C); color: #fff; }
+.rep-btn-primary { background: linear-gradient(135deg, var(--rep-orange), #22c55e); color: #fff; }
 .rep-btn-green { background: var(--rep-green); color: #fff; }
 .rep-btn-outline { background: #fff; border: 2px solid #e8e0d8; color: var(--rep-muted); }
 
@@ -206,8 +206,8 @@ body.rep-app {
 .rep-tab.active { display: block; }
 
 .rep-earnings {
-    background: linear-gradient(135deg, #FFF0E8, #fff);
-    border: 1px solid rgba(232, 107, 58, 0.2);
+    background: linear-gradient(135deg, #f0fdfa, #fff);
+    border: 1px solid rgba(13, 148, 136, 0.2);
     border-radius: 16px;
     padding: 16px;
     margin-bottom: 14px;

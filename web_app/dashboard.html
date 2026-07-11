@@ -19,14 +19,14 @@
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         :root {
-            --primary: #f97316; /* Vibrant Orange */
-            --primary-light: rgba(249, 115, 22, 0.1);
-            --primary-dark: #ea580c;
-            --secondary: #1c1917; /* Dark Slate */
-            --text-gray: #57534e; /* Warm Gray */
-            --bg: #fafaf9; /* Off-white */
-            --white: rgba(255, 255, 255, 0.85);
-            --shadow: 0 8px 30px rgba(0,0,0,0.05);
+            --primary: #6366f1; /* Calm Teal */
+            --primary-light: rgba(99, 102, 241, 0.1);
+            --primary-dark: #4f46e5;
+            --secondary: #0f1c1a; /* Ink */
+            --text-gray: #5b6b69; /* Muted */
+            --bg: #f6f8f8; /* Off-white */
+            --white: #ffffff;
+            --shadow: 0 8px 30px rgba(15, 30, 28, 0.06);
         }
 
         body {
@@ -34,7 +34,7 @@
             background: var(--bg);
             color: var(--secondary);
             min-height: 100vh;
-            background-image: radial-gradient(circle at 10% 20%, rgba(249, 115, 22, 0.05) 0%, transparent 40%),
+            background-image: radial-gradient(circle at 10% 20%, rgba(99, 102, 241, 0.05) 0%, transparent 40%),
                               radial-gradient(circle at 90% 80%, rgba(14, 165, 233, 0.05) 0%, transparent 40%);
         }
 
@@ -165,7 +165,7 @@
         .q-card:hover {
             transform: translateY(-8px);
             border-color: var(--primary);
-            box-shadow: 0 20px 50px rgba(249, 115, 22, 0.15);
+            box-shadow: 0 20px 50px rgba(99, 102, 241, 0.15);
         }
 
         .q-card.hero-card {
@@ -349,7 +349,7 @@
             overflow: hidden;
             flex: 1;
         }
-        .xp-fill { height: 100%; background: linear-gradient(90deg, var(--primary), #f59e0b); border-radius: 10px; transition: 1s; }
+        .xp-fill { height: 100%; background: linear-gradient(90deg, var(--primary), #818cf8); border-radius: 10px; transition: 1s; }
 
         /* ─── AI CAMERA OVERLAY ─── */
         .camera-overlay {
@@ -372,7 +372,7 @@
             overflow: hidden;
             position: relative;
             border: 4px solid var(--primary);
-            box-shadow: 0 0 60px rgba(255, 107, 53, 0.25);
+            box-shadow: 0 0 60px rgba(99, 102, 241, 0.25);
         }
         .cam-viewport { position: relative; width: 100%; line-height: 0; }
         #video {
@@ -1439,7 +1439,7 @@
             if (!directionsRenderer) {
                 directionsRenderer = new google.maps.DirectionsRenderer({
                     suppressMarkers: true,
-                    polylineOptions: { strokeColor: '#FF6B35', strokeWeight: 5 }
+                    polylineOptions: { strokeColor: '#0d9488', strokeWeight: 5 }
                 });
             }
 
