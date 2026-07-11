@@ -347,13 +347,14 @@ body.pb-public::before {
 }
 
 .pb-btn-outline {
-    background: rgba(255, 255, 255, 0.03);
-    color: var(--pb-text);
-    border: 1px solid var(--pb-border);
+    background: rgba(255, 255, 255, 0.04);
+    color: #ffffff;
+    border: 1.5px solid rgba(255, 255, 255, 0.25);
 }
 
 .pb-btn-outline:hover {
     border-color: var(--pb-brand-light);
+    color: var(--pb-brand-light);
     background: rgba(255, 255, 255, 0.08);
     transform: translateY(-2px);
 }

@@ -1,25 +1,45 @@
-/* PawBandhan Customer Portal Theme — Ocean Mint & Warm Honey */
-@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
+/* PawBandhan Customer Portal Theme — Cyber Synthwave / Retro-Future Neon */
+@import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Plus+Jakarta+Sans:wght@400;600;700;800&display=swap');
 
 :root {
-    --cp-brand: #0d9488;       /* Ocean Mint */
-    --cp-brand-dark: #0f766e;
-    --cp-brand-light: #2dd4bf;
-    --cp-accent: #f59e0b;      /* Warm Honey */
-    --cp-accent-soft: rgba(245, 158, 11, 0.12);
-    --cp-bg: #0f172a;          /* Premium Deep Slate */
-    --cp-card-bg: rgba(30, 41, 59, 0.7);
-    --cp-text: #f8fafc;
-    --cp-muted: #94a3b8;
-    --cp-border: rgba(13, 148, 136, 0.18);
-    --cp-shadow: 0 20px 45px rgba(0,0,0,0.4);
-    --cp-radius: 20px;
+    --cp-brand: #ff007f;       /* Luminous Neon Fuchsia */
+    --cp-brand-dark: #b3005c;
+    --cp-brand-light: #ff66b2;
+    --cp-accent: #39ff14;      /* Cyber Lime / Green Glow */
+    --cp-accent-soft: rgba(57, 255, 20, 0.12);
+    --cp-bg: #060214;          /* Deep Synth Space Black */
+    --cp-card-bg: rgba(18, 10, 36, 0.85);
+    --cp-text: #00ffff;        /* Electric Cyan */
+    --cp-muted: #8679a3;
+    --cp-border: rgba(255, 0, 127, 0.25);
+    --cp-shadow: 0 0 25px rgba(255, 0, 127, 0.4);
+    --cp-radius: 16px;
+    --cp-font: 'Plus Jakarta Sans', sans-serif;
+    --cp-mono: 'Share Tech Mono', monospace;
 }
 
 body.customer-portal-body {
     background-color: var(--cp-bg);
     color: var(--cp-text);
-    font-family: 'Plus Jakarta Sans', sans-serif;
+    font-family: var(--cp-font);
+    background-image:
+        linear-gradient(rgba(255, 0, 127, 0.05) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255, 0, 127, 0.05) 1px, transparent 1px);
+    background-size: 30px 30px;
+    position: relative;
+    overflow-x: hidden;
+}
+
+/* scanline animation */
+body.customer-portal-body::before {
+    content: '';
+    position: fixed;
+    top: 0; left: 0; width: 100%; height: 100%;
+    background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.25) 50%);
+    background-size: 100% 4px;
+    z-index: 9999;
+    pointer-events: none;
+    opacity: 0.4;
 }
 
 .cp-container {
@@ -28,80 +48,76 @@ body.customer-portal-body {
     padding: 0 24px;
 }
 
-/* Beautiful Animated Cards */
+/* Beautiful Interactive Synthwave Cards */
 .cp-card {
     background: var(--cp-card-bg);
-    backdrop-filter: blur(20px);
     border: 1px solid var(--cp-border);
     border-radius: var(--cp-radius);
     padding: 32px;
-    box-shadow: var(--cp-shadow);
+    box-shadow: 0 0 20px rgba(255, 0, 127, 0.15);
     transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
     position: relative;
-    overflow: hidden;
 }
 
 .cp-card:hover {
-    transform: translateY(-6px);
-    border-color: var(--cp-brand-light);
-    box-shadow: 0 30px 60px rgba(13, 148, 136, 0.15);
+    transform: translateY(-5px) scale(1.01);
+    border-color: var(--cp-accent);
+    box-shadow: 0 0 35px rgba(57, 255, 20, 0.3);
 }
 
-.cp-card::after {
+.cp-card::before {
     content: '';
     position: absolute;
-    top: -50%; left: -50%; width: 200%; height: 200%;
-    background: radial-gradient(circle, rgba(45, 212, 191, 0.05) 0%, transparent 70%);
-    pointer-events: none;
-    transition: transform 0.6s ease;
+    top: 0; left: 0; right: 0;
+    height: 3px;
+    background: linear-gradient(90deg, var(--cp-brand), var(--cp-accent));
+    border-radius: var(--cp-radius) var(--cp-radius) 0 0;
 }
 
-.cp-card:hover::after {
-    transform: translate(10%, 10%);
-}
-
-/* Elegant Portal Header */
+/* Portal Header */
 .cp-header {
     display: flex;
     justify-content: space-between;
     align-items: center;
     margin-bottom: 40px;
-    padding-bottom: 24px;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+    border-bottom: 2px solid var(--cp-border);
+    padding-bottom: 20px;
 }
 
 .cp-header h1 {
-    font-size: 2rem;
-    font-weight: 800;
+    font-family: var(--cp-mono);
+    font-size: 2.2rem;
     color: #fff;
-    letter-spacing: -0.03em;
+    text-transform: uppercase;
+    text-shadow: 0 0 10px var(--cp-brand);
 }
 
 .cp-header h1 em {
     font-style: normal;
-    color: var(--cp-brand-light);
+    color: var(--cp-accent);
+    text-shadow: 0 0 10px var(--cp-accent);
 }
 
-/* High-contrast form elements */
+/* Form controls */
 .cp-input {
     width: 100%;
     padding: 14px 18px;
-    background: rgba(15, 23, 42, 0.6);
+    background: rgba(6, 2, 20, 0.8);
     border: 1px solid var(--cp-border);
-    border-radius: 12px;
+    border-radius: 8px;
     color: #fff;
-    font-family: inherit;
-    font-size: 0.95rem;
+    font-family: var(--cp-mono);
+    font-size: 1rem;
     transition: all 0.3s ease;
 }
 
 .cp-input:focus {
     outline: none;
-    border-color: var(--cp-brand-light);
-    box-shadow: 0 0 0 4px rgba(45, 212, 191, 0.15);
+    border-color: var(--cp-accent);
+    box-shadow: 0 0 15px rgba(57, 255, 20, 0.4);
 }
 
-/* Gorgeous Status Trackers */
+/* Status Trackers */
 .cp-tracker {
     display: flex;
     flex-direction: column;
@@ -140,30 +156,34 @@ body.customer-portal-body {
 }
 
 .cp-tracker-node.active .cp-tracker-dot {
-    border-color: var(--cp-brand-light);
+    border-color: var(--cp-accent);
     background: var(--cp-brand);
-    box-shadow: 0 0 15px var(--cp-brand-light);
+    box-shadow: 0 0 15px var(--cp-accent);
 }
 
 .cp-tracker-label {
+    font-family: var(--cp-mono);
     font-weight: 700;
-    font-size: 0.95rem;
+    font-size: 1rem;
     color: var(--cp-muted);
 }
 
 .cp-tracker-node.active .cp-tracker-label {
-    color: #fff;
+    color: var(--cp-accent);
+    text-shadow: 0 0 8px rgba(57, 255, 20, 0.5);
 }
 
-/* Animated Interactive Buttons */
+/* Synthwave Action Buttons */
 .cp-btn {
     display: inline-flex;
     align-items: center;
     gap: 10px;
-    padding: 12px 24px;
-    border-radius: 14px;
+    padding: 14px 28px;
+    border-radius: 8px;
+    font-family: var(--cp-mono);
     font-weight: 700;
-    font-size: 0.9rem;
+    text-transform: uppercase;
+    font-size: 0.95rem;
     cursor: pointer;
     transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
     border: none;
@@ -173,20 +193,22 @@ body.customer-portal-body {
 .cp-btn-primary {
     background: linear-gradient(135deg, var(--cp-brand), var(--cp-brand-dark));
     color: #fff;
-    box-shadow: 0 8px 20px rgba(13, 148, 136, 0.25);
+    box-shadow: 0 0 15px rgba(255, 0, 127, 0.4);
 }
 
 .cp-btn-primary:hover {
     transform: translateY(-2px);
-    box-shadow: 0 12px 28px rgba(13, 148, 136, 0.4);
+    box-shadow: 0 0 25px rgba(255, 0, 127, 0.7);
 }
 
 .cp-btn-secondary {
     background: var(--cp-accent-soft);
     color: var(--cp-accent);
+    border: 1px solid var(--cp-accent);
 }
 
 .cp-btn-secondary:hover {
     background: var(--cp-accent);
-    color: #fff;
+    color: #060214;
+    box-shadow: 0 0 20px rgba(57, 255, 20, 0.6);
 }
