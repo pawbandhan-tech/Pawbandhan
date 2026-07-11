@@ -14,7 +14,7 @@ const TABS = [
   { id: 'verify', label: 'Verification', icon: 'fa-user-check' },
   { id: 'customers', label: 'Customers', icon: 'fa-users' },
   { id: 'cases', label: 'Cases', icon: 'fa-truck-medical' },
-  { id: 'cms', label: 'Website editor', icon: 'fa-globe' }
+  { id: 'cms', label: 'Website Editor', icon: 'fa-globe' }
 ];
 
 export default function AdminPortal() {
@@ -28,6 +28,9 @@ export default function AdminPortal() {
   const [stories, setStories] = useState([]);
   const [toast, setToast] = useState('');
   const [loading, setLoading] = useState(true);
+
+  // For the active section within the CMS editor
+  const [cmsSection, setCmsSection] = useState('theme');
 
   useEffect(() => {
     verifySession().then((ok) => {
@@ -109,7 +112,9 @@ export default function AdminPortal() {
         method: 'POST',
         body: JSON.stringify(payload)
       });
-      showToast('Website updated');
+      showToast('Website updated successfully!');
+      // Reload CMS config
+      loadCms();
     } catch (err) { showToast(err.message); }
   }
 
@@ -170,7 +175,7 @@ export default function AdminPortal() {
             <header className="ap-header"><h2>Pending verifications</h2></header>
             {['ngos', 'doctors', 'representatives'].map((key) => (
               <div key={key} className="ap-card" style={{ marginBottom: 16 }}>
-                <h3>{key}</h3>
+                <h3 style={{ textTransform: 'capitalize', marginBottom: 12 }}>{key}</h3>
                 {(pending[key] || []).length ? (pending[key] || []).map((item) => (
                   <div key={item.id} className="ap-queue-item" style={{ display: 'flex', justifyContent: 'space-between', padding: '12px 0', borderBottom: '1px solid var(--ap-border)' }}>
                     <span>{item.name || item.email}</span>
@@ -217,19 +222,193 @@ export default function AdminPortal() {
 
         {tab === 'cms' ? (
           <>
-            <header className="ap-header"><h2>Website editor</h2></header>
-            <form className="ap-card" onSubmit={saveSiteConfig}>
-              {['hero_title', 'hero_subtitle', 'hero_badge', 'emergency_hotline', 'stories_section_title', 'stories_section_lead'].map((key) => (
-                <div key={key} className="admin-field" style={{ marginBottom: 16 }}>
-                  <label htmlFor={key}>{key.replace(/_/g, ' ')}</label>
-                  <input id={key} name={key} defaultValue={siteConfig[key] || ''} style={{ width: '100%', padding: 10, borderRadius: 8, border: '1px solid #e2e8f0' }} />
-                </div>
-              ))}
-              <button type="submit" className="ap-btn ap-btn-primary">Save website</button>
-            </form>
-            <div className="ap-card" style={{ marginTop: 16 }}>
-              <h3>Success stories ({stories.length})</h3>
-              <p style={{ color: 'var(--ap-muted)', fontSize: '0.9rem' }}>Manage stories via API or legacy admin tools.</p>
+            <header className="ap-header">
+              <div>
+                <h2>Website Editor</h2>
+                <p>Completely dynamic tools to manage theme styling, alert banners, and interactive landing features.</p>
+              </div>
+            </header>
+
+            <div className="ap-cms-container" style={{ display: 'grid', gridTemplateColumns: '220px 1fr', gap: '24px', alignItems: 'start' }}>
+              <nav className="ap-cms-nav" style={{ display: 'flex', flexDirection: 'column', gap: '8px', background: 'var(--ap-card-bg)', padding: '16px', borderRadius: '12px', border: '1px solid var(--ap-border)' }}>
+                <button type="button" className={`ap-btn ${cmsSection === 'theme' ? 'ap-btn-primary' : 'ap-btn-ghost'}`} onClick={() => setCmsSection('theme')} style={{ justifyContent: 'flex-start', padding: '10px 14px' }}>
+                  <i className="fas fa-palette" style={{ marginRight: 8 }} /> Themes & Style
+                </button>
+                <button type="button" className={`ap-btn ${cmsSection === 'banner' ? 'ap-btn-primary' : 'ap-btn-ghost'}`} onClick={() => setCmsSection('banner')} style={{ justifyContent: 'flex-start', padding: '10px 14px' }}>
+                  <i className="fas fa-bullhorn" style={{ marginRight: 8 }} /> Alert Banner
+                </button>
+                <button type="button" className={`ap-btn ${cmsSection === 'hero' ? 'ap-btn-primary' : 'ap-btn-ghost'}`} onClick={() => setCmsSection('hero')} style={{ justifyContent: 'flex-start', padding: '10px 14px' }}>
+                  <i className="fas fa-heading" style={{ marginRight: 8 }} /> Hero & CTAs
+                </button>
+                <button type="button" className={`ap-btn ${cmsSection === 'services' ? 'ap-btn-primary' : 'ap-btn-ghost'}`} onClick={() => setCmsSection('services')} style={{ justifyContent: 'flex-start', padding: '10px 14px' }}>
+                  <i className="fas fa-server" style={{ marginRight: 8 }} /> Services Blocks
+                </button>
+                <button type="button" className={`ap-btn ${cmsSection === 'spotlight' ? 'ap-btn-primary' : 'ap-btn-ghost'}`} onClick={() => setCmsSection('spotlight')} style={{ justifyContent: 'flex-start', padding: '10px 14px' }}>
+                  <i className="fas fa-quote-left" style={{ marginRight: 8 }} /> Citizen Spotlight
+                </button>
+              </nav>
+
+              <form className="ap-card" onSubmit={saveSiteConfig} style={{ margin: 0, padding: '24px' }}>
+                {cmsSection === 'theme' && (
+                  <div className="cms-group">
+                    <h3 style={{ marginBottom: '16px', borderBottom: '1px solid var(--ap-border)', paddingBottom: '8px' }}>Themes & Accent Style</h3>
+                    <div className="admin-field" style={{ marginBottom: '20px' }}>
+                      <label htmlFor="site_accent_theme" style={{ display: 'block', fontWeight: 'bold', marginBottom: '8px' }}>Accent Accent Color Preset</label>
+                      <select id="site_accent_theme" name="site_accent_theme" defaultValue={siteConfig.site_accent_theme || 'midnight'} style={{ width: '100%', padding: '12px', borderRadius: '8px', border: '1px solid var(--ap-border)', background: 'var(--ap-input-bg)', color: 'var(--ap-text)' }}>
+                        <option value="midnight">Midnight Aurora (Indigo / Teal Accent)</option>
+                        <option value="emerald">Emerald Sanctuary (Forest Green / Gold Accent)</option>
+                        <option value="amber">Sunset Amber (Autumn gold / Sunset Rose Accent)</option>
+                        <option value="coral">Velvet Coral (Rose Coral / Psychedelic Purple Accent)</option>
+                      </select>
+                    </div>
+                  </div>
+                )}
+
+                {cmsSection === 'banner' && (
+                  <div className="cms-group">
+                    <h3 style={{ marginBottom: '16px', borderBottom: '1px solid var(--ap-border)', paddingBottom: '8px' }}>Global Alert Banner</h3>
+                    <div className="admin-field" style={{ marginBottom: '20px' }}>
+                      <label htmlFor="banner_active" style={{ display: 'block', fontWeight: 'bold', marginBottom: '8px' }}>Banner Display Status</label>
+                      <select id="banner_active" name="banner_active" defaultValue={siteConfig.banner_active || 'false'} style={{ width: '100%', padding: '12px', borderRadius: '8px', border: '1px solid var(--ap-border)', background: 'var(--ap-input-bg)', color: 'var(--ap-text)' }}>
+                        <option value="true">Active (Show at top of page)</option>
+                        <option value="false">Inactive (Hide)</option>
+                      </select>
+                    </div>
+                    <div className="admin-field" style={{ marginBottom: '20px' }}>
+                      <label htmlFor="banner_style" style={{ display: 'block', fontWeight: 'bold', marginBottom: '8px' }}>Banner Style Accent</label>
+                      <select id="banner_style" name="banner_style" defaultValue={siteConfig.banner_style || 'teal'} style={{ width: '100%', padding: '12px', borderRadius: '8px', border: '1px solid var(--ap-border)', background: 'var(--ap-input-bg)', color: 'var(--ap-text)' }}>
+                        <option value="teal">Success Teal</option>
+                        <option value="warning">Amber Caution</option>
+                        <option value="danger">Emergency Hot Red</option>
+                      </select>
+                    </div>
+                    <div className="admin-field" style={{ marginBottom: '20px' }}>
+                      <label htmlFor="banner_badge" style={{ display: 'block', fontWeight: 'bold', marginBottom: '8px' }}>Banner Mini Tag</label>
+                      <input id="banner_badge" name="banner_badge" defaultValue={siteConfig.banner_badge || 'Notice'} style={{ width: '100%', padding: '12px', borderRadius: '8px', border: '1px solid var(--ap-border)', background: 'var(--ap-input-bg)', color: 'var(--ap-text)' }} />
+                    </div>
+                    <div className="admin-field" style={{ marginBottom: '20px' }}>
+                      <label htmlFor="banner_text" style={{ display: 'block', fontWeight: 'bold', marginBottom: '8px' }}>Announcement Body Message</label>
+                      <input id="banner_text" name="banner_text" defaultValue={siteConfig.banner_text || 'Emergency rescue operations are live and active across key cities.'} style={{ width: '100%', padding: '12px', borderRadius: '8px', border: '1px solid var(--ap-border)', background: 'var(--ap-input-bg)', color: 'var(--ap-text)' }} />
+                    </div>
+                  </div>
+                )}
+
+                {cmsSection === 'hero' && (
+                  <div className="cms-group">
+                    <h3 style={{ marginBottom: '16px', borderBottom: '1px solid var(--ap-border)', paddingBottom: '8px' }}>Hero Section & CTAs</h3>
+                    {['hero_badge', 'hero_title', 'hero_subtitle', 'emergency_hotline'].map((key) => (
+                      <div key={key} className="admin-field" style={{ marginBottom: '16px' }}>
+                        <label htmlFor={key} style={{ display: 'block', fontWeight: 'bold', marginBottom: '6px', textTransform: 'capitalize' }}>{key.replace(/_/g, ' ')}</label>
+                        <input id={key} name={key} defaultValue={siteConfig[key] || ''} style={{ width: '100%', padding: '12px', borderRadius: '8px', border: '1px solid var(--ap-border)', background: 'var(--ap-input-bg)', color: 'var(--ap-text)' }} />
+                      </div>
+                    ))}
+                    <div className="admin-field" style={{ marginBottom: '16px' }}>
+                      <label htmlFor="cta_report_label" style={{ display: 'block', fontWeight: 'bold', marginBottom: '6px' }}>Main Action Button Label</label>
+                      <input id="cta_report_label" name="cta_report_label" defaultValue={siteConfig.cta_report_label || 'Report a case'} style={{ width: '100%', padding: '12px', borderRadius: '8px', border: '1px solid var(--ap-border)', background: 'var(--ap-input-bg)', color: 'var(--ap-text)' }} />
+                    </div>
+                    <div className="admin-field" style={{ marginBottom: '16px' }}>
+                      <label htmlFor="cta_partner_label" style={{ display: 'block', fontWeight: 'bold', marginBottom: '6px' }}>Secondary Action Button Label</label>
+                      <input id="cta_partner_label" name="cta_partner_label" defaultValue={siteConfig.cta_partner_label || 'Partner with us'} style={{ width: '100%', padding: '12px', borderRadius: '8px', border: '1px solid var(--ap-border)', background: 'var(--ap-input-bg)', color: 'var(--ap-text)' }} />
+                    </div>
+                  </div>
+                )}
+
+                {cmsSection === 'services' && (
+                  <div className="cms-group">
+                    <h3 style={{ marginBottom: '16px', borderBottom: '1px solid var(--ap-border)', paddingBottom: '8px' }}>Rescue Services & Interactive Blocks</h3>
+
+                    {/* Service 1 */}
+                    <div style={{ padding: '12px', background: 'rgba(0,0,0,0.1)', borderRadius: '8px', marginBottom: '16px' }}>
+                      <h4>Service Card 1</h4>
+                      <div className="admin-field" style={{ margin: '8px 0' }}>
+                        <label htmlFor="service1_title">Title</label>
+                        <input id="service1_title" name="service1_title" defaultValue={siteConfig.service1_title || 'Snap & report'} style={{ width: '100%', padding: '10px', borderRadius: '6px', border: '1px solid var(--ap-border)', background: 'var(--ap-input-bg)', color: 'var(--ap-text)' }} />
+                      </div>
+                      <div className="admin-field" style={{ margin: '8px 0' }}>
+                        <label htmlFor="service1_desc">Description</label>
+                        <input id="service1_desc" name="service1_desc" defaultValue={siteConfig.service1_desc || 'Photo, location, and animal details — under a minute.'} style={{ width: '100%', padding: '10px', borderRadius: '6px', border: '1px solid var(--ap-border)', background: 'var(--ap-input-bg)', color: 'var(--ap-text)' }} />
+                      </div>
+                      <div className="admin-field" style={{ margin: '8px 0' }}>
+                        <label htmlFor="service1_icon">FontAwesome Icon Class</label>
+                        <input id="service1_icon" name="service1_icon" defaultValue={siteConfig.service1_icon || 'fa-camera'} style={{ width: '100%', padding: '10px', borderRadius: '6px', border: '1px solid var(--ap-border)', background: 'var(--ap-input-bg)', color: 'var(--ap-text)' }} />
+                      </div>
+                    </div>
+
+                    {/* Service 2 */}
+                    <div style={{ padding: '12px', background: 'rgba(0,0,0,0.1)', borderRadius: '8px', marginBottom: '16px' }}>
+                      <h4>Service Card 2</h4>
+                      <div className="admin-field" style={{ margin: '8px 0' }}>
+                        <label htmlFor="service2_title">Title</label>
+                        <input id="service2_title" name="service2_title" defaultValue={siteConfig.service2_title || 'NGO accepts & dispatches'} style={{ width: '100%', padding: '10px', borderRadius: '6px', border: '1px solid var(--ap-border)', background: 'var(--ap-input-bg)', color: 'var(--ap-text)' }} />
+                      </div>
+                      <div className="admin-field" style={{ margin: '8px 0' }}>
+                        <label htmlFor="service2_desc">Description</label>
+                        <input id="service2_desc" name="service2_desc" defaultValue={siteConfig.service2_desc || 'Nearest shelter accepts and alerts a verified hero.'} style={{ width: '100%', padding: '10px', borderRadius: '6px', border: '1px solid var(--ap-border)', background: 'var(--ap-input-bg)', color: 'var(--ap-text)' }} />
+                      </div>
+                      <div className="admin-field" style={{ margin: '8px 0' }}>
+                        <label htmlFor="service2_icon">FontAwesome Icon Class</label>
+                        <input id="service2_icon" name="service2_icon" defaultValue={siteConfig.service2_icon || 'fa-building-shield'} style={{ width: '100%', padding: '10px', borderRadius: '6px', border: '1px solid var(--ap-border)', background: 'var(--ap-input-bg)', color: 'var(--ap-text)' }} />
+                      </div>
+                    </div>
+
+                    {/* Service 3 */}
+                    <div style={{ padding: '12px', background: 'rgba(0,0,0,0.1)', borderRadius: '8px', marginBottom: '16px' }}>
+                      <h4>Service Card 3</h4>
+                      <div className="admin-field" style={{ margin: '8px 0' }}>
+                        <label htmlFor="service3_title">Title</label>
+                        <input id="service3_title" name="service3_title" defaultValue={siteConfig.service3_title || 'Track recovery live'} style={{ width: '100%', padding: '10px', borderRadius: '6px', border: '1px solid var(--ap-border)', background: 'var(--ap-input-bg)', color: 'var(--ap-text)' }} />
+                      </div>
+                      <div className="admin-field" style={{ margin: '8px 0' }}>
+                        <label htmlFor="service3_desc">Description</label>
+                        <input id="service3_desc" name="service3_desc" defaultValue={siteConfig.service3_desc || 'Follow progress through treatment until safe.'} style={{ width: '100%', padding: '10px', borderRadius: '6px', border: '1px solid var(--ap-border)', background: 'var(--ap-input-bg)', color: 'var(--ap-text)' }} />
+                      </div>
+                      <div className="admin-field" style={{ margin: '8px 0' }}>
+                        <label htmlFor="service3_icon">FontAwesome Icon Class</label>
+                        <input id="service3_icon" name="service3_icon" defaultValue={siteConfig.service3_icon || 'fa-map-location-dot'} style={{ width: '100%', padding: '10px', borderRadius: '6px', border: '1px solid var(--ap-border)', background: 'var(--ap-input-bg)', color: 'var(--ap-text)' }} />
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {cmsSection === 'spotlight' && (
+                  <div className="cms-group">
+                    <h3 style={{ marginBottom: '16px', borderBottom: '1px solid var(--ap-border)', paddingBottom: '8px' }}>Citizen Spotlight Testimonial</h3>
+                    <div className="admin-field" style={{ marginBottom: '16px' }}>
+                      <label htmlFor="spotlight_quote" style={{ display: 'block', fontWeight: 'bold', marginBottom: '6px' }}>Highlight Quote</label>
+                      <textarea id="spotlight_quote" name="spotlight_quote" defaultValue={siteConfig.spotlight_quote || ''} rows={4} style={{ width: '100%', padding: '12px', borderRadius: '8px', border: '1px solid var(--ap-border)', background: 'var(--ap-input-bg)', color: 'var(--ap-text)', fontFamily: 'inherit' }} />
+                    </div>
+                    <div className="admin-field" style={{ marginBottom: '16px' }}>
+                      <label htmlFor="spotlight_author" style={{ display: 'block', fontWeight: 'bold', marginBottom: '6px' }}>Author Name</label>
+                      <input id="spotlight_author" name="spotlight_author" defaultValue={siteConfig.spotlight_author || ''} style={{ width: '100%', padding: '12px', borderRadius: '8px', border: '1px solid var(--ap-border)', background: 'var(--ap-input-bg)', color: 'var(--ap-text)' }} />
+                    </div>
+                    <div className="admin-field" style={{ marginBottom: '16px' }}>
+                      <label htmlFor="spotlight_role" style={{ display: 'block', fontWeight: 'bold', marginBottom: '6px' }}>Author Subtitle / Location</label>
+                      <input id="spotlight_role" name="spotlight_role" defaultValue={siteConfig.spotlight_role || ''} style={{ width: '100%', padding: '12px', borderRadius: '8px', border: '1px solid var(--ap-border)', background: 'var(--ap-input-bg)', color: 'var(--ap-text)' }} />
+                    </div>
+                    <div className="admin-field" style={{ marginBottom: '16px' }}>
+                      <label htmlFor="spotlight_photo" style={{ display: 'block', fontWeight: 'bold', marginBottom: '6px' }}>Author Photo URL</label>
+                      <input id="spotlight_photo" name="spotlight_photo" defaultValue={siteConfig.spotlight_photo || ''} style={{ width: '100%', padding: '12px', borderRadius: '8px', border: '1px solid var(--ap-border)', background: 'var(--ap-input-bg)', color: 'var(--ap-text)' }} />
+                    </div>
+                  </div>
+                )}
+
+                <button type="submit" className="ap-btn ap-btn-primary" style={{ marginTop: '24px', width: '100%', padding: '14px' }}>
+                  <i className="fas fa-save" style={{ marginRight: 8 }} /> Publish Updates to Website
+                </button>
+              </form>
+            </div>
+
+            <div className="ap-card" style={{ marginTop: 24 }}>
+              <h3>Success Stories Management ({stories.length})</h3>
+              <p style={{ color: 'var(--ap-muted)', fontSize: '0.9rem', marginBottom: '16px' }}>These stories will display dynamic tails of hope directly on the public section.</p>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: '16px' }}>
+                {stories.map(s => (
+                  <div key={s.id} style={{ padding: '12px', background: 'var(--ap-card-bg)', border: '1px solid var(--ap-border)', borderRadius: '8px' }}>
+                    <h5 style={{ fontWeight: 'bold' }}>{s.title}</h5>
+                    <p style={{ fontSize: '0.82rem', color: 'var(--ap-muted)' }}>{s.location || 'Unknown location'}</p>
+                  </div>
+                ))}
+              </div>
             </div>
           </>
         ) : null}

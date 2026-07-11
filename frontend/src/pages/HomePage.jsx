@@ -50,8 +50,38 @@ export default function HomePage() {
   const contact = config.emergency_hotline || config.contact_email || 'pawbandhan@gmail.com';
   const heroImg = resolveImageUrl(config.hero_banner) || 'https://images.unsplash.com/photo-1587300003388-59208cc962cb?w=900&q=85';
 
+  // Apply Theme Accent Preset class dynamically to PublicShell or wrapping container
+  const activeThemeClass = `theme-${config.site_accent_theme || 'midnight'}`;
+
+  // Feature Cards configuration
+  const service1Title = config.service1_title || 'Snap & report';
+  const service1Desc = config.service1_desc || 'Photo, location, and animal details — under a minute.';
+  const service1Icon = config.service1_icon || 'fa-camera';
+
+  const service2Title = config.service2_title || 'NGO accepts & dispatches';
+  const service2Desc = config.service2_desc || 'Nearest shelter accepts and alerts a verified hero.';
+  const service2Icon = config.service2_icon || 'fa-building-shield';
+
+  const service3Title = config.service3_title || 'Track recovery live';
+  const service3Desc = config.service3_desc || 'Follow progress through treatment until safe.';
+  const service3Icon = config.service3_icon || 'fa-map-location-dot';
+
+  // Citizen Spotlight config
+  const spotlightQuote = config.spotlight_quote || "Reporting an injured puppy near my lane on PawBandhan saved her life in hours! The updates were completely transparent.";
+  const spotlightAuthor = config.spotlight_author || "Meera Krishnan";
+  const spotlightRole = config.spotlight_role || "Rescue Reporter, Mumbai";
+  const spotlightPhoto = config.spotlight_photo || "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=150&q=80";
+
   return (
-    <PublicShell>
+    <PublicShell className={`pb-public ${activeThemeClass}`}>
+      {/* Dynamic Announcement Banner */}
+      {config.banner_active === 'true' && (
+        <div className={`pb-announcement-bar banner-${config.banner_style || 'teal'}`}>
+          <span className="pb-announcement-badge">{config.banner_badge || 'Notice'}</span>
+          <span>{config.banner_text || 'Emergency rescue operations are live and active across key cities.'}</span>
+        </div>
+      )}
+
       <section className="pb-hero pb-reveal">
         <div>
           <span className="pb-hero-badge">
@@ -60,8 +90,10 @@ export default function HomePage() {
           <h1 className="pb-display">{config.hero_title || <>Every life deserves a <em>helping paw</em></>}</h1>
           <p className="pb-hero-lead">{config.hero_subtitle || "India's rescue network connects caring citizens with shelters, veterinarians, and field heroes."}</p>
           <div className="pb-hero-actions">
-            <Link to="/auth/customer" className="pb-btn pb-btn-primary btn-lg"><i className="fas fa-location-dot" /> Report a case</Link>
-            <a href="#portals" className="pb-btn pb-btn-outline">Partner with us</a>
+            <Link to={config.cta_report_url || '/auth/customer'} className="pb-btn pb-btn-primary btn-lg">
+              <i className="fas fa-location-dot" /> {config.cta_report_label || 'Report a case'}
+            </Link>
+            <a href="#portals" className="pb-btn pb-btn-outline">{config.cta_partner_label || 'Partner with us'}</a>
           </div>
           <div className="pb-hero-meta">
             <span><i className="fas fa-check-circle" /> Free to report</span>
@@ -92,13 +124,43 @@ export default function HomePage() {
 
       <section id="how" className="pb-section pb-reveal">
         <div className="pb-section-head">
-          <span className="pb-label">How it works</span>
+          <span className="pb-label">Rescue Services</span>
           <h2 className="pb-display">Three steps to save a life</h2>
         </div>
         <div className="pb-steps">
-          <article className="pb-step"><div className="pb-step-num">1</div><h3>Snap &amp; report</h3><p>Photo, location, and animal details — under a minute.</p></article>
-          <article className="pb-step"><div className="pb-step-num">2</div><h3>NGO accepts &amp; dispatches</h3><p>Nearest shelter accepts and alerts a verified hero.</p></article>
-          <article className="pb-step"><div className="pb-step-num">3</div><h3>Track recovery live</h3><p>Follow progress through treatment until safe.</p></article>
+          <article className="pb-step">
+            <div className="pb-step-num"><i className={`fas ${service1Icon}`} /></div>
+            <h3>{service1Title}</h3>
+            <p>{service1Desc}</p>
+          </article>
+          <article className="pb-step">
+            <div className="pb-step-num"><i className={`fas ${service2Icon}`} /></div>
+            <h3>{service2Title}</h3>
+            <p>{service2Desc}</p>
+          </article>
+          <article className="pb-step">
+            <div className="pb-step-num"><i className={`fas ${service3Icon}`} /></div>
+            <h3>{service3Title}</h3>
+            <p>{service3Desc}</p>
+          </article>
+        </div>
+      </section>
+
+      {/* Citizens Spotlight Testimonials Section */}
+      <section id="spotlight" className="pb-section pb-spotlight-section pb-reveal">
+        <div className="pb-section-head">
+          <span className="pb-label">Citizen Spotlight</span>
+          <h2 className="pb-display">Voices of the Network</h2>
+        </div>
+        <div className="pb-spotlight-card">
+          <img className="pb-spotlight-img" src={spotlightPhoto} alt={spotlightAuthor} />
+          <div className="pb-spotlight-content">
+            <p className="pb-spotlight-quote">{spotlightQuote}</p>
+            <div className="pb-spotlight-author">
+              <strong>{spotlightAuthor}</strong>
+              <span>{spotlightRole}</span>
+            </div>
+          </div>
         </div>
       </section>
 
