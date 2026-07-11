@@ -1,371 +1,192 @@
-/* Cozy, Comforting Customer Portal design - Soft Seafoam & Warm Amber */
-@import url('https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
+/* PawBandhan Customer Portal Theme — Ocean Mint & Warm Honey */
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
 
-.pb-customer {
-    --cd-brand: #059669; /* Emerald/Seafoam accent */
-    --cd-brand-dark: #065f46;
-    --cd-accent: #f59e0b; /* Cozy Amber */
-    --cd-bg: #f0fdf4; /* Pale Mint/Seafoam background */
-    --cd-card: #ffffff;
-    --cd-text: #064e3b;
-    --cd-muted: #4b5563;
-    --cd-border: rgba(5, 150, 105, 0.12);
-    --cd-shadow: 0 16px 40px rgba(6, 78, 59, 0.05);
-    font-family: 'Plus Jakarta Sans', system-ui, sans-serif;
-    background: var(--cd-bg);
-    color: var(--cd-text);
-    padding-bottom: 100px;
+:root {
+    --cp-brand: #0d9488;       /* Ocean Mint */
+    --cp-brand-dark: #0f766e;
+    --cp-brand-light: #2dd4bf;
+    --cp-accent: #f59e0b;      /* Warm Honey */
+    --cp-accent-soft: rgba(245, 158, 11, 0.12);
+    --cp-bg: #0f172a;          /* Premium Deep Slate */
+    --cp-card-bg: rgba(30, 41, 59, 0.7);
+    --cp-text: #f8fafc;
+    --cp-muted: #94a3b8;
+    --cp-border: rgba(13, 148, 136, 0.18);
+    --cp-shadow: 0 20px 45px rgba(0,0,0,0.4);
+    --cp-radius: 20px;
 }
 
-body.pb-customer {
-    font-family: 'Plus Jakarta Sans', sans-serif !important;
-    background-color: var(--cd-bg) !important;
-    color: var(--cd-text) !important;
+body.customer-portal-body {
+    background-color: var(--cp-bg);
+    color: var(--cp-text);
+    font-family: 'Plus Jakarta Sans', sans-serif;
 }
 
-/* Warm dynamic gradient circles for cozy ambience */
-body.pb-customer::after {
-    content: '';
-    position: fixed;
-    inset: 0;
-    background:
-        radial-gradient(circle at 10% 20%, rgba(167, 243, 208, 0.4), transparent 45%),
-        radial-gradient(circle at 90% 80%, rgba(253, 230, 138, 0.3), transparent 45%);
-    pointer-events: none;
-    z-index: 0;
-}
-
-/* Cozy customer navigation header */
-.cd-header {
-    position: sticky;
-    top: 0;
-    z-index: 100;
-    background: rgba(255, 255, 255, 0.85);
-    backdrop-filter: blur(16px);
-    border-bottom: 2px solid rgba(5, 150, 105, 0.1);
-    box-shadow: 0 8px 32px rgba(6, 78, 59, 0.03);
-}
-
-.cd-header-inner {
+.cp-container {
     max-width: 1200px;
-    margin: 0 auto;
-    padding: 16px 24px;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 20px;
+    margin: 40px auto;
+    padding: 0 24px;
 }
 
-.cd-brand {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    text-decoration: none;
-    color: var(--cd-text);
-}
-
-.cd-brand-icon {
-    width: 44px;
-    height: 44px;
-    border-radius: 14px;
-    background: linear-gradient(135deg, var(--cd-brand), #10b981);
-    color: #fff;
-    display: grid;
-    place-items: center;
-    font-size: 1.15rem;
-    box-shadow: 0 8px 20px rgba(5, 150, 105, 0.15);
-}
-
-.cd-brand strong {
-    font-family: 'Fredoka', sans-serif;
-    font-size: 1.3rem;
-    font-weight: 700;
-    letter-spacing: -0.02em;
-}
-
-.cd-brand small {
-    font-size: 0.7rem;
-    font-weight: 700;
-    color: #047857;
-    text-transform: uppercase;
-    letter-spacing: 0.06em;
-}
-
-.cd-header-actions {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-}
-
-.cd-btn-icon {
-    width: 44px;
-    height: 44px;
-    border-radius: 14px;
-    border: 1px solid rgba(5, 150, 105, 0.15);
-    background: #fff;
-    color: var(--cd-text);
-    cursor: pointer;
-    font-size: 1.1rem;
+/* Beautiful Animated Cards */
+.cp-card {
+    background: var(--cp-card-bg);
+    backdrop-filter: blur(20px);
+    border: 1px solid var(--cp-border);
+    border-radius: var(--cp-radius);
+    padding: 32px;
+    box-shadow: var(--cp-shadow);
+    transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
     position: relative;
+    overflow: hidden;
+}
+
+.cp-card:hover {
+    transform: translateY(-6px);
+    border-color: var(--cp-brand-light);
+    box-shadow: 0 30px 60px rgba(13, 148, 136, 0.15);
+}
+
+.cp-card::after {
+    content: '';
+    position: absolute;
+    top: -50%; left: -50%; width: 200%; height: 200%;
+    background: radial-gradient(circle, rgba(45, 212, 191, 0.05) 0%, transparent 70%);
+    pointer-events: none;
+    transition: transform 0.6s ease;
+}
+
+.cp-card:hover::after {
+    transform: translate(10%, 10%);
+}
+
+/* Elegant Portal Header */
+.cp-header {
     display: flex;
+    justify-content: space-between;
     align-items: center;
-    justify-content: center;
-    transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
-}
-
-.cd-btn-icon:hover {
-    border-color: var(--cd-brand);
-    background: var(--cd-bg);
-    transform: translateY(-2px);
-}
-
-.cd-user-chip {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    padding: 6px 16px 6px 6px;
-    background: rgba(5, 150, 105, 0.06);
-    border: 1px solid rgba(5, 150, 105, 0.15);
-    border-radius: 999px;
-    cursor: pointer;
-    font-weight: 600;
-    font-size: 0.9rem;
-    color: var(--cd-text);
-    transition: all 0.3s ease;
-}
-
-.cd-user-chip:hover {
-    background: #fff;
-    box-shadow: var(--cd-shadow);
-    transform: translateY(-1px);
-}
-
-.cd-user-avatar {
-    width: 32px;
-    height: 32px;
-    border-radius: 50%;
-    background: linear-gradient(135deg, var(--cd-accent), #d97706);
-    color: #fff;
-    display: grid;
-    place-items: center;
-    font-weight: 800;
-    font-size: 0.8rem;
-}
-
-.cd-btn-logout {
-    padding: 10px 18px;
-    border-radius: 12px;
-    border: 1px solid #fecaca;
-    background: #fff1f2;
-    color: #dc2626;
-    font-weight: 700;
-    font-size: 0.85rem;
-    cursor: pointer;
-    display: inline-flex;
-    align-items: center;
-    gap: 8px;
-    transition: all 0.3s ease;
-}
-
-.cd-btn-logout:hover {
-    background: #dc2626;
-    color: #fff;
-    border-color: #dc2626;
-}
-
-/* Rescue actions Quick Grid */
-.cd-quick-grid {
-    display: grid;
-    grid-template-columns: 1.5fr repeat(3, 1fr);
-    gap: 20px;
     margin-bottom: 40px;
+    padding-bottom: 24px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
 }
 
-.cd-qbtn {
-    background: #fff;
-    border: 1px solid var(--cd-border);
-    border-radius: 20px;
-    padding: 24px;
-    cursor: pointer;
-    text-align: left;
-    transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
-    box-shadow: var(--cd-shadow);
+.cp-header h1 {
+    font-size: 2rem;
+    font-weight: 800;
+    color: #fff;
+    letter-spacing: -0.03em;
+}
+
+.cp-header h1 em {
+    font-style: normal;
+    color: var(--cp-brand-light);
+}
+
+/* High-contrast form elements */
+.cp-input {
+    width: 100%;
+    padding: 14px 18px;
+    background: rgba(15, 23, 42, 0.6);
+    border: 1px solid var(--cp-border);
+    border-radius: 12px;
+    color: #fff;
+    font-family: inherit;
+    font-size: 0.95rem;
+    transition: all 0.3s ease;
+}
+
+.cp-input:focus {
+    outline: none;
+    border-color: var(--cp-brand-light);
+    box-shadow: 0 0 0 4px rgba(45, 212, 191, 0.15);
+}
+
+/* Gorgeous Status Trackers */
+.cp-tracker {
     display: flex;
     flex-direction: column;
-    gap: 14px;
+    gap: 16px;
+    margin-top: 24px;
 }
 
-.cd-qbtn:hover {
-    border-color: var(--cd-brand);
-    transform: translateY(-4px);
-    box-shadow: 0 20px 40px rgba(6, 78, 59, 0.08);
-}
-
-.cd-qbtn-emergency {
-    background: linear-gradient(135deg, #064e3b, #047857);
-    color: #fff;
-    border: none;
-    box-shadow: 0 15px 35px rgba(6, 78, 59, 0.2);
-}
-
-.cd-qbtn-emergency:hover {
-    transform: translateY(-4px) scale(1.01);
-    box-shadow: 0 20px 45px rgba(6, 78, 59, 0.28);
-}
-
-.cd-qicon {
-    width: 48px;
-    height: 48px;
-    border-radius: 14px;
-    background: rgba(5, 150, 105, 0.1);
-    color: var(--cd-brand);
-    display: grid;
-    place-items: center;
-    font-size: 1.25rem;
-}
-
-.cd-qbtn-emergency .cd-qicon {
-    background: rgba(255, 255, 255, 0.15);
-    color: #fff;
-}
-
-.cd-qbtn h3 {
-    font-family: 'Fredoka', sans-serif;
-    font-size: 1.35rem;
-    font-weight: 600;
-}
-
-.cd-qbtn p {
-    font-size: 0.88rem;
-    opacity: 0.9;
-}
-
-/* Track list cards and status timeline steps */
-.cd-cases-panel {
-    background: #fff;
-    border-radius: var(--cd-radius);
-    padding: 32px;
-    border: 1px solid var(--cd-border);
-    box-shadow: var(--cd-shadow);
-}
-
-.cd-case-card {
+.cp-tracker-node {
     display: flex;
     align-items: center;
-    gap: 20px;
-    background: #fff;
-    border: 1px solid rgba(5, 150, 105, 0.08);
-    border-radius: 18px;
-    padding: 20px;
-    margin-bottom: 16px;
-    transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+    gap: 16px;
+    position: relative;
+    padding-bottom: 16px;
 }
 
-.cd-case-card:hover {
-    border-color: var(--cd-brand);
-    transform: translateX(6px);
-    box-shadow: var(--cd-shadow);
+.cp-tracker-node:not(:last-child)::after {
+    content: '';
+    position: absolute;
+    left: 11px;
+    top: 24px;
+    bottom: 0;
+    width: 2px;
+    background: var(--cp-border);
 }
 
-.cd-case-icon {
-    width: 56px;
-    height: 56px;
-    border-radius: 16px;
-    background: #ecfdf5;
-    color: var(--cd-brand);
+.cp-tracker-dot {
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    background: var(--cp-bg);
+    border: 2px solid var(--cp-border);
     display: grid;
     place-items: center;
-    font-size: 1.3rem;
-}
-
-.cd-case-body h4 {
-    font-family: 'Fredoka', sans-serif;
-    font-size: 1.15rem;
-    color: var(--cd-text);
-}
-
-.cd-case-meta {
-    font-size: 0.8rem;
-    font-weight: 700;
-    color: var(--cd-accent);
-}
-
-.cd-case-pill {
-    padding: 8px 16px;
-    border-radius: 999px;
-    font-size: 0.75rem;
-    font-weight: 800;
-    text-transform: uppercase;
-}
-
-.pill-green {
-    background: #d1fae5;
-    color: #065f46;
-}
-
-.pill-amber {
-    background: #fef3c7;
-    color: #92400e;
-}
-
-/* Cozy Custom modals */
-.modal-bg {
-    background: rgba(6, 78, 59, 0.45);
-    backdrop-filter: blur(8px);
-}
-
-.modal-panel {
-    border-radius: 28px;
-    border: 1px solid rgba(5, 150, 105, 0.15);
-    box-shadow: 0 30px 70px rgba(6, 78, 59, 0.15);
-    padding: 40px;
-}
-
-.modal-panel h2 {
-    font-family: 'Fredoka', sans-serif;
-    color: var(--cd-text);
-    font-size: 1.6rem;
-    font-weight: 600;
-}
-
-/* Cozy Custom Profile Banner */
-.cd-profile-banner {
-    background: #fef3c7;
-    border: 2px solid #fde68a;
-    border-radius: 20px;
-    padding: 20px 24px;
-    margin-bottom: 24px;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 20px;
-}
-
-.cd-profile-banner strong {
-    color: #92400e;
-}
-
-.cd-btn-profile {
-    padding: 8px 16px;
-    border-radius: 12px;
-    background: #d97706;
-    color: #fff;
-    font-weight: 700;
-    border: none;
-    cursor: pointer;
+    z-index: 10;
     transition: all 0.3s ease;
 }
 
-.cd-btn-profile:hover {
-    background: #b45309;
+.cp-tracker-node.active .cp-tracker-dot {
+    border-color: var(--cp-brand-light);
+    background: var(--cp-brand);
+    box-shadow: 0 0 15px var(--cp-brand-light);
 }
 
-/* Responsive clean overrides */
-@media (max-width: 1024px) {
-    .cd-quick-grid { grid-template-columns: 1fr; }
+.cp-tracker-label {
+    font-weight: 700;
+    font-size: 0.95rem;
+    color: var(--cp-muted);
 }
 
-@media (max-width: 768px) {
-    .cd-header-inner { padding: 12px 16px; }
-    .cd-btn-logout span { display: none; }
+.cp-tracker-node.active .cp-tracker-label {
+    color: #fff;
+}
+
+/* Animated Interactive Buttons */
+.cp-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    padding: 12px 24px;
+    border-radius: 14px;
+    font-weight: 700;
+    font-size: 0.9rem;
+    cursor: pointer;
+    transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+    border: none;
+    text-decoration: none;
+}
+
+.cp-btn-primary {
+    background: linear-gradient(135deg, var(--cp-brand), var(--cp-brand-dark));
+    color: #fff;
+    box-shadow: 0 8px 20px rgba(13, 148, 136, 0.25);
+}
+
+.cp-btn-primary:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 12px 28px rgba(13, 148, 136, 0.4);
+}
+
+.cp-btn-secondary {
+    background: var(--cp-accent-soft);
+    color: var(--cp-accent);
+}
+
+.cp-btn-secondary:hover {
+    background: var(--cp-accent);
+    color: #fff;
 }

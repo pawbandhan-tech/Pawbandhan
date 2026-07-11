@@ -1,308 +1,160 @@
-/* PawBandhan Admin Command Center — Ultra Professional Enterprise Slate */
-.ap-admin {
-    --ap-brand: #06b6d4; /* Sleek Cyan / Teal */
-    --ap-brand-dark: #0891b2;
-    --ap-brand-soft: rgba(6, 182, 212, 0.1);
-    --ap-sidebar: #0f172a; /* Deep elegant slate */
-    --ap-sidebar-text: #94a3b8;
-    --ap-bg: #f8fafc;
-    --ap-card: #ffffff;
-    --ap-border: rgba(15, 23, 42, 0.08);
-    --ap-text: #0f172a;
-    --ap-muted: #475569;
-    --ap-danger: #ef4444;
-    --ap-success: #10b981;
-    --ap-warn: #f59e0b;
+/* PawBandhan Admin Dashboard Theme — Enterprise Steel & Amethyst Glow */
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
+
+:root {
+    --ap-brand: #8b5cf6;       /* Enterprise Amethyst */
+    --ap-brand-dark: #6d28d9;
+    --ap-brand-light: #c084fc;
+    --ap-accent: #06b6d4;      /* Cyber Cyan */
+    --ap-bg: #090d16;
+    --ap-card-bg: rgba(30, 41, 59, 0.45);
+    --ap-text: #f8fafc;
+    --ap-muted: #94a3b8;
+    --ap-border: rgba(139, 92, 246, 0.18);
+    --ap-shadow: 0 25px 55px rgba(0,0,0,0.5);
     --ap-radius: 20px;
-    --ap-shadow: 0 10px 30px rgba(15, 23, 42, 0.04);
-    font-family: 'Plus Jakarta Sans', system-ui, sans-serif;
-    background: var(--ap-bg);
-    color: var(--ap-text);
-    display: flex;
-    min-height: 100vh;
 }
 
-.ap-admin * { box-sizing: border-box; }
+.ap-admin {
+    display: grid;
+    grid-template-columns: 280px 1fr;
+    min-height: 100vh;
+    background-color: var(--ap-bg);
+    color: var(--ap-text);
+    font-family: 'Plus Jakarta Sans', sans-serif;
+}
 
+/* Sidebar with glass blur */
 .ap-sidebar {
-    width: 280px;
-    background: var(--ap-sidebar);
-    color: #e2e8f0;
+    background: rgba(15, 23, 42, 0.7);
+    backdrop-filter: blur(25px);
+    border-right: 1px solid var(--ap-border);
+    padding: 36px 24px;
     display: flex;
     flex-direction: column;
-    padding: 32px 20px;
-    flex-shrink: 0;
-    position: sticky;
-    top: 0;
-    height: 100vh;
-    z-index: 100;
-    border-right: 1px solid rgba(255,255,255,0.06);
+    justify-content: space-between;
 }
 
 .ap-brand {
     display: flex;
     align-items: center;
-    gap: 12px;
-    padding: 8px 12px 32px;
+    gap: 14px;
     text-decoration: none;
     color: #fff;
+    margin-bottom: 40px;
 }
 
 .ap-brand-icon {
     width: 44px;
     height: 44px;
     border-radius: 12px;
-    background: linear-gradient(135deg, var(--ap-brand), var(--ap-brand-dark));
+    background: linear-gradient(135deg, var(--ap-brand), var(--ap-accent));
     display: grid;
     place-items: center;
-    font-size: 1.2rem;
-    box-shadow: 0 8px 24px rgba(6, 182, 212, 0.25);
+    color: #fff;
+    font-size: 1.25rem;
+    box-shadow: 0 0 20px rgba(139, 92, 246, 0.3);
 }
 
 .ap-brand h1 {
-    font-family: 'Outfit', sans-serif;
-    font-size: 1.3rem;
+    font-size: 1.25rem;
     font-weight: 800;
-    line-height: 1.2;
-    letter-spacing: -0.03em;
 }
 
 .ap-brand span {
-    display: block;
     font-size: 0.72rem;
-    color: var(--ap-sidebar-text);
-    font-weight: 600;
+    color: var(--ap-brand-light);
     text-transform: uppercase;
-    letter-spacing: 0.05em;
+    font-weight: 700;
 }
 
 .ap-nav {
     list-style: none;
-    flex: 1;
-    overflow-y: auto;
     display: flex;
     flex-direction: column;
-    gap: 6px;
+    gap: 8px;
+    flex: 1;
 }
 
 .ap-nav button {
+    width: 100%;
     display: flex;
     align-items: center;
     gap: 12px;
-    width: 100%;
-    padding: 12px 16px;
-    border: none;
+    padding: 12px 18px;
     background: transparent;
-    color: var(--ap-sidebar-text);
-    font-family: inherit;
+    border: none;
+    border-radius: 12px;
+    color: var(--ap-muted);
     font-weight: 600;
-    font-size: 0.9rem;
+    font-size: 0.95rem;
     cursor: pointer;
-    border-radius: 12px;
+    transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
     text-align: left;
-    transition: all 0.3s ease;
 }
 
+.ap-nav button.active,
 .ap-nav button:hover {
-    background: rgba(255, 255, 255, 0.05);
     color: #fff;
+    background: rgba(139, 92, 246, 0.12);
+    box-shadow: inset 0 0 0 1px rgba(192, 132, 252, 0.25);
 }
 
-.ap-nav button.active {
-    background: var(--ap-brand-soft);
-    color: var(--ap-brand);
-    font-weight: 700;
-}
-
-.ap-nav button.active i {
-    color: var(--ap-brand);
-}
-
-.ap-sidebar-foot {
-    padding-top: 20px;
-    border-top: 1px solid rgba(255, 255, 255, 0.08);
-}
-
-.ap-user-email {
-    font-size: 0.8rem;
-    color: var(--ap-sidebar-text);
-    padding: 0 12px 16px;
-    word-break: break-all;
-}
-
-.ap-btn-signout {
-    width: 100%;
-    padding: 12px;
-    border: 1px solid rgba(239, 68, 68, 0.35);
-    background: rgba(239, 68, 68, 0.1);
-    color: #fca5a5;
-    border-radius: 12px;
-    font-weight: 700;
-    font-size: 0.88rem;
-    cursor: pointer;
-    font-family: inherit;
-    transition: all 0.3s ease;
-}
-
-.ap-btn-signout:hover {
-    background: var(--ap-danger);
-    color: #fff;
-    border-color: var(--ap-danger);
-}
-
+/* Main Workspace */
 .ap-main {
-    flex: 1;
-    min-width: 0;
+    padding: 48px;
     overflow-y: auto;
-    padding: 40px 48px;
 }
 
-/* Beautiful Slate Dashboard Stats Grid */
+/* Interactive Dashboard statistics cards */
 .ap-stats {
     display: grid;
     grid-template-columns: repeat(4, 1fr);
     gap: 24px;
-    margin-bottom: 36px;
+    margin-bottom: 40px;
 }
 
 .ap-stat {
-    background: var(--ap-card);
+    background: var(--ap-card-bg);
+    backdrop-filter: blur(20px);
     border: 1px solid var(--ap-border);
     border-radius: var(--ap-radius);
-    padding: 24px 28px;
-    box-shadow: var(--ap-shadow);
-    transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+    padding: 28px;
     position: relative;
     overflow: hidden;
+    transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 .ap-stat:hover {
     transform: translateY(-4px);
-    border-color: var(--ap-brand);
-}
-
-.ap-stat::after {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 4px;
-    height: 100%;
-    background: var(--ap-brand);
+    border-color: var(--ap-brand-light);
+    box-shadow: 0 20px 40px rgba(139, 92, 246, 0.15);
 }
 
 .ap-stat .label {
-    font-size: 0.75rem;
-    font-weight: 800;
+    display: block;
+    font-size: 0.85rem;
     text-transform: uppercase;
-    letter-spacing: 0.08em;
+    letter-spacing: 0.05em;
     color: var(--ap-muted);
+    font-weight: 700;
+    margin-bottom: 8px;
 }
 
 .ap-stat .val {
-    display: block;
-    font-family: 'Outfit', sans-serif;
     font-size: 2.2rem;
     font-weight: 800;
-    margin: 8px 0 4px;
-    color: var(--ap-text);
+    color: #fff;
+    letter-spacing: -0.02em;
 }
 
+/* Beautiful form cards */
 .ap-card {
-    background: var(--ap-card);
+    background: var(--ap-card-bg);
+    backdrop-filter: blur(20px);
     border: 1px solid var(--ap-border);
     border-radius: var(--ap-radius);
     padding: 32px;
     box-shadow: var(--ap-shadow);
     margin-bottom: 24px;
-}
-
-.ap-card h3 {
-    font-family: 'Outfit', sans-serif;
-    font-size: 1.3rem;
-    font-weight: 700;
-    margin-bottom: 20px;
-    letter-spacing: -0.02em;
-}
-
-/* Elegant high-fidelity tables for Customer List */
-.ap-table {
-    width: 100%;
-    border-collapse: collapse;
-}
-
-.ap-table th {
-    text-align: left;
-    padding: 14px 16px;
-    font-size: 0.72rem;
-    text-transform: uppercase;
-    letter-spacing: 0.08em;
-    color: var(--ap-muted);
-    font-weight: 800;
-    border-bottom: 2px solid var(--ap-border);
-}
-
-.ap-table td {
-    padding: 16px;
-    border-bottom: 1px solid var(--ap-border);
-    font-size: 0.9rem;
-    color: var(--ap-text);
-}
-
-.ap-table tr:last-child td {
-    border-bottom: none;
-}
-
-.ap-table tr:hover td {
-    background: #f8fafc;
-}
-
-/* Verification list entries and website editor custom inputs */
-.ap-queue-item {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    gap: 16px;
-    padding: 16px 20px;
-    background: #f8fafc;
-    border-radius: 12px;
-    border: 1px solid var(--ap-border);
-    margin-bottom: 12px;
-    transition: all 0.3s ease;
-}
-
-.ap-queue-item:hover {
-    border-color: var(--ap-brand);
-    background: #fff;
-}
-
-.admin-field {
-    margin-bottom: 20px;
-}
-
-.admin-field label {
-    display: block;
-    font-size: 0.75rem;
-    font-weight: 800;
-    text-transform: uppercase;
-    letter-spacing: 0.06em;
-    color: var(--ap-muted);
-    margin-bottom: 8px;
-}
-
-.admin-field input {
-    width: 100%;
-    padding: 12px 16px;
-    border: 1px solid var(--ap-border);
-    border-radius: 12px;
-    font-family: inherit;
-    font-size: 0.95rem;
-    background: #fff;
-    transition: all 0.3s ease;
-}
-
-.admin-field input:focus {
-    outline: none;
-    border-color: var(--ap-brand);
-    box-shadow: 0 0 0 4px rgba(6, 182, 212, 0.1);
 }

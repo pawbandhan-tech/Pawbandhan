@@ -1,71 +1,147 @@
-/* Distinct styles for NGO, Doctor, and Field Rep App */
+/* PawBandhan Shared Portals Overhaul — Distinct Non-overlapping Theme Contexts scoped to specific routes */
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
 
-/* 1. NGO PARTNER THEME — Deep Emerald & Forest Green */
-.ngo-shell {
-    --ngo-brand: #065f46;
-    --ngo-bg: #f0fdf4;
-    --ngo-text: #022c22;
-    --ngo-border: rgba(6, 95, 70, 0.15);
-    background: var(--ngo-bg);
+/* Base portal shell layout */
+.portal-container {
+    max-width: 1300px;
+    margin: 40px auto;
+    padding: 0 24px;
+    font-family: 'Plus Jakarta Sans', sans-serif;
 }
 
-.ngo-card {
-    background: #fff;
-    border: 1px solid var(--ngo-border);
-    border-radius: 16px;
-    padding: 24px;
-    box-shadow: 0 10px 30px rgba(6, 95, 70, 0.03);
+/* Beautiful custom cards */
+.portal-card {
+    background: rgba(255, 255, 255, 0.02);
+    backdrop-filter: blur(20px);
+    border-radius: 20px;
+    padding: 32px;
+    transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+    border: 1px solid rgba(255, 255, 255, 0.08);
 }
 
-.ngo-header {
-    background: #fff;
-    border-bottom: 2px solid var(--ngo-border);
-    padding: 20px 32px;
+.portal-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 12px 24px;
+    border-radius: 14px;
+    font-weight: 700;
+    font-size: 0.9rem;
+    cursor: pointer;
+    border: none;
+    transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
-/* 2. DOCTOR / VET THEME — Reassuring Clinical Royal Blue & Sterile Lavender */
-.doctor-shell {
-    --doc-brand: #1d4ed8;
-    --doc-bg: #eff6ff;
-    --doc-text: #1e3a8a;
-    --doc-border: rgba(29, 78, 216, 0.15);
-    background: var(--doc-bg);
+/* -------------------------------------------------------------
+   THEME 1: NGO PORTAL (Forest Emerald & Brass Gold)
+   ------------------------------------------------------------- */
+.ngo-portal-theme {
+    --ngo-primary: #10b981;
+    --ngo-dark: #064e3b;
+    --ngo-light: #34d399;
+    --ngo-accent: #eab308;
+    --ngo-bg: #022c22;
+    --ngo-text: #ecfdf5;
+
+    background-color: var(--ngo-bg);
+    color: var(--ngo-text);
+    min-height: 100vh;
 }
 
-.doctor-card {
-    background: #fff;
-    border: 1px solid var(--doc-border);
-    border-radius: 16px;
-    padding: 24px;
-    box-shadow: 0 10px 30px rgba(29, 78, 216, 0.03);
+.ngo-portal-theme .portal-card {
+    background: rgba(6, 78, 59, 0.4);
+    border-color: rgba(16, 185, 129, 0.2);
 }
 
-.doctor-header {
-    background: #fff;
-    border-bottom: 2px solid var(--doc-border);
-    padding: 20px 32px;
+.ngo-portal-theme .portal-card:hover {
+    border-color: var(--ngo-light);
+    box-shadow: 0 25px 50px rgba(6, 78, 59, 0.5);
+    transform: translateY(-4px);
 }
 
-/* 3. REPRESENTATIVE / FIELD APP THEME — Dark Slate/Obsidian & Neon Orange */
-.rep-shell {
-    --rep-brand: #f97316;
-    --rep-bg: #0f172a;
-    --rep-text: #f8fafc;
-    --rep-border: rgba(249, 115, 22, 0.25);
-    background: var(--rep-bg);
+.ngo-portal-theme .portal-btn {
+    background: linear-gradient(135deg, var(--ngo-primary), var(--ngo-dark));
+    color: #fff;
+    box-shadow: 0 8px 20px rgba(16, 185, 129, 0.25);
+}
+
+.ngo-portal-theme .portal-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 12px 28px rgba(16, 185, 129, 0.4);
+}
+
+/* -------------------------------------------------------------
+   THEME 2: VET / DOCTOR PORTAL (Royal Indigo & Orchid Mist)
+   ------------------------------------------------------------- */
+.vet-portal-theme {
+    --vet-primary: #6366f1;
+    --vet-dark: #312e81;
+    --vet-light: #818cf8;
+    --vet-accent: #db2777;
+    --vet-bg: #0b0a1a;
+    --vet-text: #e0e7ff;
+
+    background-color: var(--vet-bg);
+    color: var(--vet-text);
+    min-height: 100vh;
+}
+
+.vet-portal-theme .portal-card {
+    background: rgba(49, 46, 129, 0.4);
+    border-color: rgba(99, 102, 241, 0.2);
+}
+
+.vet-portal-theme .portal-card:hover {
+    border-color: var(--vet-light);
+    box-shadow: 0 25px 50px rgba(49, 46, 129, 0.5);
+    transform: translateY(-4px);
+}
+
+.vet-portal-theme .portal-btn {
+    background: linear-gradient(135deg, var(--vet-primary), var(--vet-dark));
+    color: #fff;
+    box-shadow: 0 8px 20px rgba(99, 102, 241, 0.25);
+}
+
+.vet-portal-theme .portal-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 12px 28px rgba(99, 102, 241, 0.4);
+}
+
+/* -------------------------------------------------------------
+   THEME 3: FIELD REP PORTAL (Obsidian Dark & Neon Amber)
+   ------------------------------------------------------------- */
+.rep-portal-theme {
+    --rep-primary: #f59e0b;
+    --rep-dark: #78350f;
+    --rep-light: #fbbf24;
+    --rep-accent: #ef4444;
+    --rep-bg: #180800;
+    --rep-text: #fffbeb;
+
+    background-color: var(--rep-bg);
     color: var(--rep-text);
+    min-height: 100vh;
 }
 
-.rep-card {
-    background: #1e293b;
-    border: 1px solid var(--rep-border);
-    border-radius: 16px;
-    padding: 24px;
-    box-shadow: 0 15px 35px rgba(0,0,0,0.3);
+.rep-portal-theme .portal-card {
+    background: rgba(120, 53, 15, 0.35);
+    border-color: rgba(245, 158, 11, 0.2);
 }
 
-.rep-header {
-    background: #1e293b;
-    border-bottom: 2px solid var(--rep-border);
-    padding: 20px 32px;
+.rep-portal-theme .portal-card:hover {
+    border-color: var(--rep-light);
+    box-shadow: 0 25px 50px rgba(120, 53, 15, 0.5);
+    transform: translateY(-4px);
+}
+
+.rep-portal-theme .portal-btn {
+    background: linear-gradient(135deg, var(--rep-primary), var(--rep-dark));
+    color: #fff;
+    box-shadow: 0 8px 20px rgba(245, 158, 11, 0.25);
+}
+
+.rep-portal-theme .portal-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 12px 28px rgba(245, 158, 11, 0.4);
 }
