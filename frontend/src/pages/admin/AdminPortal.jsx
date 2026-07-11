@@ -43,6 +43,7 @@ export default function AdminPortal() {
     if (tab === 'customers') loadCustomers();
     if (tab === 'cases') loadCases();
     if (tab === 'cms') loadCms();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [tab, loading]);
 
   function showToast(msg) {

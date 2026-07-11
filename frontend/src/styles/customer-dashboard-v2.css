@@ -1,379 +1,76 @@
-/* Customer dashboard v2 — hero, quick actions, profile */
-.pb-customer .cd-hero-card {
-    background: linear-gradient(135deg, #0f766e 0%, #14b8a6 45%, #2dd4bf 100%);
-    border-radius: 28px;
-    padding: 28px 26px;
-    margin-bottom: 24px;
+/* Overwrite custom styles v2 */
+.cd-main {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 32px 24px;
+}
+
+.cd-hero-card {
+    background: linear-gradient(135deg, #059669 0%, #047857 100%);
     color: #fff;
-    box-shadow: 0 24px 60px rgba(15, 118, 110, 0.28);
+    border-radius: var(--cd-radius, 24px);
+    padding: 36px;
+    margin-bottom: 32px;
+    box-shadow: 0 15px 35px rgba(5, 150, 105, 0.15);
     position: relative;
     overflow: hidden;
 }
 
-.pb-customer .cd-hero-card::before {
+.cd-hero-card::after {
     content: '🐾';
     position: absolute;
-    right: -10px;
-    top: -20px;
-    font-size: 7rem;
-    opacity: 0.12;
+    right: 32px;
+    bottom: -16px;
+    font-size: 8rem;
+    opacity: 0.08;
+    pointer-events: none;
 }
 
-.pb-customer .cd-hero-top {
+.cd-hero-top {
     display: flex;
     align-items: center;
-    gap: 16px;
-    flex-wrap: wrap;
-    position: relative;
-    z-index: 1;
+    gap: 24px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.15);
+    padding-bottom: 24px;
+    margin-bottom: 24px;
 }
 
-.pb-customer .cd-hero-avatar {
+.cd-hero-avatar {
     width: 64px;
     height: 64px;
-    border-radius: 20px;
-    background: rgba(255, 255, 255, 0.25);
-    border: 3px solid rgba(255, 255, 255, 0.5);
+    border-radius: 50%;
+    background: #fff;
+    color: #059669;
     display: grid;
     place-items: center;
-    font-weight: 800;
-    font-size: 1.25rem;
-    flex-shrink: 0;
-}
-
-.pb-customer .cd-hero-text {
-    flex: 1;
-    min-width: 160px;
-}
-
-.pb-customer .cd-hero-label {
-    font-size: 0.72rem;
-    font-weight: 800;
-    text-transform: uppercase;
-    letter-spacing: 0.1em;
-    opacity: 0.85;
-    margin-bottom: 4px;
-}
-
-.pb-customer .cd-hero-card h1 {
-    font-family: 'Fraunces', Georgia, serif;
-    font-size: clamp(1.5rem, 4vw, 2rem);
-    font-weight: 600;
-    margin: 0;
-    line-height: 1.2;
-}
-
-.pb-customer .cd-hero-card h1 em {
-    font-style: normal;
-    color: #fef08a;
-}
-
-.pb-customer .cd-hero-sub {
-    margin-top: 8px;
-    opacity: 0.92;
-    font-size: 0.9rem;
-    max-width: 420px;
-}
-
-.pb-customer .cd-btn-profile {
-    padding: 10px 18px;
-    border-radius: 12px;
-    border: 2px solid rgba(255, 255, 255, 0.45);
-    background: rgba(255, 255, 255, 0.15);
-    color: #fff;
-    font-weight: 700;
-    font-size: 0.82rem;
-    cursor: pointer;
-    font-family: inherit;
-    display: inline-flex;
-    align-items: center;
-    gap: 8px;
-    transition: background 0.2s;
-}
-
-.pb-customer .cd-btn-profile:hover {
-    background: rgba(255, 255, 255, 0.28);
-}
-
-.pb-customer .cd-hero-stats {
-    display: flex;
-    gap: 12px;
-    margin-top: 20px;
-    flex-wrap: wrap;
-    position: relative;
-    z-index: 1;
-}
-
-.pb-customer .cd-hero-stat {
-    background: rgba(255, 255, 255, 0.18);
-    border: 1px solid rgba(255, 255, 255, 0.25);
-    border-radius: 14px;
-    padding: 10px 16px;
-    font-size: 0.8rem;
-    font-weight: 700;
-}
-
-.pb-customer .cd-hero-stat strong {
-    display: block;
-    font-size: 1.1rem;
-    margin-bottom: 2px;
-}
-
-.pb-customer .cd-quick-grid {
-    display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    gap: 14px;
-    margin-bottom: 28px;
-}
-
-.pb-customer .cd-qbtn {
-    background: var(--cd-card);
-    border: 1px solid var(--cd-border);
-    border-radius: 20px;
-    padding: 20px 16px;
-    cursor: pointer;
-    text-align: left;
-    font-family: inherit;
-    color: inherit;
-    transition: transform 0.2s, box-shadow 0.2s, border-color 0.2s;
-    box-shadow: var(--cd-shadow);
-    display: flex;
-    flex-direction: column;
-    gap: 10px;
-    min-height: 120px;
-}
-
-.pb-customer .cd-qbtn:hover {
-    transform: translateY(-3px);
-    border-color: var(--cd-brand);
-    box-shadow: 0 16px 40px rgba(13, 148, 136, 0.12);
-}
-
-.pb-customer .cd-qbtn-emergency {
-    grid-column: span 3;
-    background: linear-gradient(145deg, #ea580c, #f97316);
-    border: none;
-    color: #fff;
-    min-height: auto;
-    padding: 24px 22px;
-    flex-direction: row;
-    align-items: center;
-    gap: 18px;
-}
-
-.pb-customer .cd-qbtn-emergency .cd-qicon {
-    background: rgba(255, 255, 255, 0.25);
-    color: #fff;
-    width: 56px;
-    height: 56px;
-    font-size: 1.5rem;
-    flex-shrink: 0;
-}
-
-.pb-customer .cd-qbtn-emergency h3 {
-    font-family: 'Fraunces', Georgia, serif;
-    font-size: 1.25rem;
-    margin: 0 0 4px;
-}
-
-.pb-customer .cd-qbtn-emergency p {
-    margin: 0;
-    opacity: 0.92;
-    font-size: 0.88rem;
-}
-
-.pb-customer .cd-qicon {
-    width: 44px;
-    height: 44px;
-    border-radius: 14px;
-    background: #ccfbf1;
-    color: var(--cd-brand);
-    display: grid;
-    place-items: center;
-    font-size: 1.15rem;
-    flex-shrink: 0;
-}
-
-.pb-customer .cd-qbtn-text {
-    display: flex;
-    flex-direction: column;
-    gap: 4px;
-    align-items: flex-start;
-}
-
-.pb-customer .cd-qbtn-text strong {
-    font-size: 0.95rem;
-    color: var(--cd-text);
+    font-size: 1.4rem;
     font-weight: 800;
 }
 
-.pb-customer .cd-qbtn-text span {
-    font-size: 0.75rem;
-    color: var(--cd-muted);
-    font-weight: 600;
-}
-
-.pb-customer .cd-cases-panel {
-    background: var(--cd-card);
-    border: 1px solid var(--cd-border);
-    border-radius: 24px;
-    padding: 22px 20px;
-    box-shadow: var(--cd-shadow);
-}
-
-.pb-customer .profile-save-status {
-    font-size: 0.85rem;
-    font-weight: 700;
-    text-align: center;
-    margin-top: 12px;
-    min-height: 1.2em;
-}
-
-.pb-customer .profile-save-status.ok { color: #16a34a; }
-.pb-customer .profile-save-status.err { color: #dc2626; }
-
-.pb-portal.pb-customer {
-    min-height: 100vh;
-    position: relative;
-    isolation: isolate;
-}
-
-.pb-customer .empty-cases-card {
-    text-align: center;
-    padding: 48px 28px;
-    background: linear-gradient(180deg, #f0fdfa 0%, #fff 100%);
-    border-radius: 20px;
-    border: 2px dashed rgba(13, 148, 136, 0.25);
-}
-
-.pb-customer .empty-cases-card i {
-    font-size: 2.5rem;
-    color: var(--cd-brand);
-    margin-bottom: 16px;
-    display: block;
-}
-
-.pb-customer .empty-cases-card h3 {
-    font-family: 'Fraunces', Georgia, serif;
-    font-size: 1.25rem;
-    margin-bottom: 8px;
-}
-
-.pb-customer .empty-cases-card p {
-    color: var(--cd-muted);
-    margin-bottom: 20px;
-}
-
-.pb-customer .btn-track-primary {
-    padding: 14px 28px;
-    background: linear-gradient(145deg, #ea580c, #f97316);
-    color: #fff;
-    border: none;
-    border-radius: 14px;
-    font-weight: 800;
-    cursor: pointer;
-    font-family: inherit;
-    font-size: 0.95rem;
-    box-shadow: 0 12px 32px rgba(234, 88, 12, 0.25);
-}
-
-.pb-customer .cd-loading {
-    min-height: 60vh;
-    display: grid;
-    place-items: center;
-    color: var(--cd-muted);
-    font-weight: 700;
-    gap: 12px;
-}
-
-.pb-customer .cd-loading i {
+.cd-hero-text h1 {
+    font-family: 'Fredoka', sans-serif;
     font-size: 2rem;
-    color: var(--cd-brand);
+    font-weight: 600;
 }
 
-.pb-customer .cd-profile-banner {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 16px;
-    flex-wrap: wrap;
-    background: linear-gradient(135deg, #fff7ed, #ffedd5);
-    border: 1px solid #fdba74;
-    border-radius: 16px;
-    padding: 16px 20px;
-    margin-bottom: 20px;
+.cd-hero-text h1 em {
+    font-style: normal;
+    color: #f59e0b;
 }
 
-.pb-customer .cd-profile-banner strong {
+.cd-hero-stats {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 20px;
+}
+
+.cd-hero-stat {
+    text-align: center;
+}
+
+.cd-hero-stat strong {
     display: block;
-    color: #c2410c;
-    margin-bottom: 4px;
-}
-
-.pb-customer .cd-profile-banner p {
-    margin: 0;
-    font-size: 0.88rem;
-    color: #9a3412;
-}
-
-.pb-customer .cd-profile-banner .cd-btn-profile {
-    background: #ea580c;
-    border-color: #ea580c;
-    color: #fff;
-    flex-shrink: 0;
-}
-
-.pb-customer .cd-case-pill {
-    padding: 6px 12px;
-    border-radius: 999px;
-    font-size: 0.72rem;
-    font-weight: 800;
-    text-transform: uppercase;
-    letter-spacing: 0.04em;
-    flex-shrink: 0;
-}
-
-.pb-customer .cd-case-pill.pill-green {
-    background: #dcfce7;
-    color: #166534;
-}
-
-.pb-customer .cd-case-pill.pill-amber {
-    background: #ffedd5;
-    color: #c2410c;
-}
-
-@media (max-width: 700px) {
-    .pb-customer .cd-quick-grid {
-        grid-template-columns: 1fr 1fr;
-    }
-    .pb-customer .cd-qbtn-emergency {
-        grid-column: span 2;
-        flex-direction: column;
-        align-items: flex-start;
-    }
-}
-
-@media (max-width: 768px) {
-    .pb-customer .cd-btn-logout span {
-        display: none;
-    }
-    .pb-customer .cd-user-chip > span {
-        max-width: 90px;
-        overflow: hidden;
-        text-overflow: ellipsis;
-        white-space: nowrap;
-    }
-}
-
-@media (max-width: 480px) {
-    .pb-customer .cd-quick-grid {
-        grid-template-columns: 1fr;
-    }
-    .pb-customer .cd-qbtn-emergency {
-        grid-column: span 1;
-    }
-    .pb-customer .cd-hero-card {
-        padding: 22px 18px;
-    }
+    font-size: 1.8rem;
+    font-family: 'Fredoka', sans-serif;
+    color: #f59e0b;
 }

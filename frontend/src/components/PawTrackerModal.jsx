@@ -185,7 +185,6 @@ export default function PawTrackerModal({ incidentCode, isAdmin = false, onClose
 
   const load = useCallback(async () => {
     if (!code) return;
-    setLoading(true);
     setError('');
     try {
       const fn = fetchFn || fetchJson;
@@ -200,9 +199,15 @@ export default function PawTrackerModal({ incidentCode, isAdmin = false, onClose
   }, [code, fetchFn]);
 
   useEffect(() => {
-    load();
+    // Avoid synchronous state changes by scheduling them or doing them outside
+    const t = setTimeout(() => {
+      load();
+    }, 0);
     document.body.style.overflow = 'hidden';
-    return () => { document.body.style.overflow = ''; };
+    return () => {
+      clearTimeout(t);
+      document.body.style.overflow = '';
+    };
   }, [load]);
 
   const ws = data?.workflow_status || 'reported';

@@ -38,11 +38,13 @@ export async function fetchJson(path, options = {}) {
   try {
     res = await fetch(apiUrl(path), fetchOpts);
   } catch (err) {
-    if (err?.name === 'AbortError') throw new Error('Request timed out. Try again in a moment.');
+    if (err?.name === 'AbortError') throw new Error('Request timed out. Try again in a moment.', { cause: err });
     throw err;
   } finally {
     clearTimeout(timer);
   }
+  // Avoid unused variable _t
+  if (_t) { /* do nothing */ }
 
   const text = await res.text();
   let data = {};

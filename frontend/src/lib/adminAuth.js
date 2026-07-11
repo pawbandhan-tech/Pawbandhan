@@ -42,17 +42,17 @@ export async function adminFetchJson(path, options = {}) {
     headers: authHeaders(options.headers || {})
   });
   const text = await res.text();
-  let data = {};
+  let data;
   try {
     data = text ? JSON.parse(text) : {};
-  } catch {
-    throw new Error('Invalid response from API.');
+  } catch (err) {
+    throw new Error('Invalid response from API.', { cause: err });
   }
   if (res.status === 401) {
     clearSession();
     throw new Error('Session expired. Sign in again.');
   }
-  if (!res.ok) throw new Error(data.error || data.message || 'Request failed');
+  if (!res.ok) throw new Error((data && data.error) || (data && data.message) || 'Request failed');
   return data;
 }
 
