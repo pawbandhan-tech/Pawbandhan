@@ -115,23 +115,29 @@ function PaymentSection({ caseItem, caseCode, totals, onPaid }) {
   const [showPayForm, setShowPayForm] = useState(false);
   const [paying, setPaying] = useState(false);
   const [communityMode, setCommunityMode] = useState(false);
-  const [communityProgress, setCommunityProgress] = useState(0);
+  const [partialAmount, setPartialAmount] = useState('');
+  const [paymentTab, setPaymentTab] = useState('full');
 
   const totalAmount = totals?.subtotal || 0;
   const commission = totals?.commission || 0;
   const grandTotal = totals?.grandTotal || 0;
+  const totalPaid = totals?.totalPaid || 0;
+  const remaining = totals?.remaining || grandTotal;
 
-  async function handlePay() {
+  async function handlePay(method) {
     setPaying(true);
     try {
-      const res = await fetch(`/api/cases/${caseCode}/payment`, {
+      const body = { paymentMethod: method };
+      if (method === 'partial' && partialAmount) body.amount = parseFloat(partialAmount);
+      const res = await fetch(`/api/cases/${caseCode}/pay`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ paymentMethod: payMethod || 'upi' }),
+        body: JSON.stringify(body),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || 'Payment failed');
       setShowPayForm(false);
+      setCommunityMode(false);
       onPaid();
     } catch (err) { console.error(err); }
     setPaying(false);
@@ -139,42 +145,69 @@ function PaymentSection({ caseItem, caseCode, totals, onPaid }) {
 
   function handleCommunityList() {
     setCommunityMode(true);
-    setCommunityProgress(0);
+    setPaymentTab('full');
   }
 
   if (communityMode) {
-    const goal = grandTotal;
-    const raised = Math.round(goal * 0.3);
     return (
-      <div style={{ padding: '16px 18px', borderRadius: 14, border: '1px solid var(--color-pb-border)', background: 'var(--color-pb-surface)', marginTop: 12 }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 12 }}>
-          <i className="fas fa-people-group" style={{ color: 'var(--color-pb-primary)' }}></i>
-          <span style={{ fontWeight: 700, fontSize: '0.92rem' }}>Community Funding</span>
+      <div style={{ padding: '18px 20px', borderRadius: 14, border: '1px solid var(--color-pb-border)', background: 'var(--color-pb-surface)', marginTop: 12 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 14 }}>
+          <i className="fas fa-people-group" style={{ color: 'var(--color-pb-primary)', fontSize: '1rem' }}></i>
+          <span style={{ fontWeight: 700, fontSize: '0.95rem' }}>Payment Options</span>
         </div>
-        <div style={{ marginBottom: 12 }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.82rem', marginBottom: 4 }}>
-            <span style={{ color: 'var(--color-pb-text-muted)' }}>Raised</span>
-            <span style={{ fontWeight: 700 }}>₹{raised.toLocaleString()} / ₹{goal.toLocaleString()}</span>
-          </div>
-          <div className="workflow-progress-bar" style={{ height: 8 }}>
-            <div className="workflow-progress-fill" style={{ width: `${Math.round((raised / goal) * 100)}%` }}></div>
-          </div>
+
+        <div style={{ display: 'flex', gap: 4, padding: 3, borderRadius: 10, background: 'var(--color-pb-border)', marginBottom: 16 }}>
+          {[{ key: 'full', label: 'List for Donations' }, { key: 'partial', label: 'Pay Partial' }].map(tab => (
+            <button key={tab.key} onClick={() => setPaymentTab(tab.key)} style={{
+              flex: 1, padding: '8px 6px', borderRadius: 8, border: 'none', cursor: 'pointer', fontWeight: 700, fontSize: '0.78rem',
+              fontFamily: 'var(--font-sans)',
+              background: paymentTab === tab.key ? 'var(--color-pb-surface)' : 'transparent',
+              color: paymentTab === tab.key ? 'var(--color-pb-primary)' : 'var(--color-pb-text-muted)',
+              boxShadow: paymentTab === tab.key ? '0 1px 4px rgba(0,0,0,0.06)' : 'none',
+              transition: 'all 0.2s',
+            }}>{tab.label}</button>
+          ))}
         </div>
-        <div style={{ fontSize: '0.82rem', color: 'var(--color-pb-text-secondary)', textAlign: 'center', padding: '12px 0' }}>
-          <i className="fas fa-share-nodes" style={{ marginRight: 6, color: 'var(--color-pb-primary)' }}></i>
-          Share this case with friends and family to raise funds
+
+        {paymentTab === 'partial' && (
+          <div style={{ marginBottom: 16 }}>
+            <label className="pb-label">Amount you want to pay (₹)</label>
+            <input className="pb-input" type="number" min="1" max={remaining} placeholder="e.g. 500" value={partialAmount} onChange={e => setPartialAmount(e.target.value)} style={{ marginBottom: 6 }} />
+            {partialAmount && parseFloat(partialAmount) > 0 && (
+              <div style={{ fontSize: '0.8rem', color: 'var(--color-pb-text-muted)' }}>
+                Remaining ₹{Math.max(0, remaining - parseFloat(partialAmount)).toLocaleString()} will be listed for community donations
+              </div>
+            )}
+          </div>
+        )}
+
+        {paymentTab === 'full' && (
+          <div style={{ padding: '12px 14px', borderRadius: 10, background: 'rgba(27,107,82,0.04)', marginBottom: 16 }}>
+            <div style={{ fontSize: '0.82rem', color: 'var(--color-pb-text-secondary)', lineHeight: 1.5 }}>
+              <i className="fas fa-info-circle" style={{ color: 'var(--color-pb-primary)', marginRight: 6 }}></i>
+              Your case will be shown on the <strong>public donate page</strong>. Animal details, treatment info, and photos will be visible to potential donors.
+            </div>
+          </div>
+        )}
+
+        <div style={{ display: 'flex', gap: 8 }}>
+          <button className="btn btn-ghost" style={{ flex: 1 }} onClick={() => setCommunityMode(false)}>Back</button>
+          <button className="btn btn-primary" style={{ flex: 2 }} onClick={() => handlePay(paymentTab === 'partial' ? 'partial' : 'community')} disabled={paying || (paymentTab === 'partial' && (!partialAmount || parseFloat(partialAmount) <= 0))}>
+            {paying ? <><i className="fas fa-spinner fa-spin"></i> Processing...</> : <><i className="fas fa-people-group"></i> {paymentTab === 'partial' ? `Pay ₹${parseFloat(partialAmount || 0).toLocaleString()} & List Remaining` : 'List for Community Donations'}</>}
+          </button>
         </div>
       </div>
     );
   }
 
   return (
-    <div style={{ padding: '16px 18px', borderRadius: 14, border: '1px solid var(--color-pb-border)', background: 'var(--color-pb-surface)', marginTop: 12 }}>
-      <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 12 }}>
+    <div style={{ padding: '18px 20px', borderRadius: 14, border: '1px solid var(--color-pb-border)', background: 'var(--color-pb-surface)', marginTop: 12 }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 14 }}>
         <i className="fas fa-indian-rupee-sign" style={{ color: 'var(--color-pb-accent)' }}></i>
-        <span style={{ fontWeight: 700, fontSize: '0.92rem' }}>Payment</span>
+        <span style={{ fontWeight: 700, fontSize: '0.95rem' }}>Payment Required</span>
       </div>
-      <div style={{ marginBottom: 12 }}>
+
+      <div style={{ marginBottom: 14 }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 6, fontSize: '0.85rem' }}>
           <span style={{ color: 'var(--color-pb-text-secondary)' }}>Treatment Cost</span>
           <span style={{ fontWeight: 600 }}>₹{totalAmount.toLocaleString()}</span>
@@ -183,36 +216,63 @@ function PaymentSection({ caseItem, caseCode, totals, onPaid }) {
           <span style={{ color: 'var(--color-pb-text-secondary)' }}>Platform Commission (15%)</span>
           <span style={{ fontWeight: 600, color: 'var(--color-pb-accent)' }}>₹{commission.toLocaleString()}</span>
         </div>
-        <div style={{ borderTop: '1px solid var(--color-pb-border)', paddingTop: 8, display: 'flex', justifyContent: 'space-between' }}>
-          <span style={{ fontWeight: 800 }}>Total Payable</span>
+        <div style={{ borderTop: '1px solid var(--color-pb-border)', paddingTop: 8, display: 'flex', justifyContent: 'space-between', marginBottom: 8 }}>
+          <span style={{ fontWeight: 800 }}>Grand Total</span>
           <span style={{ fontWeight: 800, fontSize: '1.1rem', color: 'var(--color-pb-primary)' }}>₹{grandTotal.toLocaleString()}</span>
+        </div>
+        <div style={{ borderTop: '1px solid var(--color-pb-border)', paddingTop: 8, display: 'flex', justifyContent: 'space-between', marginBottom: 4, fontSize: '0.85rem' }}>
+          <span style={{ color: 'var(--color-pb-text-secondary)' }}>Amount Paid</span>
+          <span style={{ fontWeight: 600 }}>₹{totalPaid.toLocaleString()}</span>
+        </div>
+        <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.85rem' }}>
+          <span style={{ color: 'var(--color-pb-text-secondary)' }}>Remaining</span>
+          <span style={{ fontWeight: 700, color: remaining > 0 ? 'var(--color-pb-accent)' : 'var(--color-pb-primary)' }}>₹{remaining.toLocaleString()}</span>
         </div>
       </div>
 
       {!showPayForm ? (
-        <div style={{ display: 'flex', gap: 10 }}>
-          <button className="btn btn-primary" style={{ flex: 1 }} onClick={() => setShowPayForm(true)}>
-            <i className="fas fa-credit-card"></i> Pay Now
-          </button>
-          <button className="btn btn-secondary" style={{ flex: 1 }} onClick={handleCommunityList}>
-            <i className="fas fa-people-group"></i> Community Pay
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+          <div style={{ display: 'flex', gap: 8 }}>
+            <button className="btn btn-primary" style={{ flex: 1 }} onClick={() => handlePay('upi')}>
+              <i className="fas fa-mobile-screen"></i> Pay Full Amount
+            </button>
+            <button className="btn btn-secondary" style={{ flex: 1 }} onClick={() => { setShowPayForm(true); setPayMethod('upi'); }}>
+              <i className="fas fa-credit-card"></i> Pay Partial
+            </button>
+          </div>
+          <button className="btn btn-secondary" style={{ width: '100%' }} onClick={handleCommunityList}>
+            <i className="fas fa-people-group"></i> List for Donations
           </button>
         </div>
       ) : (
         <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-          <div style={{ display: 'flex', gap: 8 }}>
-            <button onClick={() => setPayMethod('upi')} style={{ flex: 1, padding: '10px', borderRadius: 10, border: payMethod === 'upi' ? '2px solid var(--color-pb-primary)' : '1px solid var(--color-pb-border)', background: payMethod === 'upi' ? 'rgba(27,107,82,0.06)' : 'transparent', cursor: 'pointer', fontWeight: 700, fontSize: '0.82rem', fontFamily: 'var(--font-sans)', color: 'var(--color-pb-text)' }}>
-              <i className="fas fa-mobile-screen" style={{ marginRight: 4 }}></i> UPI
-            </button>
-            <button onClick={() => setPayMethod('card')} style={{ flex: 1, padding: '10px', borderRadius: 10, border: payMethod === 'card' ? '2px solid var(--color-pb-primary)' : '1px solid var(--color-pb-border)', background: payMethod === 'card' ? 'rgba(27,107,82,0.06)' : 'transparent', cursor: 'pointer', fontWeight: 700, fontSize: '0.82rem', fontFamily: 'var(--font-sans)', color: 'var(--color-pb-text)' }}>
-              <i className="fas fa-credit-card" style={{ marginRight: 4 }}></i> Card
-            </button>
-          </div>
-          {payMethod === 'upi' && (
-            <div>
-              <label className="pb-label">UPI ID</label>
-              <input className="pb-input" placeholder="yourname@upi" />
+          <div>
+            <label className="pb-label">Payment Method</label>
+            <div style={{ display: 'flex', gap: 8 }}>
+              {[
+                { key: 'upi', icon: 'fa-mobile-screen', label: 'UPI' },
+                { key: 'card', icon: 'fa-credit-card', label: 'Card' },
+                { key: 'netbanking', icon: 'fa-building-columns', label: 'Net Banking' },
+              ].map(m => (
+                <button key={m.key} onClick={() => setPayMethod(m.key)} style={{
+                  flex: 1, padding: '10px', borderRadius: 10,
+                  border: payMethod === m.key ? '2px solid var(--color-pb-primary)' : '1px solid var(--color-pb-border)',
+                  background: payMethod === m.key ? 'rgba(27,107,82,0.06)' : 'transparent',
+                  cursor: 'pointer', fontWeight: 700, fontSize: '0.8rem', fontFamily: 'var(--font-sans)', color: 'var(--color-pb-text)',
+                }}>
+                  <i className={`fas ${m.icon}`} style={{ marginRight: 4 }}></i> {m.label}
+                </button>
+              ))}
             </div>
+          </div>
+
+          <div>
+            <label className="pb-label">Amount to Pay (₹)</label>
+            <input className="pb-input" type="number" min="1" max={remaining} value={partialAmount || remaining} onChange={e => setPartialAmount(e.target.value)} />
+          </div>
+
+          {payMethod === 'upi' && (
+            <div><label className="pb-label">UPI ID</label><input className="pb-input" placeholder="yourname@upi" /></div>
           )}
           {payMethod === 'card' && (
             <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
@@ -223,10 +283,16 @@ function PaymentSection({ caseItem, caseCode, totals, onPaid }) {
               </div>
             </div>
           )}
+          {payMethod === 'netbanking' && (
+            <div><label className="pb-label">Select Bank</label>
+              <select className="pb-select"><option>SBI</option><option>HDFC</option><option>ICICI</option><option>Axis</option><option>Other</option></select>
+            </div>
+          )}
+
           <div style={{ display: 'flex', gap: 8 }}>
             <button className="btn btn-ghost btn-sm" onClick={() => setShowPayForm(false)} style={{ flex: 1 }}>Cancel</button>
-            <button className="btn btn-primary btn-sm" onClick={handlePay} disabled={paying || !payMethod} style={{ flex: 1 }}>
-              {paying ? <><i className="fas fa-spinner fa-spin"></i> Processing...</> : <>Pay ₹{grandTotal.toLocaleString()}</>}
+            <button className="btn btn-primary btn-sm" onClick={() => handlePay(payMethod)} disabled={paying || !payMethod} style={{ flex: 2 }}>
+              {paying ? <><i className="fas fa-spinner fa-spin"></i> Processing...</> : <>Pay ₹{(parseFloat(partialAmount) || remaining).toLocaleString()}</>}
             </button>
           </div>
         </div>
@@ -568,6 +634,20 @@ export default function DashboardClient() {
                       totals={caseTotals}
                       onPaid={() => { showToast('Payment successful!'); openTracking(trackingCase); }}
                     />
+                  )}
+
+                  {(trackingStatus === 'closed' || trackingStatus === 'delivered' || trackingStatus === 'ready_for_drop' || trackingData?.case?.treatmentReport) && (
+                    <div style={{ marginTop: 12, padding: '14px 18px', borderRadius: 14, border: '1px solid var(--color-pb-border)', background: 'rgba(27,107,82,0.03)' }}>
+                      <a
+                        href={`/api/cases/${trackingData.case?.incidentCode || trackingCase?.incidentCode}/pdf`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="btn btn-secondary"
+                        style={{ width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, textDecoration: 'none' }}
+                      >
+                        <i className="fas fa-file-pdf"></i> View Prescription (PDF)
+                      </a>
+                    </div>
                   )}
 
                   {trackingData.location && (

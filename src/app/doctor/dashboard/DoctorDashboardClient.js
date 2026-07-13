@@ -309,6 +309,31 @@ export default function DoctorDashboardClient() {
     setAddingExpense(false);
   }
 
+  async function downloadPrescription(c) {
+    try {
+      const { generatePrescriptionPDF } = await import('@/lib/pdf-generator');
+      const doc = generatePrescriptionPDF({
+        caseCode: c.incidentCode,
+        animalType: c.animalType,
+        patientInfo: `${c.animalType} - ${c.description || ''}`,
+        diagnosis: reportForm.diagnosis,
+        treatment: reportForm.treatment,
+        medications: reportForm.medications,
+        notes: reportForm.notes,
+        doctorName: profile?.name || doctor?.name || 'Doctor',
+        doctorLicense: doctor?.licenseNumber || '',
+        hospitalName: doctor?.hospitalName || '',
+        timestamp: new Date().toISOString(),
+        ip: 'N/A',
+      });
+      doc.save(`Prescription_${c.incidentCode}.pdf`);
+      showToast('Prescription PDF downloaded');
+    } catch (err) {
+      console.error(err);
+      showToast('Failed to generate PDF', 'error');
+    }
+  }
+
   async function handleSaveProfile() {
     if (!uid) return;
     setSavingProfile(true);
@@ -467,9 +492,14 @@ export default function DoctorDashboardClient() {
                         <input className="pb-input" type="number" value={reportForm.estimatedCost} onChange={e => setReportForm(f => ({ ...f, estimatedCost: e.target.value }))} placeholder="0.00" />
                       </div>
                     </div>
-                    <button className="btn btn-primary" onClick={saveReport} disabled={savingReport}>
-                      {savingReport ? <><i className="fas fa-spinner fa-spin"></i> Saving...</> : <><i className="fas fa-save"></i> Save Report</>}
-                    </button>
+                    <div style={{ display: 'flex', gap: 8 }}>
+                      <button className="btn btn-primary" onClick={saveReport} disabled={savingReport} style={{ flex: 1 }}>
+                        {savingReport ? <><i className="fas fa-spinner fa-spin"></i> Saving...</> : <><i className="fas fa-save"></i> Save Report</>}
+                      </button>
+                      <button className="btn btn-secondary" onClick={() => downloadPrescription(viewingCaseDetail)}>
+                        <i className="fas fa-file-pdf"></i> Download Prescription PDF
+                      </button>
+                    </div>
                   </div>
                 </div>
               )}

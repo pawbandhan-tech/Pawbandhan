@@ -23,6 +23,9 @@ export default function PublicNav() {
         </Link>
         <div className="pb-nav-links">
           <Link href="/" className="pb-nav-link">Home</Link>
+          <Link href="/donate" className="pb-nav-link" style={{ color: 'var(--color-pb-primary)', fontWeight: 800, position: 'relative' }}>
+            <i className="fas fa-heart" style={{ fontSize: '0.75rem', marginRight: 3, animation: 'heartbeat 1.5s ease-in-out infinite' }}></i> Donate
+          </Link>
           <Link href="/#how-it-works" className="pb-nav-link">How it works</Link>
           <Link href="/#portals" className="pb-nav-link">Portals</Link>
           <Link href="/#about" className="pb-nav-link">About</Link>
@@ -41,6 +44,9 @@ export default function PublicNav() {
       {mobileOpen && (
         <div style={{ padding: '16px 24px', borderTop: '1px solid var(--color-pb-border)' }}>
           <Link href="/" className="pb-nav-link" style={{ display: 'block', padding: '12px 0' }}>Home</Link>
+          <Link href="/donate" className="pb-nav-link" style={{ display: 'block', padding: '12px 0', color: 'var(--color-pb-primary)', fontWeight: 800 }}>
+            <i className="fas fa-heart" style={{ marginRight: 6 }}></i>Donate
+          </Link>
           <Link href="/#how-it-works" className="pb-nav-link" style={{ display: 'block', padding: '12px 0' }}>How it works</Link>
           <Link href="/#portals" className="pb-nav-link" style={{ display: 'block', padding: '12px 0' }}>Portals</Link>
           <Link href="/#about" className="pb-nav-link" style={{ display: 'block', padding: '12px 0' }}>About</Link>

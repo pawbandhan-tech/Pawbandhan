@@ -694,6 +694,7 @@ body.pb-public {
 @keyframes pulse { 0%, 100% { opacity: 1; transform: scale(1); } 50% { opacity: 0.5; transform: scale(1.2); } }
 @keyframes slideIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
 @keyframes trackingDot { 0% { box-shadow: 0 0 0 0 rgba(34,197,94,0.4); } 70% { box-shadow: 0 0 0 10px rgba(34,197,94,0); } 100% { box-shadow: 0 0 0 0 rgba(34,197,94,0); } }
+@keyframes heartbeat { 0%, 100% { transform: scale(1); } 15% { transform: scale(1.25); } 30% { transform: scale(1); } 45% { transform: scale(1.15); } 60% { transform: scale(1); } }
 .tracking-animate { animation: trackingDot 1.5s infinite; }
 .workflow-progress-bar { height: 4px; border-radius: 2px; background: var(--color-pb-border); overflow: hidden; }
 .workflow-progress-fill { height: 100%; border-radius: 2px; background: linear-gradient(90deg, var(--color-pb-primary), var(--color-pb-accent)); transition: width 0.6s ease; }

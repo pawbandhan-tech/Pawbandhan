@@ -444,6 +444,9 @@ model CasePayment {
   netAmount     Decimal? @map("net_amount") @db.Decimal(10, 2)
   paymentMethod String?  @map("payment_method") @db.VarChar(30)
   paymentStatus String?  @map("payment_status") @db.VarChar(30) @default("pending")
+  donorName     String?  @map("donor_name") @db.VarChar(255)
+  donorEmail    String?  @map("donor_email") @db.VarChar(255)
+  donorMessage  String?  @map("donor_message") @db.Text
   paidAt        DateTime? @map("paid_at")
   createdAt     DateTime @default(now()) @map("created_at")
 

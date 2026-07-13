@@ -337,6 +337,72 @@ export default function AdminPortalClient() {
     setLoading(true);
   }
 
+  // Download functions
+  async function downloadExcel(type) {
+    try {
+      const { exportToExcel, casesToRows, accountsToRows } = await import('@/lib/excel-generator');
+      if (type === 'cases') {
+        exportToExcel(casesToRows(cases), 'PawBandhan_Cases', 'Cases');
+      } else if (type === 'accounts') {
+        exportToExcel(accountsToRows(accounts), 'PawBandhan_Accounts', 'Accounts');
+      }
+      showToast('Excel file downloaded');
+    } catch (err) {
+      console.error(err);
+      showToast('Failed to export Excel', 'error');
+    }
+  }
+
+  async function downloadPdf(type) {
+    try {
+      const { generateEntityReportPDF } = await import('@/lib/pdf-generator');
+      if (type === 'cases') {
+        const doc = generateEntityReportPDF(cases, 'Cases Report', ['incidentCode', 'animalType', 'status', 'workflowStatus', 'createdAt']);
+        doc.save('PawBandhan_Cases.pdf');
+      } else if (type === 'accounts') {
+        const doc = generateEntityReportPDF(accounts, 'Accounts Report', ['_label', 'email', '_type', 'status']);
+        doc.save('PawBandhan_Accounts.pdf');
+      }
+      showToast('PDF file downloaded');
+    } catch (err) {
+      console.error(err);
+      showToast('Failed to export PDF', 'error');
+    }
+  }
+
+  async function downloadEntityPdf(entity) {
+    try {
+      const { generateEntityReportPDF } = await import('@/lib/pdf-generator');
+      const doc = generateEntityReportPDF([entity], `${entity._label || entity.name || 'Entity'} Report`, ['_label', 'email', '_type', 'status', 'phone', 'createdAt']);
+      doc.save(`PawBandhan_${entity._type || 'entity'}_${entity.id}.pdf`);
+      showToast('Entity report downloaded');
+    } catch (err) {
+      console.error(err);
+      showToast('Failed to export PDF', 'error');
+    }
+  }
+
+  // Admin SSO - Open entity portal
+  async function openPortalSSO(portalType, entityUid) {
+    try {
+      const res = await adminFetch('/api/admin/portal-sso', {
+        method: 'POST',
+        body: JSON.stringify({ portalType, entityUid }),
+      });
+      const data = await res.json();
+      if (res.ok && data.success) {
+        sessionStorage.setItem('pb_portal_token', data.portalToken);
+        window.open(data.redirectUrl, '_blank');
+        showToast(`Opened ${portalType} portal`);
+      } else {
+        showToast(data.error || 'SSO failed', 'error');
+      }
+    } catch (err) {
+      console.error(err);
+      showToast('Portal SSO failed', 'error');
+    }
+  }
+
   // KYC Review functions
   async function handleKycAction(entity, action) {
     if ((action === 'reject' || action === 'request_reupload') && !kycActionReason.trim()) {
@@ -618,7 +684,16 @@ export default function AdminPortalClient() {
 
             {/* CASES TAB */}
             {tab === 'cases' && (
-              <div className="glass" style={{ padding: 24 }}>
+              <div>
+                <div style={{ display: 'flex', gap: 8, marginBottom: 16 }}>
+                  <button className="btn btn-secondary btn-sm" onClick={() => downloadExcel('cases')}>
+                    <i className="fas fa-file-excel"></i> Export Cases (Excel)
+                  </button>
+                  <button className="btn btn-secondary btn-sm" onClick={() => downloadPdf('cases')}>
+                    <i className="fas fa-file-pdf"></i> Export Cases (PDF)
+                  </button>
+                </div>
+                <div className="glass" style={{ padding: 24 }}>
                 {cases.length === 0 ? <p style={{ color: 'var(--color-pb-text-muted)' }}>No cases found.</p> : (
                   <div style={{ overflowX: 'auto' }}>
                     <table className="pb-table">
@@ -638,12 +713,21 @@ export default function AdminPortalClient() {
                     </table>
                   </div>
                 )}
+                </div>
               </div>
             )}
 
             {/* ALL ACCOUNTS TAB */}
             {tab === 'accounts' && (
               <div>
+                <div style={{ marginBottom: 16, display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+                  <button className="btn btn-secondary btn-sm" onClick={() => downloadExcel('accounts')}>
+                    <i className="fas fa-file-excel"></i> Export Accounts (Excel)
+                  </button>
+                  <button className="btn btn-secondary btn-sm" onClick={() => downloadPdf('accounts')}>
+                    <i className="fas fa-file-pdf"></i> Export Accounts (PDF)
+                  </button>
+                </div>
                 <div style={{ marginBottom: 16, display: 'flex', gap: 12, flexWrap: 'wrap', alignItems: 'center' }}>
                   <input className="pb-input" placeholder="Search by name, email, or type..." value={searchQuery} onChange={e => setSearchQuery(e.target.value)} style={{ maxWidth: 400 }} />
                   <span style={{ fontSize: '0.82rem', color: 'var(--color-pb-text-muted)' }}>{filteredAccounts.length} accounts</span>
@@ -670,6 +754,11 @@ export default function AdminPortalClient() {
                                 <button className="btn btn-secondary btn-sm" onClick={() => openViewEntity(a)} title="View details">
                                   <i className="fas fa-eye"></i>
                                 </button>
+                                {canCreate && (a._type === 'doctor' || a._type === 'ngo' || a._type === 'rider' || a._type === 'representative' || a._type === 'customer') && (
+                                  <button className="btn btn-ghost btn-sm" onClick={() => openPortalSSO(a._type === 'representative' ? 'rider' : a._type, a.id)} title={`Open in ${a._type} portal`}>
+                                    <i className="fas fa-right-to-bracket"></i>
+                                  </button>
+                                )}
                                 <button className="btn btn-ghost btn-sm" onClick={() => { setResetPasswordModal(a); setNewPassword(generateRandomPassword()); }} title="Reset password">
                                   <i className="fas fa-key"></i>
                                 </button>
@@ -1446,6 +1535,15 @@ export default function AdminPortalClient() {
                   </span>
                   <span className={`badge ${typeColors[viewingEntity._type] || 'badge-green'}`}>{viewingEntity._type}</span>
                   <span className={`badge ${viewingEntity.status === 'active' ? 'badge-green' : viewingEntity.status === 'pending' ? 'badge-gold' : 'badge-red'}`}>{viewingEntity.status || '—'}</span>
+                  <div style={{ flex: 1 }}></div>
+                  <button className="btn btn-secondary btn-sm" onClick={() => downloadEntityPdf(viewingEntity)} title="Download entity report PDF">
+                    <i className="fas fa-file-pdf"></i> Download Report
+                  </button>
+                  {canCreate && (viewingEntity._type === 'doctor' || viewingEntity._type === 'ngo' || viewingEntity._type === 'rider' || viewingEntity._type === 'representative' || viewingEntity._type === 'customer') && (
+                    <button className="btn btn-primary btn-sm" onClick={() => openPortalSSO(viewingEntity._type === 'representative' ? 'rider' : viewingEntity._type, viewingEntity.id)} title={`Open in ${viewingEntity._type} portal`}>
+                      <i className="fas fa-right-to-bracket"></i> Open in Portal
+                    </button>
+                  )}
                 </div>
 
                 {/* Stat cards */}

@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
 import { requireAdmin } from '@/lib/admin-auth';
 import { calculateDistanceKm } from '@/lib/case-workflow';
+import { getRecommendedVehicle, getVehicleLabel } from '@/lib/vehicle-assignment';
 
 export async function POST(request) {
   try {
@@ -78,7 +79,7 @@ export async function POST(request) {
 
       const riders = await prisma.rider.findMany({
         where: ngoFilter,
-        select: { id: true, name: true, uid: true, lat: true, lng: true, ngoId: true },
+        select: { id: true, name: true, uid: true, lat: true, lng: true, ngoId: true, vehicleType: true },
       });
 
       if (riders.length === 0) {
@@ -93,13 +94,16 @@ export async function POST(request) {
       withDistance.sort((a, b) => a.distance - b.distance);
       const nearest = withDistance[0];
 
+      const recommendedVehicle = getRecommendedVehicle(incident.animalType);
+      const vehicleLabel = getVehicleLabel(recommendedVehicle);
+
       await prisma.incident.update({
         where: { id: incident.id },
         data: { repId: nearest.id },
       });
 
-      assigned = { id: nearest.id, name: nearest.name, uid: nearest.uid, distance: Math.round(nearest.distance * 10) / 10 };
-      timelineNote = `Assigned nearest rider: ${nearest.name} (${assigned.distance} km away)`;
+      assigned = { id: nearest.id, name: nearest.name, uid: nearest.uid, distance: Math.round(nearest.distance * 10) / 10, recommendedVehicle, vehicleLabel, animalType: incident.animalType };
+      timelineNote = `Assigned nearest rider: ${nearest.name} (${assigned.distance} km away). Recommended vehicle: ${vehicleLabel} for ${incident.animalType || 'animal'}.`;
 
     } else if (action === 'assign_nearest_doctor') {
       const doctors = await prisma.doctor.findMany({
