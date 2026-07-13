@@ -17,6 +17,7 @@ model User {
   lastName        String?   @map("last_name") @db.VarChar(100)
   phoneNo         String?   @map("phone_no") @db.VarChar(20)
   email           String?   @unique @db.VarChar(255)
+  passwordHash    String?   @map("password_hash") @db.VarChar(255)
   accountNo       String?   @map("account_no") @db.VarChar(50)
   address         String?   @db.Text
   role            String?   @default("customer") @db.VarChar(20)

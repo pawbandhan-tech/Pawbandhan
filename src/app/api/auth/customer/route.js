@@ -12,7 +12,6 @@ export async function POST(request) {
     }
 
     if (action === 'register') {
-      // Check if user exists
       const existing = await prisma.user.findUnique({ where: { email } });
       if (existing) {
         return Response.json({ error: 'Email already registered' }, { status: 409 });
@@ -25,6 +24,7 @@ export async function POST(request) {
         data: {
           uid,
           email,
+          passwordHash: hash,
           firstName: name || email.split('@')[0],
           phoneNo: phone || '',
           role: role || 'customer',
@@ -32,7 +32,6 @@ export async function POST(request) {
         },
       });
 
-      // Create customer record
       if (!role || role === 'customer') {
         await prisma.customer.create({
           data: { uid, name: name || '', email, phone: phone || '' },
@@ -45,12 +44,14 @@ export async function POST(request) {
     // Login
     const user = await prisma.user.findUnique({ where: { email } });
     if (!user) {
-      // Try customer portal login with access code
-      const customer = await prisma.customer.findFirst({ where: { email } });
-      if (customer) {
-        return Response.json({ uid: customer.uid, name: customer.name, id: customer.id });
-      }
       return Response.json({ error: 'Account not found. Please sign up first.' }, { status: 404 });
+    }
+
+    if (user.passwordHash) {
+      const valid = await bcrypt.compare(password, user.passwordHash);
+      if (!valid) {
+        return Response.json({ error: 'Invalid password' }, { status: 401 });
+      }
     }
 
     return Response.json({ uid: user.uid, name: user.firstName, id: user.id });
