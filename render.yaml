@@ -1,0 +1,16 @@
+# Render Blueprint — https://render.com
+# After deploy: set DATABASE_URL in the service Environment tab (Neon pooler URL).
+services:
+  - type: web
+    name: pawbandhan
+    runtime: node
+    plan: free
+    rootDir: pawbandhan-next
+    buildCommand: npm install && npx prisma generate && npm run build
+    startCommand: npm start
+    healthCheckPath: /
+    envVars:
+      - key: NODE_VERSION
+        value: "22"
+      - key: DATABASE_URL
+        sync: false
