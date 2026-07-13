@@ -32,7 +32,7 @@ export default function PublicNav() {
           </Link>
         </div>
         <button
-          className="btn btn-ghost btn-icon md:hidden"
+          className="btn btn-ghost btn-icon pb-nav-hamburger"
           onClick={() => setMobileOpen(!mobileOpen)}
           aria-label="Menu"
         >

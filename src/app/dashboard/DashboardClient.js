@@ -20,6 +20,8 @@ export default function DashboardClient() {
   const [reportImages, setReportImages] = useState([]);
   const [reporting, setReporting] = useState(false);
   const [toast, setToast] = useState(null);
+  const [liveLocation, setLiveLocation] = useState({ status: 'detecting', lat: '', lng: '', address: '' });
+  const fileInputRef = useRef(null);
 
   useEffect(() => {
     const stored = sessionStorage.getItem('customer_uid') || sessionStorage.getItem('portal_customer_uid');
@@ -27,6 +29,33 @@ export default function DashboardClient() {
     setUid(stored);
     loadDashboard(stored);
   }, [router]);
+
+  useEffect(() => {
+    if (!showReport) return;
+    setLiveLocation({ status: 'detecting', lat: '', lng: '', address: '' });
+    if (!navigator.geolocation) {
+      setLiveLocation(prev => ({ ...prev, status: 'unavailable' }));
+      return;
+    }
+    navigator.geolocation.getCurrentPosition(
+      async (pos) => {
+        const lat = pos.coords.latitude;
+        const lng = pos.coords.longitude;
+        setReportForm(f => ({ ...f, latitude: String(lat), longitude: String(lng) }));
+        try {
+          const res = await fetch(`https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${lat}&lon=${lng}`);
+          const data = await res.json();
+          const addr = data.display_name || '';
+          setLiveLocation({ status: 'ready', lat: String(lat.toFixed(6)), lng: String(lng.toFixed(6)), address: addr });
+          setReportForm(f => ({ ...f, location: f.location || addr }));
+        } catch {
+          setLiveLocation({ status: 'ready', lat: String(lat.toFixed(6)), lng: String(lng.toFixed(6)), address: '' });
+        }
+      },
+      () => setLiveLocation({ status: 'denied', lat: '', lng: '', address: '' }),
+      { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
+    );
+  }, [showReport]);
 
   async function loadDashboard(u) {
     setLoading(true);
@@ -213,6 +242,23 @@ export default function DashboardClient() {
             </div>
             <div className="modal-body">
               <form onSubmit={handleReport} style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+
+                {/* Live Location */}
+                <div style={{ padding: '12px 14px', borderRadius: 12, background: liveLocation.status === 'ready' ? 'rgba(27,107,82,0.06)' : liveLocation.status === 'denied' ? 'rgba(220,38,38,0.06)' : 'rgba(212,160,23,0.06)', border: '1px solid var(--color-pb-border)' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4 }}>
+                    <i className={`fas ${liveLocation.status === 'detecting' ? 'fa-spinner fa-spin' : liveLocation.status === 'ready' ? 'fa-location-dot' : 'fa-triangle-exclamation'}`} style={{ color: liveLocation.status === 'ready' ? 'var(--color-pb-primary)' : liveLocation.status === 'denied' ? 'var(--color-pb-danger)' : 'var(--color-pb-accent)', fontSize: '0.85rem' }}></i>
+                    <span style={{ fontSize: '0.82rem', fontWeight: 600 }}>
+                      {liveLocation.status === 'detecting' && 'Detecting your location…'}
+                      {liveLocation.status === 'ready' && `Location: ${liveLocation.lat}, ${liveLocation.lng}`}
+                      {liveLocation.status === 'denied' && 'Location access denied'}
+                      {liveLocation.status === 'unavailable' && 'Geolocation not supported'}
+                    </span>
+                  </div>
+                  {liveLocation.address && (
+                    <div style={{ fontSize: '0.75rem', color: 'var(--color-pb-text-muted)', lineHeight: 1.4 }}>{liveLocation.address}</div>
+                  )}
+                </div>
+
                 <div>
                   <label className="pb-label">Animal Type</label>
                   <select className="pb-select" value={reportForm.animalType} onChange={e => setReportForm(f => ({ ...f, animalType: e.target.value }))} required>
@@ -225,23 +271,18 @@ export default function DashboardClient() {
                   <textarea className="pb-textarea" value={reportForm.description} onChange={e => setReportForm(f => ({ ...f, description: e.target.value }))} placeholder="Describe the animal's condition…" required />
                 </div>
                 <div>
-                  <label className="pb-label">Location (optional)</label>
-                  <input className="pb-input" value={reportForm.location} onChange={e => setReportForm(f => ({ ...f, location: e.target.value }))} placeholder="Landmark or address" />
+                  <label className="pb-label">Landmark (optional)</label>
+                  <input className="pb-input" value={reportForm.location} onChange={e => setReportForm(f => ({ ...f, location: e.target.value }))} placeholder="Nearby landmark or address" />
                 </div>
+
+                {/* Camera Capture Only */}
                 <div>
-                  <label className="pb-label">Photos</label>
-                  <div style={{ display: 'flex', gap: 10 }}>
-                    <label className="btn btn-ghost" style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, padding: '12px', cursor: 'pointer', border: '2px dashed var(--color-pb-border)', borderRadius: 12, fontSize: '0.85rem' }}>
-                      <i className="fas fa-camera" style={{ color: 'var(--color-pb-primary)' }}></i>
-                      <span>Take Photo</span>
-                      <input type="file" accept="image/*" capture="environment" multiple style={{ display: 'none' }} onChange={e => setReportImages(prev => [...prev, ...Array.from(e.target.files)])} />
-                    </label>
-                    <label className="btn btn-ghost" style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, padding: '12px', cursor: 'pointer', border: '2px dashed var(--color-pb-border)', borderRadius: 12, fontSize: '0.85rem' }}>
-                      <i className="fas fa-images" style={{ color: 'var(--color-pb-accent)' }}></i>
-                      <span>Gallery</span>
-                      <input type="file" accept="image/*" multiple style={{ display: 'none' }} onChange={e => setReportImages(prev => [...prev, ...Array.from(e.target.files)])} />
-                    </label>
-                  </div>
+                  <label className="pb-label">Photo Proof</label>
+                  <input ref={fileInputRef} type="file" accept="image/*" capture="environment" style={{ display: 'none' }} onChange={e => setReportImages(prev => [...prev, ...Array.from(e.target.files)])} />
+                  <button type="button" className="btn btn-ghost" onClick={() => fileInputRef.current?.click()} style={{ width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10, padding: '16px', cursor: 'pointer', border: '2px dashed var(--color-pb-border)', borderRadius: 12, fontSize: '0.88rem' }}>
+                    <i className="fas fa-camera" style={{ color: 'var(--color-pb-primary)', fontSize: '1.1rem' }}></i>
+                    <span>{reportImages.length > 0 ? `Add another photo (${reportImages.length} taken)` : 'Open Camera'}</span>
+                  </button>
                   {reportImages.length > 0 && (
                     <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginTop: 10 }}>
                       {reportImages.map((img, i) => (
@@ -255,6 +296,7 @@ export default function DashboardClient() {
                     </div>
                   )}
                 </div>
+
                 <button type="submit" className="btn btn-primary" style={{ width: '100%' }} disabled={reporting}>
                   {reporting ? <><i className="fas fa-spinner fa-spin"></i> Submitting…</> : <><i className="fas fa-paper-plane"></i> Submit Report</>}
                 </button>

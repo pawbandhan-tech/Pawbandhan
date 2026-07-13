@@ -187,6 +187,10 @@ body.pb-public {
   gap: 8px;
 }
 
+.pb-nav-hamburger {
+  display: none;
+}
+
 .pb-nav-link {
   padding: 8px 16px;
   border-radius: 10px;
@@ -673,6 +677,7 @@ body.pb-public {
   .pb-section { padding: 48px 16px; }
   .pb-card-grid { grid-template-columns: 1fr; }
   .pb-nav-links { display: none; }
+  .pb-nav-hamburger { display: flex !important; }
 }
 
 /* ─── Scrollbar ─── */
