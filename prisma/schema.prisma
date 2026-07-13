@@ -1,0 +1,383 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ─── Core User ───
+
+model User {
+  id              Int       @id @default(autoincrement())
+  uid             String?   @unique
+  firstName       String?   @map("first_name") @db.VarChar(100)
+  middleName      String?   @map("middle_name") @db.VarChar(100)
+  lastName        String?   @map("last_name") @db.VarChar(100)
+  phoneNo         String?   @map("phone_no") @db.VarChar(20)
+  email           String?   @unique @db.VarChar(255)
+  accountNo       String?   @map("account_no") @db.VarChar(50)
+  address         String?   @db.Text
+  role            String?   @default("customer") @db.VarChar(20)
+  status          String?   @default("pending") @db.VarChar(20)
+  gender          String?   @db.VarChar(30)
+  portalAccessCode String?  @map("portal_access_code") @db.VarChar(20)
+  createdAt       DateTime  @default(now()) @map("created_at")
+
+  customer        Customer?
+  ngos            NGO[]             @relation("NGOsOwned")
+  doctors         Doctor[]          @relation("DoctorsOwned")
+  riders          Rider[]           @relation("RidersOwned")
+  representatives Representative[] @relation("RepsOwned")
+  incidents       Incident[]
+  notifications   Notification[]
+
+  @@map("users")
+}
+
+// ─── Customer ───
+
+model Customer {
+  id        Int      @id @default(autoincrement())
+  uid       String?  @unique @db.VarChar(255)
+  name      String?  @db.VarChar(255)
+  email     String?  @db.VarChar(255)
+  phone     String?  @db.VarChar(50)
+  gender    String?  @db.VarChar(30)
+  createdAt DateTime @default(now()) @map("created_at")
+
+  user User? @relation(fields: [uid], references: [uid])
+
+  @@map("customers")
+}
+
+// ─── NGO ───
+
+model NGO {
+  id            Int      @id @default(autoincrement())
+  uid           String?  @db.VarChar(255)
+  name          String?  @db.VarChar(255)
+  email         String?  @db.VarChar(255)
+  phone         String?  @db.VarChar(20)
+  ngoType       String?  @map("ngo_type") @db.VarChar(100)
+  regNumber     String?  @map("reg_number") @db.VarChar(100)
+  panNumber     String?  @map("pan_number") @db.VarChar(100)
+  address       String?  @db.Text
+  city          String?  @db.VarChar(100)
+  state         String?  @db.VarChar(100)
+  serviceArea   String?  @map("service_area") @db.Text
+  workType      String?  @map("work_type") @db.VarChar(100)
+  status        String?  @default("pending") @db.VarChar(20)
+  prn           String?  @unique @db.VarChar(50)
+  tempPrn       String?  @map("temp_prn") @unique @db.VarChar(50)
+  ackNo         String?  @map("ack_no") @unique @db.VarChar(50)
+  kycData       Json?    @map("kyc_data")
+  createdAt     DateTime @default(now()) @map("created_at")
+
+  user          User?          @relation("NGOsOwned", fields: [uid], references: [uid])
+  representatives Representative[]
+  incidents     Incident[]
+  cases         Case[]
+  riders        Rider[]
+
+  @@map("ngos")
+}
+
+// ─── Doctor ───
+
+model Doctor {
+  id             Int      @id @default(autoincrement())
+  uid            String?  @db.VarChar(255)
+  name           String?  @db.VarChar(255)
+  email          String?  @db.VarChar(255)
+  phone          String?  @db.VarChar(20)
+  specialization String?  @db.VarChar(255)
+  licenseNumber  String?  @map("license_number") @db.VarChar(100)
+  hospitalName   String?  @map("hospital_name") @db.VarChar(255)
+  status         String?  @default("pending") @db.VarChar(20)
+  prn            String?  @unique @db.VarChar(50)
+  tempId         String?  @map("temp_id") @unique @db.VarChar(50)
+  ackNo          String?  @map("ack_no") @unique @db.VarChar(50)
+  kycData        Json?    @map("kyc_data")
+  createdAt      DateTime @default(now()) @map("created_at")
+
+  user     User?     @relation("DoctorsOwned", fields: [uid], references: [uid])
+  incidents Incident[]
+
+  @@map("doctors")
+}
+
+// ─── Rider ───
+
+model Rider {
+  id            Int      @id @default(autoincrement())
+  uid           String?  @db.VarChar(255)
+  ngoId         Int?     @map("ngo_id")
+  name          String?  @db.VarChar(255)
+  email         String?  @db.VarChar(255)
+  phone         String?  @db.VarChar(20)
+  vehicleType   String?  @map("vehicle_type") @db.VarChar(100)
+  vehicleNumber String?  @map("vehicle_number") @db.VarChar(100)
+  licenseNumber String?  @map("license_number") @db.VarChar(100)
+  status        String?  @default("pending") @db.VarChar(20)
+  riderId       String?  @map("rider_id") @unique @db.VarChar(50)
+  kycData       Json?    @map("kyc_data")
+  createdAt     DateTime @default(now()) @map("created_at")
+
+  user User? @relation("RidersOwned", fields: [uid], references: [uid])
+  ngo  NGO?  @relation(fields: [ngoId], references: [id])
+
+  @@map("riders")
+}
+
+// ─── Representative ───
+
+model Representative {
+  id              Int       @id @default(autoincrement())
+  uid             String?   @unique @db.VarChar(255)
+  ngoId           Int?      @map("ngo_id")
+  name            String?   @db.VarChar(255)
+  email           String?   @db.VarChar(255)
+  phone           String?   @db.VarChar(20)
+  vehicleType     String?   @map("vehicle_type") @db.VarChar(100)
+  vehicleNumber   String?   @map("vehicle_number") @db.VarChar(100)
+  licenseNumber   String?   @map("license_number") @db.VarChar(100)
+  status          String?   @default("portal_registered") @db.VarChar(30)
+  repId           String?   @map("rep_id") @unique @db.VarChar(50)
+  trackingId      String?   @map("tracking_id") @unique @db.VarChar(50)
+  rejectionReason String?   @map("rejection_reason") @db.Text
+  suspendedAt     DateTime? @map("suspended_at")
+  lastLat         Decimal?  @map("last_lat") @db.Decimal(10, 8)
+  lastLng         Decimal?  @map("last_lng") @db.Decimal(11, 8)
+  lastLocationAt  DateTime? @map("last_location_at")
+  isOnline        Boolean?  @default(false) @map("is_online")
+  kycData         Json?     @map("kyc_data")
+  createdAt       DateTime  @default(now()) @map("created_at")
+
+  user          User?    @relation("RepsOwned", fields: [uid], references: [uid])
+  ngo           NGO?     @relation(fields: [ngoId], references: [id])
+  checkins      RepCheckin[]
+  timeslots     RepTimeslot[]
+  reviews       RepReview[]
+  incidents     Incident[]
+
+  @@map("representatives")
+}
+
+// ─── Incident / Case ───
+
+model Incident {
+  id              Int       @id @default(autoincrement())
+  incidentCode    String?   @unique @map("incident_code") @db.VarChar(50)
+  userId          Int?      @map("user_id")
+  incidentType    String?   @map("incident_type") @db.VarChar(50)
+  description     String?   @db.Text
+  latitude        Decimal?  @db.Decimal(10, 8)
+  longitude       Decimal?  @db.Decimal(11, 8)
+  animalType      String?   @map("animal_type") @db.VarChar(50)
+  images          String[]
+  status          String?   @default("pending") @db.VarChar(50)
+  notes           String?   @db.Text
+  ngoId           Int?      @map("ngo_id")
+  workflowStatus  String?   @default("reported") @map("workflow_status") @db.VarChar(80)
+  repId           Int?      @map("rep_id")
+  doctorId        Int?      @map("doctor_id")
+  injuryType      String?   @map("injury_type") @db.VarChar(100)
+  handoverOtp     String?   @map("handover_otp") @db.VarChar(10)
+  dogTagId        String?   @map("dog_tag_id") @db.VarChar(50)
+  resolutionType  String?   @map("resolution_type") @db.VarChar(50)
+  releaseLat      Decimal?  @map("release_lat") @db.Decimal(10, 8)
+  releaseLng      Decimal?  @map("release_lng") @db.Decimal(11, 8)
+  releaseAddress  String?   @map("release_address") @db.Text
+  treatmentReport String?   @map("treatment_report") @db.Text
+  ngoAcceptedAt   DateTime? @map("ngo_accepted_at")
+  createdAt       DateTime  @default(now()) @map("created_at")
+  updatedAt       DateTime  @default(now()) @map("updated_at")
+
+  user      User?      @relation(fields: [userId], references: [id])
+  ngo       NGO?       @relation(fields: [ngoId], references: [id])
+  rep       Representative? @relation(fields: [repId], references: [id])
+  doctor    Doctor?    @relation(fields: [doctorId], references: [id])
+  timeline  CaseTimeline[]
+  photos    CasePhoto[]
+
+  @@map("incidents")
+}
+
+model Case {
+  id              Int      @id @default(autoincrement())
+  customerName    String?  @map("customer_name") @db.VarChar(255)
+  customerPhone   String?  @map("customer_phone") @db.VarChar(50)
+  customerEmail   String?  @map("customer_email") @db.VarChar(255)
+  customerUid     String?  @map("customer_uid") @db.VarChar(255)
+  animalType      String?  @map("animal_type") @db.VarChar(100)
+  condition       String?  @db.Text
+  location        String?  @db.Text
+  status          String?  @default("open") @db.VarChar(50)
+  ngoId           Int?     @map("ngo_id")
+  incidentCode    String?  @map("incident_code") @db.VarChar(50)
+  workflowStatus  String?  @map("workflow_status") @db.VarChar(80)
+  repId           Int?     @map("rep_id")
+  doctorId        Int?     @map("doctor_id")
+  latitude        Decimal? @db.Decimal(10, 8)
+  longitude       Decimal? @db.Decimal(11, 8)
+  createdAt       DateTime @default(now()) @map("created_at")
+
+  ngo NGO? @relation(fields: [ngoId], references: [id])
+
+  @@map("cases")
+}
+
+// ─── Workflow Tables ───
+
+model CaseTimeline {
+  id            Int      @id @default(autoincrement())
+  incidentCode  String?  @map("incident_code") @db.VarChar(50)
+  status        String?  @db.VarChar(80)
+  actorType     String?  @map("actor_type") @db.VarChar(30)
+  actorId       Int?     @map("actor_id")
+  note          String?  @db.Text
+  meta          Json?
+  createdAt     DateTime @default(now()) @map("created_at")
+
+  incident Incident? @relation(fields: [incidentCode], references: [incidentCode])
+
+  @@map("case_timeline")
+}
+
+model CasePhoto {
+  id            Int      @id @default(autoincrement())
+  incidentCode  String?  @map("incident_code") @db.VarChar(50)
+  photoType     String?  @map("photo_type") @db.VarChar(50)
+  fileUrl       String?  @map("file_url") @db.Text
+  verified      Boolean? @default(false)
+  uploadedBy    String?  @map("uploaded_by") @db.VarChar(30)
+  uploaderId    Int?     @map("uploader_id")
+  createdAt     DateTime @default(now()) @map("created_at")
+
+  incident Incident? @relation(fields: [incidentCode], references: [incidentCode])
+
+  @@map("case_photos")
+}
+
+// ─── Notifications ───
+
+model Notification {
+  id            Int      @id @default(autoincrement())
+  userId        Int?     @map("user_id")
+  ngoId         Int?     @map("ngo_id")
+  riderId       Int?     @map("rider_id")
+  doctorId      Int?     @map("doctor_id")
+  repId         Int?     @map("rep_id")
+  incidentCode  String?  @map("incident_code") @db.VarChar(50)
+  title         String?  @db.VarChar(255)
+  message       String?  @db.Text
+  type          String?  @db.VarChar(50)
+  isRead        Boolean? @default(false) @map("is_read")
+  createdAt     DateTime @default(now()) @map("created_at")
+
+  user User? @relation(fields: [userId], references: [id])
+
+  @@map("notifications")
+}
+
+// ─── CMS / Config ───
+
+model SiteConfig {
+  key       String   @id @db.VarChar(100)
+  value     String?  @db.Text
+  updatedAt DateTime @default(now()) @map("updated_at")
+
+  @@map("site_config")
+}
+
+model SiteSetting {
+  key       String   @id @db.VarChar(100)
+  value     String?  @db.Text
+  updatedAt DateTime @default(now()) @map("updated_at")
+
+  @@map("site_settings")
+}
+
+model SuccessStory {
+  id         Int      @id @default(autoincrement())
+  title      String?  @db.VarChar(255)
+  location   String?  @db.VarChar(100)
+  description String? @db.Text
+  imageUrl   String?  @map("image_url") @db.Text
+  category   String?  @db.VarChar(50)
+  createdAt  DateTime @default(now()) @map("created_at")
+
+  @@map("success_stories")
+}
+
+model SiteReview {
+  id         Int      @id @default(autoincrement())
+  name       String?  @db.VarChar(255)
+  role       String?  @db.VarChar(255)
+  location   String?  @db.VarChar(255)
+  quote      String?  @db.Text
+  avatarUrl  String?  @map("avatar_url") @db.Text
+  rating     Int?     @default(5)
+  isFeatured Boolean? @default(false) @map("is_featured")
+  createdAt  DateTime @default(now()) @map("created_at")
+
+  @@map("site_reviews")
+}
+
+// ─── Admin ───
+
+model AdminUser {
+  id           Int      @id @default(autoincrement())
+  email        String   @unique @db.VarChar(255)
+  passwordHash String  @map("password_hash") @db.VarChar(255)
+  name         String?  @default("Administrator") @db.VarChar(255)
+  active       Boolean? @default(true)
+  createdAt    DateTime @default(now()) @map("created_at")
+  lastLoginAt  DateTime? @map("last_login_at")
+
+  @@map("admin_users")
+}
+
+// ─── Rep Checkins / Timeslots / Reviews ───
+
+model RepCheckin {
+  id        Int      @id @default(autoincrement())
+  repId     Int?     @map("rep_id")
+  selfieUrl String?  @map("selfie_url") @db.Text
+  lat       Decimal? @db.Decimal(10, 8)
+  lng       Decimal? @db.Decimal(11, 8)
+  createdAt DateTime @default(now()) @map("created_at")
+
+  rep Representative? @relation(fields: [repId], references: [id])
+
+  @@map("rep_checkins")
+}
+
+model RepTimeslot {
+  id        Int      @id @default(autoincrement())
+  repId     Int?     @map("rep_id")
+  dayOfWeek Int?     @map("day_of_week")
+  startTime String?  @map("start_time") @db.VarChar(10)
+  endTime   String?  @map("end_time") @db.VarChar(10)
+  createdAt DateTime @default(now()) @map("created_at")
+
+  rep Representative? @relation(fields: [repId], references: [id])
+
+  @@map("rep_timeslots")
+}
+
+model RepReview {
+  id            Int      @id @default(autoincrement())
+  repId         Int?     @map("rep_id")
+  incidentCode  String?  @map("incident_code") @db.VarChar(50)
+  author        String?  @db.VarChar(255)
+  rating        Int?     @default(5)
+  comment       String?  @db.Text
+  createdAt     DateTime @default(now()) @map("created_at")
+
+  rep Representative? @relation(fields: [repId], references: [id])
+
+  @@map("rep_reviews")
+}
