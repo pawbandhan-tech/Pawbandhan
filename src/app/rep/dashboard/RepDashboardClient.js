@@ -25,6 +25,16 @@ export default function RepDashboardClient() {
     loadAll(stored);
   }, [router]);
 
+  useEffect(() => {
+    const ssoToken = sessionStorage.getItem('pb_portal_token');
+    if (ssoToken && !sessionStorage.getItem('representative_uid')) {
+      fetch('/api/reps/me', { headers: { Authorization: `Bearer ${ssoToken}` } })
+        .then(r => r.json())
+        .then(d => { if (d.uid) { sessionStorage.setItem('representative_uid', d.uid); setUid(d.uid); loadAll(d.uid); } })
+        .catch(() => {});
+    }
+  }, []);
+
   async function loadAll(u) {
     setLoading(true);
     try {

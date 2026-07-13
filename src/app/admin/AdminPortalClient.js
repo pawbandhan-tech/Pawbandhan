@@ -58,6 +58,11 @@ export default function AdminPortalClient() {
   const [editingCmsItem, setEditingCmsItem] = useState(null);
   const [showCmsModal, setShowCmsModal] = useState(false);
 
+  // Team state
+  const [teamMembers, setTeamMembers] = useState([]);
+  const [editingMember, setEditingMember] = useState(null);
+  const [showCreateMember, setShowCreateMember] = useState(false);
+
   // Account creation modals
   const [showCreateUser, setShowCreateUser] = useState(false);
   const [showCreateNgo, setShowCreateNgo] = useState(false);
@@ -126,6 +131,9 @@ export default function AdminPortalClient() {
       } else if (t === 'reviews') {
         const [rv, sc] = await Promise.all([adminFetch('/api/admin/reviews').then(r => r.json()), adminFetch('/api/admin/site-config').then(r => r.json())]);
         setReviews(Array.isArray(rv) ? rv : []); setSiteConfig(sc || {});
+      } else if (t === 'team') {
+        const tm = await adminFetch('/api/admin/team').then(r => r.json());
+        setTeamMembers(Array.isArray(tm) ? tm : []);
       } else if (t === 'cms') {
         const cms = await adminFetch('/api/admin/cms').then(r => r.json());
         setCmsData(cms || {});
@@ -162,6 +170,7 @@ export default function AdminPortalClient() {
     { key: 'onboarding', icon: 'fa-user-check', label: 'Onboarding' },
     { key: 'stories', icon: 'fa-book-open', label: 'Stories' },
     { key: 'reviews', icon: 'fa-star', label: 'Reviews' },
+    { key: 'team', icon: 'fa-people-group', label: 'Team' },
     { key: 'cms', icon: 'fa-newspaper', label: 'CMS' },
     { key: 'settings', icon: 'fa-gear', label: 'Site Config' },
   ];
@@ -1305,6 +1314,92 @@ export default function AdminPortalClient() {
               </div>
             )}
 
+            {/* TEAM TAB */}
+            {tab === 'team' && (
+              <div>
+                <div style={{ marginBottom: 16, display: 'flex', gap: 12 }}>
+                  {canCreate && <button className="btn btn-primary" onClick={() => { setEditingMember(null); setShowCreateMember(true); }}><i className="fas fa-plus"></i> Add Team Member</button>}
+                </div>
+                
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: 16 }}>
+                  {teamMembers.map(m => (
+                    <div key={m.id} className="glass" style={{ padding: 20, textAlign: 'center' }}>
+                      <div style={{ width: 80, height: 80, borderRadius: '50%', margin: '0 auto 12px', overflow: 'hidden', background: 'var(--color-pb-border)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                        {m.photoUrl ? <img src={m.photoUrl} alt={m.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} /> : <i className="fas fa-user" style={{ fontSize: 32, color: 'var(--color-pb-text-muted)' }}></i>}
+                      </div>
+                      <h4 style={{ fontWeight: 700, margin: '0 0 4px' }}>{m.name}</h4>
+                      <div style={{ fontSize: '0.82rem', color: 'var(--color-pb-primary)', fontWeight: 600, marginBottom: 4 }}>{m.role}</div>
+                      {m.department && <div style={{ fontSize: '0.78rem', color: 'var(--color-pb-text-muted)' }}>{m.department}</div>}
+                      <div style={{ display: 'flex', gap: 6, justifyContent: 'center', marginTop: 12 }}>
+                        {canCreate && <button className="btn btn-secondary btn-sm" onClick={() => { setEditingMember(m); setShowCreateMember(true); }}><i className="fas fa-pen"></i></button>}
+                        {canDelete && <button className="btn btn-ghost btn-sm" onClick={async () => { if (confirm('Delete team member?')) { await adminFetch('/api/admin/team', { method: 'POST', body: JSON.stringify({ action: 'delete', id: m.id }) }); loadTab('team'); } }} style={{ color: 'var(--color-pb-danger)' }}><i className="fas fa-trash"></i></button>}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+
+                {/* Create/Edit Member Modal */}
+                {showCreateMember && (
+                  <div className="modal-overlay" onClick={() => { setShowCreateMember(false); setEditingMember(null); }}>
+                    <div className="modal-content modal-sm" onClick={e => e.stopPropagation()}>
+                      <div className="modal-header">
+                        <h3>{editingMember ? 'Edit Team Member' : 'Add Team Member'}</h3>
+                        <button className="btn btn-ghost btn-icon" onClick={() => { setShowCreateMember(false); setEditingMember(null); }}><i className="fas fa-xmark"></i></button>
+                      </div>
+                      <div className="modal-body" style={{ maxHeight: '65vh', overflowY: 'auto' }}>
+                        <form onSubmit={async (e) => {
+                          e.preventDefault();
+                          const form = new FormData(e.target);
+                          const data = Object.fromEntries(form);
+                          if (editingMember?.id) data.id = editingMember.id;
+                          if (data.sortOrder) data.sortOrder = parseInt(data.sortOrder, 10);
+                          const res = await adminFetch('/api/admin/team', { method: 'POST', body: JSON.stringify(data) });
+                          const json = await res.json();
+                          if (json.ok) { showToast('Team member saved'); setShowCreateMember(false); setEditingMember(null); loadTab('team'); }
+                          else showToast('Failed to save', 'error');
+                        }} style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+                          <div><label className="pb-label">Name</label><input className="pb-input" name="name" defaultValue={editingMember?.name || ''} required /></div>
+                          <div><label className="pb-label">Role / Designation</label><input className="pb-input" name="role" defaultValue={editingMember?.role || ''} required placeholder="e.g. Founder, CEO, Lead Developer" /></div>
+                          <div><label className="pb-label">Department</label><input className="pb-input" name="department" defaultValue={editingMember?.department || ''} placeholder="e.g. Engineering, Design, Operations" /></div>
+                          <div><label className="pb-label">Bio</label><textarea className="pb-textarea" name="bio" defaultValue={editingMember?.bio || ''} rows={3} /></div>
+                          <div><label className="pb-label">Photo URL</label><input className="pb-input" name="photoUrl" defaultValue={editingMember?.photoUrl || ''} placeholder="Paste image URL or upload" /></div>
+                          <div><label className="pb-label">Or Upload Photo</label><input type="file" accept="image/*" onChange={async (e) => {
+                            const file = e.target.files[0];
+                            if (!file) return;
+                            const reader = new FileReader();
+                            reader.onload = (ev) => {
+                              const input = document.querySelector('input[name="photoUrl"]');
+                              if (input) input.value = ev.target.result;
+                            };
+                            reader.readAsDataURL(file);
+                          }} /></div>
+                          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+                            <div><label className="pb-label">Email</label><input className="pb-input" name="email" type="email" defaultValue={editingMember?.email || ''} /></div>
+                            <div><label className="pb-label">Phone</label><input className="pb-input" name="phone" defaultValue={editingMember?.phone || ''} /></div>
+                          </div>
+                          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 12 }}>
+                            <div><label className="pb-label">LinkedIn</label><input className="pb-input" name="linkedin" defaultValue={editingMember?.linkedin || ''} placeholder="URL" /></div>
+                            <div><label className="pb-label">Twitter</label><input className="pb-input" name="twitter" defaultValue={editingMember?.twitter || ''} placeholder="URL" /></div>
+                            <div><label className="pb-label">Instagram</label><input className="pb-input" name="instagram" defaultValue={editingMember?.instagram || ''} placeholder="URL" /></div>
+                          </div>
+                          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+                            <div><label className="pb-label">Sort Order</label><input className="pb-input" name="sortOrder" type="number" defaultValue={editingMember?.sortOrder || 0} /></div>
+                            <div><label className="pb-label">Active</label>
+                              <select className="pb-select" name="active" defaultValue={editingMember?.active !== false ? 'true' : 'false'}>
+                                <option value="true">Visible on site</option>
+                                <option value="false">Hidden</option>
+                              </select>
+                            </div>
+                          </div>
+                          <button type="submit" className="btn btn-primary" style={{ width: '100%' }}><i className="fas fa-save"></i> {editingMember ? 'Update' : 'Add'} Team Member</button>
+                        </form>
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
+
             {/* CMS TAB */}
             {tab === 'cms' && (
               <div>
@@ -1933,6 +2028,133 @@ export default function AdminPortalClient() {
                   </div>
                   <button type="submit" className="btn btn-primary" style={{ alignSelf: 'flex-start' }}><i className="fas fa-save"></i> Save configuration</button>
                 </form>
+                </div>
+
+                {/* Social Media Settings */}
+                <div className="glass" style={{ padding: 28, marginBottom: 24, marginTop: 24 }}>
+                  <h3 style={{ fontFamily: 'var(--font-display)', fontWeight: 700, margin: '0 0 6px' }}>
+                    <i className="fas fa-share-nodes" style={{ marginRight: 8, color: 'var(--color-pb-primary)' }}></i>
+                    Social Media Links
+                  </h3>
+                  <p style={{ fontSize: '0.82rem', color: 'var(--color-pb-text-muted)', marginBottom: 20 }}>
+                    Configure social media links displayed in the footer and about page.
+                  </p>
+                  <form onSubmit={async (e) => {
+                    e.preventDefault();
+                    const form = new FormData(e.target);
+                    const data = Object.fromEntries(form);
+                    const socialData = {};
+                    for (const [k, v] of Object.entries(data)) { socialData['social_' + k] = v; }
+                    const res = await adminFetch('/api/admin/cms', { method: 'POST', body: JSON.stringify(socialData) });
+                    if (res.ok) showToast('Social media links saved');
+                    else showToast('Failed to save', 'error');
+                  }} style={{ display: 'flex', flexDirection: 'column', gap: 14, maxWidth: 600 }}>
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+                      <div><label className="pb-label"><i className="fab fa-instagram" style={{ marginRight: 6 }}></i>Instagram URL</label><input className="pb-input" name="instagram" defaultValue={cmsData.social_instagram || ''} placeholder="https://instagram.com/..." /></div>
+                      <div><label className="pb-label"><i className="fab fa-twitter" style={{ marginRight: 6 }}></i>Twitter / X URL</label><input className="pb-input" name="twitter" defaultValue={cmsData.social_twitter || ''} placeholder="https://twitter.com/..." /></div>
+                      <div><label className="pb-label"><i className="fab fa-facebook" style={{ marginRight: 6 }}></i>Facebook URL</label><input className="pb-input" name="facebook" defaultValue={cmsData.social_facebook || ''} placeholder="https://facebook.com/..." /></div>
+                      <div><label className="pb-label"><i className="fab fa-linkedin" style={{ marginRight: 6 }}></i>LinkedIn URL</label><input className="pb-input" name="linkedin" defaultValue={cmsData.social_linkedin || ''} placeholder="https://linkedin.com/..." /></div>
+                      <div><label className="pb-label"><i className="fab fa-youtube" style={{ marginRight: 6 }}></i>YouTube URL</label><input className="pb-input" name="youtube" defaultValue={cmsData.social_youtube || ''} placeholder="https://youtube.com/..." /></div>
+                      <div><label className="pb-label"><i className="fab fa-github" style={{ marginRight: 6 }}></i>GitHub URL</label><input className="pb-input" name="github" defaultValue={cmsData.social_github || ''} placeholder="https://github.com/..." /></div>
+                      <div><label className="pb-label"><i className="fab fa-whatsapp" style={{ marginRight: 6 }}></i>WhatsApp Number</label><input className="pb-input" name="whatsapp" defaultValue={cmsData.social_whatsapp || ''} placeholder="+91..." /></div>
+                      <div><label className="pb-label"><i className="fab fa-telegram" style={{ marginRight: 6 }}></i>Telegram URL</label><input className="pb-input" name="telegram" defaultValue={cmsData.social_telegram || ''} placeholder="https://t.me/..." /></div>
+                    </div>
+                    <button type="submit" className="btn btn-primary" style={{ alignSelf: 'flex-start' }}><i className="fas fa-save"></i> Save Social Links</button>
+                  </form>
+                </div>
+
+                {/* About Us Settings */}
+                <div className="glass" style={{ padding: 28, marginBottom: 24 }}>
+                  <h3 style={{ fontFamily: 'var(--font-display)', fontWeight: 700, margin: '0 0 6px' }}>
+                    <i className="fas fa-info-circle" style={{ marginRight: 8, color: 'var(--color-pb-primary)' }}></i>
+                    About Us / Page Content
+                  </h3>
+                  <p style={{ fontSize: '0.82rem', color: 'var(--color-pb-text-muted)', marginBottom: 20 }}>
+                    Edit the About Us page content, mission statement, and page descriptions.
+                  </p>
+                  <form onSubmit={async (e) => {
+                    e.preventDefault();
+                    const form = new FormData(e.target);
+                    const data = Object.fromEntries(form);
+                    const aboutData = {};
+                    for (const [k, v] of Object.entries(data)) { aboutData['about_' + k] = v; }
+                    const res = await adminFetch('/api/admin/cms', { method: 'POST', body: JSON.stringify(aboutData) });
+                    if (res.ok) showToast('About Us content saved');
+                    else showToast('Failed to save', 'error');
+                  }} style={{ display: 'flex', flexDirection: 'column', gap: 14, maxWidth: 700 }}>
+                    <div><label className="pb-label">Page Title</label><input className="pb-input" name="title" defaultValue={cmsData.about_title || 'About PawBandhan'} /></div>
+                    <div><label className="pb-label">Mission Statement</label><textarea className="pb-textarea" name="mission" defaultValue={cmsData.about_mission || ''} rows={3} placeholder="Our mission is to..." /></div>
+                    <div><label className="pb-label">About Description</label><textarea className="pb-textarea" name="description" defaultValue={cmsData.about_description || ''} rows={5} placeholder="Detailed about us content..." /></div>
+                    <div><label className="pb-label">Vision</label><textarea className="pb-textarea" name="vision" defaultValue={cmsData.about_vision || ''} rows={3} placeholder="Our vision for the future..." /></div>
+                    <div><label className="pb-label">Values</label><textarea className="pb-textarea" name="values" defaultValue={cmsData.about_values || ''} rows={3} placeholder="Compassion, Innovation, Community..." /></div>
+                    <div><label className="pb-label">Founding Story</label><textarea className="pb-textarea" name="story" defaultValue={cmsData.about_story || ''} rows={4} placeholder="How PawBandhan started..." /></div>
+                    <div><label className="pb-label">Copyright Text</label><input className="pb-input" name="copyright" defaultValue={cmsData.about_copyright || 'Designed and Developed by Capture Visual Studios'} /></div>
+                    <button type="submit" className="btn btn-primary" style={{ alignSelf: 'flex-start' }}><i className="fas fa-save"></i> Save About Us</button>
+                  </form>
+                </div>
+
+                {/* Donation Settings */}
+                <div className="glass" style={{ padding: 28, marginBottom: 24 }}>
+                  <h3 style={{ fontFamily: 'var(--font-display)', fontWeight: 700, margin: '0 0 6px' }}>
+                    <i className="fas fa-hand-holding-heart" style={{ marginRight: 8, color: 'var(--color-pb-primary)' }}></i>
+                    Donation Settings
+                  </h3>
+                  <p style={{ fontSize: '0.82rem', color: 'var(--color-pb-text-muted)', marginBottom: 20 }}>
+                    Configure the donation page and platform donation options.
+                  </p>
+                  <form onSubmit={async (e) => {
+                    e.preventDefault();
+                    const form = new FormData(e.target);
+                    const data = Object.fromEntries(form);
+                    const donationData = {};
+                    for (const [k, v] of Object.entries(data)) { donationData['donation_' + k] = v; }
+                    const res = await adminFetch('/api/admin/cms', { method: 'POST', body: JSON.stringify(donationData) });
+                    if (res.ok) showToast('Donation settings saved');
+                    else showToast('Failed to save', 'error');
+                  }} style={{ display: 'flex', flexDirection: 'column', gap: 14, maxWidth: 600 }}>
+                    <div><label className="pb-label">Donate to PawBandhan Title</label><input className="pb-input" name="platform_title" defaultValue={cmsData.donation_platform_title || 'Support PawBandhan'} /></div>
+                    <div><label className="pb-label">Platform Donation Description</label><textarea className="pb-textarea" name="platform_desc" defaultValue={cmsData.donation_platform_desc || ''} rows={3} placeholder="Help us keep the platform running..." /></div>
+                    <div><label className="pb-label">UPI ID for Direct Donations</label><input className="pb-input" name="upi_id" defaultValue={cmsData.donation_upi_id || ''} placeholder="pawbandhan@upi" /></div>
+                    <div><label className="pb-label">Bank Account (for large donations)</label><input className="pb-input" name="bank_details" defaultValue={cmsData.donation_bank_details || ''} placeholder="Account details..." /></div>
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+                      <div><label className="pb-label">Min Donation Amount (₹)</label><input className="pb-input" name="min_amount" type="number" defaultValue={cmsData.donation_min_amount || '10'} /></div>
+                      <div><label className="pb-label">Platform Fee (%)</label><input className="pb-input" name="platform_fee_pct" type="number" defaultValue={cmsData.donation_platform_fee_pct || '0'} min="0" max="100" /></div>
+                    </div>
+                    <button type="submit" className="btn btn-primary" style={{ alignSelf: 'flex-start' }}><i className="fas fa-save"></i> Save Donation Settings</button>
+                  </form>
+                </div>
+
+                {/* Page-specific Maintenance Mode */}
+                <div className="glass" style={{ padding: 28 }}>
+                  <h3 style={{ fontFamily: 'var(--font-display)', fontWeight: 700, margin: '0 0 6px' }}>
+                    <i className="fas fa-wrench" style={{ marginRight: 8, color: 'var(--color-pb-danger)' }}></i>
+                    Maintenance Mode
+                  </h3>
+                  <p style={{ fontSize: '0.82rem', color: 'var(--color-pb-text-muted)', marginBottom: 20 }}>
+                    Enable maintenance mode per page. Pages in maintenance show a custom message to visitors.
+                  </p>
+                  <form onSubmit={async (e) => {
+                    e.preventDefault();
+                    const form = new FormData(e.target);
+                    const pages = ['home', 'donate', 'about', 'auth', 'dashboard', 'doctor', 'ngo', 'rep'];
+                    const data = {};
+                    pages.forEach(p => { data['maintenance_' + p] = form.get(p) === 'on' ? 'true' : 'false'; });
+                    data['maintenance_message'] = form.get('message') || 'We are currently performing maintenance. Please check back later.';
+                    const res = await adminFetch('/api/admin/cms', { method: 'POST', body: JSON.stringify(data) });
+                    if (res.ok) showToast('Maintenance settings saved');
+                    else showToast('Failed to save', 'error');
+                  }} style={{ display: 'flex', flexDirection: 'column', gap: 14, maxWidth: 600 }}>
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+                      {['home', 'donate', 'about', 'auth', 'dashboard', 'doctor', 'ngo', 'rep'].map(page => (
+                        <label key={page} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '10px 14px', borderRadius: 8, border: '1px solid var(--color-pb-border)', cursor: 'pointer' }}>
+                          <input type="checkbox" name={page} defaultChecked={cmsData['maintenance_' + page] === 'true'} style={{ width: 18, height: 18 }} />
+                          <span style={{ fontSize: '0.88rem', fontWeight: 500, textTransform: 'capitalize' }}>{page}</span>
+                        </label>
+                      ))}
+                    </div>
+                    <div><label className="pb-label">Maintenance Message</label><textarea className="pb-textarea" name="message" defaultValue={cmsData.maintenance_message || 'We are currently performing maintenance. Please check back later.'} rows={2} /></div>
+                    <button type="submit" className="btn btn-primary" style={{ alignSelf: 'flex-start' }}><i className="fas fa-save"></i> Save Maintenance Settings</button>
+                  </form>
                 </div>
               </div>
             )}

@@ -433,6 +433,27 @@ model CaseExpense {
   @@map("case_expenses")
 }
 
+// ─── Team Members ───
+
+model TeamMember {
+  id            Int      @id @default(autoincrement())
+  name          String?  @db.VarChar(255)
+  role          String?  @db.VarChar(100)
+  department    String?  @db.VarChar(100)
+  bio           String?  @db.Text
+  photoUrl      String?  @map("photo_url") @db.Text
+  email         String?  @db.VarChar(255)
+  phone         String?  @db.VarChar(20)
+  linkedin      String?  @db.VarChar(255)
+  twitter       String?  @db.VarChar(255)
+  instagram     String?  @db.VarChar(255)
+  sortOrder     Int?     @default(0) @map("sort_order")
+  active        Boolean? @default(true)
+  createdAt     DateTime @default(now()) @map("created_at")
+
+  @@map("team_members")
+}
+
 // ─── Case Payments ───
 
 model CasePayment {

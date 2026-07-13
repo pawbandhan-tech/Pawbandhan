@@ -182,6 +182,16 @@ export default function DoctorDashboardClient() {
     loadAll(stored);
   }, [router]);
 
+  useEffect(() => {
+    const ssoToken = sessionStorage.getItem('pb_portal_token');
+    if (ssoToken && !sessionStorage.getItem('doctor_uid')) {
+      fetch('/api/doctors/me', { headers: { Authorization: `Bearer ${ssoToken}` } })
+        .then(r => r.json())
+        .then(d => { if (d.uid) { sessionStorage.setItem('doctor_uid', d.uid); setUid(d.uid); loadAll(d.uid); } })
+        .catch(() => {});
+    }
+  }, []);
+
   async function loadAll(u) {
     setLoading(true);
     try {

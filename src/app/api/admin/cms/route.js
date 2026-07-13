@@ -1,7 +1,7 @@
 import { requireAdmin } from '@/lib/admin-auth';
 import prisma from '@/lib/prisma';
 
-const CMS_PREFIXES = ['news_', 'announcement_', 'banner_', 'maintenance_', 'schedule_'];
+const CMS_PREFIXES = ['news_', 'announcement_', 'banner_', 'maintenance_', 'schedule_', 'about_', 'team_', 'social_', 'page_', 'donation_'];
 
 function isCmsKey(key) {
   return CMS_PREFIXES.some(prefix => key.startsWith(prefix));

@@ -336,6 +336,16 @@ export default function DashboardClient() {
   }, [router]);
 
   useEffect(() => {
+    const ssoToken = sessionStorage.getItem('pb_portal_token');
+    if (ssoToken && !sessionStorage.getItem('customer_uid') && !sessionStorage.getItem('portal_customer_uid')) {
+      fetch('/api/users/me', { headers: { Authorization: `Bearer ${ssoToken}` } })
+        .then(r => r.json())
+        .then(d => { if (d.uid) { sessionStorage.setItem('customer_uid', d.uid); setUid(d.uid); loadDashboard(d.uid); } })
+        .catch(() => {});
+    }
+  }, []);
+
+  useEffect(() => {
     if (!showReport) return;
     setLiveLocation({ status: 'detecting', lat: '', lng: '', address: '' });
     if (!navigator.geolocation) { setLiveLocation(prev => ({ ...prev, status: 'unavailable' })); return; }

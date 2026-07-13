@@ -2,7 +2,7 @@ import { verifyAdminToken } from '@/lib/admin-auth';
 import { NextResponse } from 'next/server';
 import jwt from 'jsonwebtoken';
 
-const JWT_SECRET = process.env.JWT_SECRET || 'pawbandhan-secret';
+const JWT_SECRET = process.env.ADMIN_JWT_SECRET || process.env.JWT_SECRET || 'pawbandhan-dev-secret';
 
 export async function POST(request) {
   try {
