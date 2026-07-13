@@ -22,6 +22,8 @@ export default function DashboardClient() {
   const [toast, setToast] = useState(null);
   const [liveLocation, setLiveLocation] = useState({ status: 'detecting', lat: '', lng: '', address: '' });
   const fileInputRef = useRef(null);
+  const [profileForm, setProfileForm] = useState({ name: '', phone: '', gender: '' });
+  const [savingProfile, setSavingProfile] = useState(false);
 
   useEffect(() => {
     const stored = sessionStorage.getItem('customer_uid') || sessionStorage.getItem('portal_customer_uid');
@@ -73,6 +75,32 @@ export default function DashboardClient() {
   }
 
   function showToast(msg, type = 'success') { setToast({ msg, type }); setTimeout(() => setToast(null), 3000); }
+
+  useEffect(() => {
+    if (profile) {
+      setProfileForm({ name: profile.name || '', phone: profile.phone || '', gender: profile.gender || '' });
+    }
+  }, [profile]);
+
+  async function handleSaveProfile() {
+    if (!uid) return;
+    setSavingProfile(true);
+    try {
+      const res = await fetch(`/api/users/${uid}/profile`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(profileForm),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Save failed');
+      setProfile(prev => ({ ...prev, ...profileForm }));
+      showToast('Profile updated');
+      setShowProfile(false);
+    } catch (err) {
+      showToast(err.message, 'error');
+    }
+    setSavingProfile(false);
+  }
 
   async function getCurrentLocation() {
     return new Promise((resolve) => {
@@ -138,8 +166,9 @@ export default function DashboardClient() {
       {/* Header */}
       <header style={{
         background: 'rgba(255,255,255,0.85)', backdropFilter: 'blur(20px)', WebkitBackdropFilter: 'blur(20px)',
-        borderBottom: '1px solid var(--color-pb-border)', padding: '16px 24px',
+        borderBottom: '1px solid var(--color-pb-border)',         padding: '16px 20px',
         display: 'flex', alignItems: 'center', justifyContent: 'space-between', position: 'sticky', top: 0, zIndex: 100,
+        flexWrap: 'wrap', gap: 8,
       }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
           <div style={{ width: 36, height: 36, borderRadius: 10, background: 'linear-gradient(135deg, var(--color-pb-primary), var(--color-pb-accent))', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff' }}>
@@ -182,7 +211,7 @@ export default function DashboardClient() {
         </div>
 
         {/* Quick Actions */}
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 14, marginBottom: 28 }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))', gap: 14, marginBottom: 28 }}>
           <button className="glass" style={{ padding: '20px 16px', textAlign: 'left', cursor: 'pointer', border: 'none', fontFamily: 'inherit' }} onClick={() => setShowReport(true)}>
             <div style={{ width: 40, height: 40, borderRadius: 12, background: 'rgba(27,107,82,0.1)', color: 'var(--color-pb-primary)', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 12 }}>
               <i className="fas fa-paw"></i>
@@ -343,13 +372,27 @@ export default function DashboardClient() {
             </div>
             <div className="modal-body">
               <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
-                <div><label className="pb-label">Name</label><input className="pb-input" defaultValue={profile?.name || ''} /></div>
-                <div><label className="pb-label">Email</label><input className="pb-input" defaultValue={profile?.email || ''} disabled /></div>
-                <div><label className="pb-label">Phone</label><input className="pb-input" defaultValue={profile?.phone || ''} /></div>
-                <div><label className="pb-label">Gender</label><select className="pb-select" defaultValue={profile?.gender || ''}>
-                  <option value="">Select</option><option value="male">Male</option><option value="female">Female</option><option value="other">Other</option>
-                </select></div>
-                <button className="btn btn-primary" style={{ width: '100%' }}><i className="fas fa-save"></i> Save Profile</button>
+                <div>
+                  <label className="pb-label">Name</label>
+                  <input className="pb-input" value={profileForm.name} onChange={e => setProfileForm(f => ({ ...f, name: e.target.value }))} />
+                </div>
+                <div>
+                  <label className="pb-label">Email</label>
+                  <input className="pb-input" value={profile?.email || ''} disabled />
+                </div>
+                <div>
+                  <label className="pb-label">Phone</label>
+                  <input className="pb-input" value={profileForm.phone} onChange={e => setProfileForm(f => ({ ...f, phone: e.target.value }))} />
+                </div>
+                <div>
+                  <label className="pb-label">Gender</label>
+                  <select className="pb-select" value={profileForm.gender} onChange={e => setProfileForm(f => ({ ...f, gender: e.target.value }))}>
+                    <option value="">Select</option><option value="male">Male</option><option value="female">Female</option><option value="other">Other</option>
+                  </select>
+                </div>
+                <button className="btn btn-primary" style={{ width: '100%' }} onClick={handleSaveProfile} disabled={savingProfile}>
+                  {savingProfile ? <><i className="fas fa-spinner fa-spin"></i> Saving…</> : <><i className="fas fa-save"></i> Save Profile</>}
+                </button>
               </div>
             </div>
           </div>

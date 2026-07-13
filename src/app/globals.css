@@ -678,6 +678,10 @@ body.pb-public {
   .pb-card-grid { grid-template-columns: 1fr; }
   .pb-nav-links { display: none; }
   .pb-nav-hamburger { display: flex !important; }
+  .modal-overlay { padding: 12px; align-items: flex-end; }
+  .modal-content { border-radius: 20px 20px 0 0; max-height: 85vh; }
+  .modal-header { padding: 20px 20px 0; }
+  .modal-body { padding: 16px 20px 24px; }
 }
 
 /* ─── Scrollbar ─── */
