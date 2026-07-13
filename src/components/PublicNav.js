@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
+import SiteLogo from '@/components/SiteLogo';
 
 export default function PublicNav() {
   const [scrolled, setScrolled] = useState(false);
@@ -17,9 +18,7 @@ export default function PublicNav() {
     <nav className={`pb-nav ${scrolled ? 'scrolled' : ''}`}>
       <div className="pb-nav-inner">
         <Link href="/" className="pb-nav-brand">
-          <div className="pb-nav-brand-icon">
-            <i className="fas fa-paw"></i>
-          </div>
+          <SiteLogo size={36} />
           <span className="pb-nav-brand-text">PawBandhan</span>
         </Link>
         <div className="pb-nav-links">

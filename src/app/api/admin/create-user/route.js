@@ -3,6 +3,7 @@ import { v4 as uuidv4 } from "uuid";
 import bcrypt from "bcryptjs";
 import prisma from "@/lib/prisma";
 import { requireAdmin } from "@/lib/admin-auth";
+import { generateId } from "@/lib/generate-id";
 
 export async function POST(request) {
   try {
@@ -55,6 +56,7 @@ export async function POST(request) {
           passwordHash,
           name,
           active: true,
+          role: role,
         },
       });
 
@@ -94,7 +96,7 @@ export async function POST(request) {
 
       const uid = uuidv4();
       const passwordHash = await bcrypt.hash(password, 12);
-      const accountNo = `ACC-${Date.now()}`;
+      const accountNo = generateId('PB-ACC');
 
       const user = await prisma.user.create({
         data: {
@@ -164,7 +166,7 @@ export async function POST(request) {
         phoneNo: phone,
         email,
         passwordHash,
-        accountNo: `ACC-${Date.now()}`,
+        accountNo: generateId('PB-ACC'),
         role,
         status: "pending",
       },

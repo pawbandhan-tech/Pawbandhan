@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
+import SiteLogo from '@/components/SiteLogo';
 
 function adminFetch(url, opts = {}) {
   const token = sessionStorage.getItem('pb_admin_token');
@@ -54,12 +55,35 @@ export default function AdminPortalClient() {
   // Logo preview
   const [logoPreview, setLogoPreview] = useState('');
 
+  // Role-based permission checks
+  const adminRole = admin?.role || sessionStorage.getItem('pb_admin_role') || 'admin';
+  const isViewer = adminRole === 'viewer';
+  const isStaff = adminRole === 'staff';
+  const isRestricted = isViewer || isStaff;
+  const canCreate = adminRole === 'admin' || adminRole === 'co-admin';
+  const canDelete = adminRole === 'admin';
+  const canEditSettings = adminRole === 'admin';
+
+  function checkPermission(permission) {
+    const PERMS = {
+      admin: ['*'],
+      'co-admin': ['users.view', 'users.create', 'users.edit', 'cases.view', 'cases.edit', 'ngos.view', 'ngos.edit', 'kyc.view', 'kyc.review', 'cms.edit', 'stories.edit', 'reviews.edit', 'settings.view'],
+      staff: ['cases.view', 'cases.edit', 'ngos.view', 'kyc.view', 'kyc.review', 'stories.view', 'reviews.view'],
+      viewer: ['cases.view', 'ngos.view'],
+    };
+    const perms = PERMS[adminRole] || [];
+    if (perms.includes('*')) return true;
+    return perms.includes(permission);
+  }
+
+  function showPermDenied() { showToast('Insufficient permissions for this action', 'error'); }
+
   useEffect(() => {
     const token = sessionStorage.getItem('pb_admin_token');
     if (!token) { router.push('/admin/login'); return; }
     fetch('/api/admin/me', { headers: { Authorization: `Bearer ${token}` } })
       .then(r => { if (!r.ok) throw new Error(); return r.json(); })
-      .then(d => setAdmin(d.admin))
+      .then(d => { setAdmin(d.admin); sessionStorage.setItem('pb_admin_role', d.admin.role || 'admin'); })
       .catch(() => { sessionStorage.removeItem('pb_admin_token'); router.push('/admin/login'); });
   }, [router]);
 
@@ -130,6 +154,7 @@ export default function AdminPortalClient() {
 
   async function saveSiteConfig(e) {
     e.preventDefault();
+    if (!canEditSettings) { showPermDenied(); return; }
     const form = new FormData(e.target);
     const data = {};
     form.forEach((v, k) => { if (v) data[k] = v; });
@@ -173,6 +198,7 @@ export default function AdminPortalClient() {
   }
 
   async function toggleUserStatus(user) {
+    if (!canCreate) { showPermDenied(); return; }
     const newStatus = user.status === 'active' ? 'suspended' : 'active';
     const res = await adminFetch('/api/admin/update-user', { method: 'POST', body: JSON.stringify({ id: user.id, status: newStatus }) });
     if (res.ok) { showToast(`User ${newStatus === 'active' ? 'activated' : 'suspended'}`); loadTab('accounts'); }
@@ -285,6 +311,7 @@ export default function AdminPortalClient() {
 
   // CMS functions
   async function saveCmsCollectionItem(collectionKey, itemData, itemId) {
+    if (!checkPermission('cms.edit')) { showPermDenied(); return; }
     const action = itemId ? 'update' : 'create';
     const res = await adminFetch('/api/admin/cms', {
       method: 'POST',
@@ -377,16 +404,18 @@ export default function AdminPortalClient() {
       {/* Sidebar */}
       <aside className="portal-sidebar">
         <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 28, padding: '0 4px' }}>
-          <div style={{ width: 36, height: 36, borderRadius: 10, background: 'linear-gradient(135deg, var(--color-pb-primary), var(--color-pb-accent))', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff' }}>
-            <i className="fas fa-paw"></i>
-          </div>
+          <SiteLogo size={36} />
           <div>
             <div style={{ fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: '1rem' }}>PawBandhan</div>
             <div style={{ fontSize: '0.7rem', color: 'var(--color-pb-text-muted)' }}>Admin Portal</div>
           </div>
         </div>
 
-        {tabs.map(t => (
+        {tabs.filter(t => {
+          if (isViewer) return ['dashboard', 'cases', 'ngos'].includes(t.key);
+          if (isStaff) return !['settings'].includes(t.key);
+          return true;
+        }).map(t => (
           <button key={t.key} className={`sidebar-nav-item ${tab === t.key ? 'active' : ''}`} onClick={() => setTab(t.key)}>
             <i className={`fas ${t.icon}`} style={{ width: 20, textAlign: 'center' }}></i> {t.label}
           </button>
@@ -394,7 +423,14 @@ export default function AdminPortalClient() {
 
         <div style={{ flex: 1 }}></div>
         <div style={{ padding: '12px 4px', borderTop: '1px solid var(--color-pb-border)' }}>
-          <div style={{ fontSize: '0.78rem', color: 'var(--color-pb-text-muted)', marginBottom: 4 }}>{admin.email}</div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 4 }}>
+            <span style={{ fontSize: '0.78rem', color: 'var(--color-pb-text-muted)' }}>{admin.email}</span>
+          </div>
+          <div style={{ marginBottom: 6 }}>
+            <span className={`badge ${adminRole === 'admin' ? 'badge-green' : adminRole === 'co-admin' ? 'badge-blue' : adminRole === 'staff' ? 'badge-gold' : 'badge-orange'}`} style={{ fontSize: '0.7rem', textTransform: 'capitalize' }}>
+              {adminRole}
+            </span>
+          </div>
           <button className="sidebar-nav-item" onClick={logout} style={{ color: 'var(--color-pb-danger)' }}>
             <i className="fas fa-right-from-bracket" style={{ width: 20, textAlign: 'center' }}></i> Sign out
           </button>
@@ -486,12 +522,12 @@ export default function AdminPortalClient() {
             {tab === 'accounts' && (
               <div>
                 <div style={{ marginBottom: 16, display: 'flex', gap: 12, flexWrap: 'wrap', alignItems: 'center' }}>
-                  <input className="pb-input" placeholder="Search by name, email, or type…" value={searchQuery} onChange={e => setSearchQuery(e.target.value)} style={{ maxWidth: 400 }} />
+                  <input className="pb-input" placeholder="Search by name, email, or type..." value={searchQuery} onChange={e => setSearchQuery(e.target.value)} style={{ maxWidth: 400 }} />
                   <span style={{ fontSize: '0.82rem', color: 'var(--color-pb-text-muted)' }}>{filteredAccounts.length} accounts</span>
                   <div style={{ flex: 1 }}></div>
-                  <button className="btn btn-primary" onClick={() => setShowCreateUser(true)}><i className="fas fa-plus"></i> Create User</button>
-                  <button className="btn btn-secondary" onClick={() => setShowCreateDoctor(true)}><i className="fas fa-user-md"></i> Create Doctor</button>
-                  <button className="btn btn-secondary" onClick={() => setShowCreateRider(true)}><i className="fas fa-motorcycle"></i> Create Rider</button>
+                  {canCreate && <button className="btn btn-primary" onClick={() => setShowCreateUser(true)}><i className="fas fa-plus"></i> Create User</button>}
+                  {canCreate && <button className="btn btn-secondary" onClick={() => setShowCreateDoctor(true)}><i className="fas fa-user-md"></i> Create Doctor</button>}
+                  {canCreate && <button className="btn btn-secondary" onClick={() => setShowCreateRider(true)}><i className="fas fa-motorcycle"></i> Create Rider</button>}
                 </div>
                 <div className="glass" style={{ padding: 0, overflow: 'hidden' }}>
                   <div style={{ overflowX: 'auto' }}>
@@ -634,7 +670,7 @@ export default function AdminPortalClient() {
                 )}
 
                 <div style={{ marginBottom: 16 }}>
-                  <button className="btn btn-primary" onClick={() => setShowCreateNgo(true)}><i className="fas fa-plus"></i> Create NGO</button>
+                  {canCreate && <button className="btn btn-primary" onClick={() => setShowCreateNgo(true)}><i className="fas fa-plus"></i> Create NGO</button>}
                 </div>
                 <div className="glass" style={{ padding: 24 }}>
                   {ngos.length === 0 ? <p style={{ color: 'var(--color-pb-text-muted)' }}>No NGOs found.</p> : (
@@ -994,7 +1030,7 @@ export default function AdminPortalClient() {
                     </div>
                   </div>
                 )}
-                <button className="btn btn-primary" style={{ marginBottom: 16 }} onClick={() => setEditingStory({})}><i className="fas fa-plus"></i> New story</button>
+                <button className="btn btn-primary" style={{ marginBottom: 16 }} onClick={() => { if (!checkPermission('stories.edit')) { showPermDenied(); return; } setEditingStory({}); }}><i className="fas fa-plus"></i> New story</button>
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: 16 }}>
                   {stories.map(s => (
                     <div key={s.id} className="glass" style={{ padding: 20 }}>
@@ -1030,7 +1066,7 @@ export default function AdminPortalClient() {
                     </div>
                   </div>
                 )}
-                <button className="btn btn-primary" style={{ marginBottom: 16 }} onClick={() => setEditingReview({})}><i className="fas fa-plus"></i> New review</button>
+                <button className="btn btn-primary" style={{ marginBottom: 16 }} onClick={() => { if (!checkPermission('reviews.edit')) { showPermDenied(); return; } setEditingReview({}); }}><i className="fas fa-plus"></i> New review</button>
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: 16 }}>
                   {reviews.map(r => (
                     <div key={r.id} className="glass" style={{ padding: 20 }}>

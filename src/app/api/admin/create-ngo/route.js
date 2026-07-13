@@ -2,14 +2,7 @@ import { NextResponse } from "next/server";
 import { v4 as uuidv4 } from "uuid";
 import prisma from "@/lib/prisma";
 import { requireAdmin } from "@/lib/admin-auth";
-
-function generateRandomDigits(length) {
-  let result = "";
-  for (let i = 0; i < length; i++) {
-    result += Math.floor(Math.random() * 10).toString();
-  }
-  return result;
-}
+import { generateId } from "@/lib/generate-id";
 
 export async function POST(request) {
   try {
@@ -37,43 +30,43 @@ export async function POST(request) {
     }
 
     const uid = uuidv4();
-    const suffix = generateRandomDigits(4);
 
-    const user = await prisma.user.create({
-      data: {
-        uid,
-        firstName: name,
-        middleName: "",
-        lastName: "",
-        phoneNo: phone,
-        email,
-        passwordHash: "",
-        accountNo: `ACC-${Date.now()}`,
-        role: "ngo",
-        status: "pending",
-      },
-    });
-
-    const ngo = await prisma.nGO.create({
-      data: {
-        uid,
-        name,
-        email,
-        phone,
-        ngoType: ngoType || "",
-        regNumber: regNumber || "",
-        panNumber: panNumber || "",
-        address: address || "",
-        city: city || "",
-        state: state || "",
-        serviceArea: serviceArea || "",
-        workType: workType || "",
-        status: "pending",
-        prn: `PRN-${suffix}`,
-        tempPrn: `TEMP-${generateRandomDigits(4)}`,
-        ackNo: `ACK-${generateRandomDigits(4)}`,
-      },
-    });
+    const [user, ngo] = await prisma.$transaction([
+      prisma.user.create({
+        data: {
+          uid,
+          firstName: name,
+          middleName: "",
+          lastName: "",
+          phoneNo: phone,
+          email,
+          passwordHash: "",
+          accountNo: `ACC-${Date.now()}`,
+          role: "ngo",
+          status: "pending",
+        },
+      }),
+      prisma.nGO.create({
+        data: {
+          uid,
+          name,
+          email,
+          phone,
+          ngoType: ngoType || "",
+          regNumber: regNumber || "",
+          panNumber: panNumber || "",
+          address: address || "",
+          city: city || "",
+          state: state || "",
+          serviceArea: serviceArea || "",
+          workType: workType || "",
+          status: "pending",
+          prn: generateId('PB-PRN'),
+          tempPrn: generateId('PB-PRN'),
+          ackNo: generateId('PB-PRN'),
+        },
+      }),
+    ]);
 
     return NextResponse.json({
       success: true,

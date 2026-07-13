@@ -12,7 +12,7 @@ export async function seedAdmin() {
     const existing = await prisma.adminUser.findUnique({ where: { email } });
     if (!existing) {
       const hash = await bcrypt.hash(password, 12);
-      await prisma.adminUser.create({ data: { email, passwordHash: hash, name: 'Administrator' } });
+      await prisma.adminUser.create({ data: { email, passwordHash: hash, name: 'Administrator', role: 'admin' } });
       console.log('[auth] seeded admin:', email);
     }
   } catch (e) {
@@ -22,24 +22,31 @@ export async function seedAdmin() {
 
 export function signAdminToken(admin) {
   return jwt.sign(
-    { sub: admin.id, email: admin.email, role: 'admin', name: admin.name },
+    { sub: admin.id, email: admin.email, role: admin.role || 'admin', name: admin.name },
     JWT_SECRET,
     { expiresIn: JWT_EXPIRES }
   );
 }
 
-export function verifyAdminToken(token) {
-  return jwt.verify(token, JWT_SECRET);
-}
-
-export function requireAdmin(request) {
-  const auth = request.headers.get('authorization');
-  if (!auth || !auth.startsWith('Bearer ')) return null;
+export function verifyAdminToken(tokenOrRequest) {
+  let token;
+  if (typeof tokenOrRequest === 'string') {
+    token = tokenOrRequest;
+  } else {
+    const auth = tokenOrRequest.headers.get('authorization');
+    if (!auth || !auth.startsWith('Bearer ')) return null;
+    token = auth.slice(7);
+  }
   try {
-    const payload = verifyAdminToken(auth.slice(7));
-    if (payload.role !== 'admin') return null;
-    return payload;
+    return jwt.verify(token, JWT_SECRET);
   } catch {
     return null;
   }
+}
+
+export function requireAdmin(request) {
+  const payload = verifyAdminToken(request);
+  if (!payload) return null;
+  if (!payload.role) return null;
+  return payload;
 }

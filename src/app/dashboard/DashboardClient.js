@@ -3,8 +3,117 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
+import SiteLogo from '@/components/SiteLogo';
+import IdBadge from '@/components/IdBadge';
+import { ANIMAL_DATABASE } from '@/lib/animals';
 
-const ANIMAL_TYPES = ['Dog', 'Cat', 'Bird', 'Cow', 'Horse', 'Rabbit', 'Goat', 'Sheep', 'Other'];
+const ANIMAL_ICONS = {
+  dog: 'fa-dog', cat: 'fa-cat', cow: 'fa-cow', horse: 'fa-horse', bird: 'fa-dove',
+  default: 'fa-paw',
+};
+
+function getAnimalIcon(type) {
+  if (!type) return ANIMAL_ICONS.default;
+  const t = type.toLowerCase();
+  if (t.includes('dog') || t.includes('canine')) return ANIMAL_ICONS.dog;
+  if (t.includes('cat') || t.includes('feline')) return ANIMAL_ICONS.cat;
+  if (t.includes('cow') || t.includes('cattle') || t.includes('bovine')) return ANIMAL_ICONS.cow;
+  if (t.includes('horse') || t.includes('equine')) return ANIMAL_ICONS.horse;
+  if (t.includes('bird') || t.includes('avian')) return ANIMAL_ICONS.bird;
+  return ANIMAL_ICONS.default;
+}
+
+function CaseTrackingTimeline({ timeline, currentStatus }) {
+  const idx = timeline.findIndex(t => t.status === currentStatus);
+  const activeIdx = idx >= 0 ? idx : 0;
+
+  return (
+    <div style={{ padding: '4px 0' }}>
+      {timeline.map((step, i) => {
+        const isCompleted = i < activeIdx;
+        const isCurrent = i === activeIdx;
+        const isFuture = i > activeIdx;
+
+        let dotColor = 'var(--color-pb-border)';
+        let lineColor = 'var(--color-pb-border)';
+        let textColor = 'var(--color-pb-text-muted)';
+        let iconColor = 'var(--color-pb-text-muted)';
+
+        if (isCompleted) {
+          dotColor = 'var(--color-pb-primary)';
+          lineColor = 'var(--color-pb-primary)';
+          textColor = 'var(--color-pb-text)';
+          iconColor = 'var(--color-pb-primary)';
+        } else if (isCurrent) {
+          dotColor = step.color === 'green' ? '#22c55e' : step.color === 'red' ? '#ef4444' : 'var(--color-pb-primary)';
+          textColor = 'var(--color-pb-text)';
+          iconColor = dotColor;
+        }
+
+        return (
+          <div key={i} style={{ display: 'flex', gap: 14, position: 'relative', minHeight: isFuture ? 56 : 'auto' }}>
+            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', width: 32, flexShrink: 0 }}>
+              <div style={{
+                width: isCurrent ? 28 : 22,
+                height: isCurrent ? 28 : 22,
+                borderRadius: '50%',
+                background: isCompleted || isCurrent ? dotColor : 'transparent',
+                border: isFuture ? '2px solid var(--color-pb-border)' : 'none',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                flexShrink: 0,
+                animation: isCurrent ? 'pulse-dot 2s ease-in-out infinite' : 'none',
+                boxShadow: isCurrent ? `0 0 0 4px ${dotColor}20` : 'none',
+              }}>
+                {isCompleted ? (
+                  <i className="fas fa-check" style={{ fontSize: '0.6rem', color: '#fff' }}></i>
+                ) : isCurrent ? (
+                  <div style={{ width: 8, height: 8, borderRadius: '50%', background: '#fff' }}></div>
+                ) : (
+                  <i className={`fas ${step.icon || 'fa-circle'}`} style={{ fontSize: '0.5rem', color: iconColor }}></i>
+                )}
+              </div>
+              {i < timeline.length - 1 && (
+                <div style={{
+                  width: 2,
+                  flex: 1,
+                  minHeight: 24,
+                  background: isCompleted ? lineColor : 'var(--color-pb-border)',
+                  margin: '2px 0',
+                }}></div>
+              )}
+            </div>
+            <div style={{ paddingBottom: 20, flex: 1 }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 2 }}>
+                <i className={`fas ${step.icon || 'fa-circle-dot'}`} style={{ fontSize: '0.78rem', color: iconColor }}></i>
+                <span style={{ fontWeight: 700, fontSize: '0.85rem', color: textColor }}>{step.title}</span>
+                {isCurrent && (
+                  <span style={{
+                    fontSize: '0.65rem', fontWeight: 700, textTransform: 'uppercase',
+                    padding: '2px 8px', borderRadius: 20,
+                    background: `${dotColor}15`, color: dotColor, letterSpacing: '0.05em',
+                  }}>current</span>
+                )}
+              </div>
+              {step.description && (
+                <div style={{ fontSize: '0.78rem', color: 'var(--color-pb-text-muted)', lineHeight: 1.4 }}>{step.description}</div>
+              )}
+              <div style={{ fontSize: '0.72rem', color: 'var(--color-pb-text-muted)', marginTop: 2 }}>
+                {step.timestamp ? new Date(step.timestamp).toLocaleString() : ''}
+              </div>
+            </div>
+          </div>
+        );
+      })}
+      {timeline.length === 0 && (
+        <div style={{ textAlign: 'center', padding: 20, color: 'var(--color-pb-text-muted)', fontSize: '0.85rem' }}>
+          No tracking data available yet.
+        </div>
+      )}
+    </div>
+  );
+}
 
 export default function DashboardClient() {
   const router = useRouter();
@@ -24,6 +133,13 @@ export default function DashboardClient() {
   const fileInputRef = useRef(null);
   const [profileForm, setProfileForm] = useState({ name: '', phone: '', gender: '' });
   const [savingProfile, setSavingProfile] = useState(false);
+
+  const [trackingCase, setTrackingCase] = useState(null);
+  const [trackingData, setTrackingData] = useState(null);
+  const [trackingLoading, setTrackingLoading] = useState(false);
+  const [showTracking, setShowTracking] = useState(false);
+
+  const [newCaseCode, setNewCaseCode] = useState(null);
 
   useEffect(() => {
     const stored = sessionStorage.getItem('customer_uid') || sessionStorage.getItem('portal_customer_uid');
@@ -136,10 +252,34 @@ export default function DashboardClient() {
       setReportForm({ animalType: '', description: '', location: '', latitude: '', longitude: '' });
       setReportImages([]);
       loadDashboard(uid);
+
+      if (data.incidentCode) {
+        setNewCaseCode(data.incidentCode);
+        setTimeout(() => openTracking({ incidentCode: data.incidentCode, animalType: reportForm.animalType }), 500);
+      }
     } catch (err) {
       showToast(err.message, 'error');
     }
     setReporting(false);
+  }
+
+  async function openTracking(caseItem) {
+    const code = caseItem.incidentCode;
+    if (!code) return;
+    setTrackingCase(caseItem);
+    setShowTracking(true);
+    setTrackingLoading(true);
+    setTrackingData(null);
+    try {
+      const res = await fetch(`/api/incidents/${code}/tracking`);
+      if (res.ok) {
+        const data = await res.json();
+        setTrackingData(data);
+      }
+    } catch (e) {
+      console.error(e);
+    }
+    setTrackingLoading(false);
   }
 
   function logout() {
@@ -157,23 +297,27 @@ export default function DashboardClient() {
 
   return (
     <div style={{ minHeight: '100vh', background: 'var(--color-pb-bg)' }}>
+      <style>{`
+        @keyframes pulse-dot {
+          0%, 100% { box-shadow: 0 0 0 4px rgba(27,107,82,0.15); }
+          50% { box-shadow: 0 0 0 8px rgba(27,107,82,0.05); }
+        }
+      `}</style>
+
       {toast && (
         <div className="toast-container">
           <div className={`toast toast-${toast.type}`}><i className={`fas ${toast.type === 'success' ? 'fa-check-circle' : 'fa-exclamation-circle'}`}></i>{toast.msg}</div>
         </div>
       )}
 
-      {/* Header */}
       <header style={{
         background: 'rgba(255,255,255,0.85)', backdropFilter: 'blur(20px)', WebkitBackdropFilter: 'blur(20px)',
-        borderBottom: '1px solid var(--color-pb-border)',         padding: '16px 20px',
+        borderBottom: '1px solid var(--color-pb-border)', padding: '16px 20px',
         display: 'flex', alignItems: 'center', justifyContent: 'space-between', position: 'sticky', top: 0, zIndex: 100,
         flexWrap: 'wrap', gap: 8,
       }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-          <div style={{ width: 36, height: 36, borderRadius: 10, background: 'linear-gradient(135deg, var(--color-pb-primary), var(--color-pb-accent))', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff' }}>
-            <i className="fas fa-paw"></i>
-          </div>
+          <SiteLogo size={36} />
           <div>
             <div style={{ fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: '1rem' }}>PawBandhan</div>
             <div style={{ fontSize: '0.7rem', color: 'var(--color-pb-text-muted)' }}>Rescue Dashboard</div>
@@ -194,7 +338,6 @@ export default function DashboardClient() {
       </header>
 
       <div style={{ maxWidth: 900, margin: '0 auto', padding: '24px 20px' }}>
-        {/* Hero Card */}
         <div className="glass-lg" style={{
           padding: '32px 28px', marginBottom: 24,
           background: 'linear-gradient(135deg, rgba(27,107,82,0.08), rgba(212,160,23,0.04))',
@@ -210,7 +353,6 @@ export default function DashboardClient() {
           </p>
         </div>
 
-        {/* Quick Actions */}
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))', gap: 14, marginBottom: 28 }}>
           <button className="glass" style={{ padding: '20px 16px', textAlign: 'left', cursor: 'pointer', border: 'none', fontFamily: 'inherit' }} onClick={() => setShowReport(true)}>
             <div style={{ width: 40, height: 40, borderRadius: 12, background: 'rgba(27,107,82,0.1)', color: 'var(--color-pb-primary)', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 12 }}>
@@ -219,7 +361,10 @@ export default function DashboardClient() {
             <div style={{ fontWeight: 700, fontSize: '0.9rem', marginBottom: 4 }}>Report Rescue</div>
             <div style={{ fontSize: '0.78rem', color: 'var(--color-pb-text-muted)' }}>Report an emergency</div>
           </button>
-          <button className="glass" style={{ padding: '20px 16px', textAlign: 'left', cursor: 'pointer', border: 'none', fontFamily: 'inherit' }} onClick={() => {}}>
+          <button className="glass" style={{ padding: '20px 16px', textAlign: 'left', cursor: 'pointer', border: 'none', fontFamily: 'inherit' }} onClick={() => {
+            const firstCase = cases[0];
+            if (firstCase) openTracking(firstCase);
+          }}>
             <div style={{ width: 40, height: 40, borderRadius: 12, background: 'rgba(212,160,23,0.1)', color: 'var(--color-pb-accent)', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 12 }}>
               <i className="fas fa-folder-open"></i>
             </div>
@@ -235,7 +380,6 @@ export default function DashboardClient() {
           </button>
         </div>
 
-        {/* Cases */}
         <div className="glass" style={{ padding: 24, marginBottom: 24 }}>
           <h3 style={{ fontFamily: 'var(--font-display)', fontWeight: 700, margin: '0 0 16px' }}>My Cases</h3>
           {cases.length === 0 ? (
@@ -243,17 +387,32 @@ export default function DashboardClient() {
           ) : (
             <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
               {cases.map((c, i) => (
-                <div key={i} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '14px 16px', background: 'rgba(27,107,82,0.03)', borderRadius: 14, border: '1px solid var(--color-pb-border)' }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-                    <div style={{ width: 36, height: 36, borderRadius: 10, background: 'rgba(27,107,82,0.1)', color: 'var(--color-pb-primary)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                      <i className="fas fa-paw" style={{ fontSize: '0.85rem' }}></i>
+                <div key={i} onClick={() => openTracking(c)} style={{ cursor: 'pointer', padding: '16px 18px', background: 'rgba(27,107,82,0.03)', borderRadius: 14, border: '1px solid var(--color-pb-border)', transition: 'all 0.2s', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, flexWrap: 'wrap' }}
+                  onMouseEnter={e => { e.currentTarget.style.borderColor = 'var(--color-pb-primary)'; e.currentTarget.style.background = 'rgba(27,107,82,0.06)'; }}
+                  onMouseLeave={e => { e.currentTarget.style.borderColor = 'var(--color-pb-border)'; e.currentTarget.style.background = 'rgba(27,107,82,0.03)'; }}
+                >
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 14, flex: 1 }}>
+                    <div style={{ width: 44, height: 44, borderRadius: 12, background: 'rgba(27,107,82,0.1)', color: 'var(--color-pb-primary)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                      <i className={`fas ${getAnimalIcon(c.animalType)}`} style={{ fontSize: '1rem' }}></i>
                     </div>
-                    <div>
-                      <div style={{ fontWeight: 700, fontSize: '0.88rem' }}>{c.animalType || 'Animal'} — {c.incidentCode || `Case #${c.id}`}</div>
-                      <div style={{ fontSize: '0.78rem', color: 'var(--color-pb-text-muted)' }}>{c.status || c.workflowStatus || 'open'}</div>
+                    <div style={{ flex: 1 }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap', marginBottom: 4 }}>
+                        <span style={{ fontWeight: 700, fontSize: '0.92rem' }}>{c.animalType || 'Animal'}</span>
+                        <IdBadge id={c.incidentCode || `PB-CASE-${c.id}`} />
+                      </div>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                        <span className={`badge ${(c.workflowStatus || c.status || '').includes('closed') || (c.workflowStatus || c.status || '').includes('released') ? 'badge-green' : (c.workflowStatus || c.status || '').includes('rejected') ? 'badge-red' : 'badge-gold'}`}>
+                          {c.workflowStatus || c.status || 'open'}
+                        </span>
+                        <span style={{ fontSize: '0.75rem', color: 'var(--color-pb-text-muted)' }}>
+                          {c.createdAt ? new Date(c.createdAt).toLocaleDateString() : ''}
+                        </span>
+                      </div>
                     </div>
                   </div>
-                  <span className="badge badge-green">{c.workflowStatus || c.status || 'open'}</span>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 6, color: 'var(--color-pb-primary)', fontSize: '0.85rem', fontWeight: 600 }}>
+                    Track <i className="fas fa-chevron-right" style={{ fontSize: '0.7rem' }}></i>
+                  </div>
                 </div>
               ))}
             </div>
@@ -261,7 +420,66 @@ export default function DashboardClient() {
         </div>
       </div>
 
-      {/* Report Modal */}
+      {showTracking && (
+        <div className="modal-overlay" onClick={() => { setShowTracking(false); setTrackingCase(null); setTrackingData(null); }}>
+          <div className="modal-content modal-sm" onClick={e => e.stopPropagation()} style={{ maxWidth: 520, maxHeight: '85vh', overflowY: 'auto' }}>
+            <div className="modal-header">
+              <h3>Track Case</h3>
+              <button className="btn btn-ghost btn-icon" onClick={() => { setShowTracking(false); setTrackingCase(null); setTrackingData(null); }}><i className="fas fa-xmark"></i></button>
+            </div>
+            <div className="modal-body">
+              {trackingLoading ? (
+                <div style={{ textAlign: 'center', padding: 40 }}>
+                  <i className="fas fa-spinner fa-spin" style={{ fontSize: 24, color: 'var(--color-pb-primary)' }}></i>
+                  <div style={{ marginTop: 12, fontSize: '0.85rem', color: 'var(--color-pb-text-muted)' }}>Loading tracking...</div>
+                </div>
+              ) : trackingData ? (
+                <div>
+                  <div style={{ padding: '14px 16px', borderRadius: 14, background: 'rgba(27,107,82,0.04)', border: '1px solid var(--color-pb-border)', marginBottom: 20 }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 10 }}>
+                      <div style={{ width: 40, height: 40, borderRadius: 10, background: 'rgba(27,107,82,0.1)', color: 'var(--color-pb-primary)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                        <i className={`fas ${getAnimalIcon(trackingData.case?.animalType)}`}></i>
+                      </div>
+                      <div>
+                        <div style={{ fontWeight: 700, fontSize: '0.95rem' }}>{trackingData.case?.animalType || 'Animal'}</div>
+                        <IdBadge id={trackingData.case?.incidentCode} />
+                      </div>
+                    </div>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+                      <span className="badge badge-blue">{trackingData.currentStatus || 'reported'}</span>
+                      {trackingData.case?.ngo && <span style={{ fontSize: '0.78rem', color: 'var(--color-pb-text-muted)' }}>Assigned to {trackingData.case.ngo.name}</span>}
+                    </div>
+                  </div>
+
+                  <CaseTrackingTimeline timeline={trackingData.timeline} currentStatus={trackingData.currentStatus} />
+
+                  {trackingData.location && (
+                    <div style={{ marginTop: 16, padding: '12px 14px', borderRadius: 12, background: 'rgba(37,99,235,0.04)', border: '1px solid var(--color-pb-border)' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4 }}>
+                        <i className="fas fa-location-dot" style={{ color: 'var(--color-pb-doctor)', fontSize: '0.85rem' }}></i>
+                        <span style={{ fontSize: '0.82rem', fontWeight: 600 }}>Location</span>
+                      </div>
+                      <div style={{ fontSize: '0.78rem', color: 'var(--color-pb-text-muted)' }}>
+                        Lat: {trackingData.location.lat}, Lng: {trackingData.location.lng}
+                      </div>
+                      {trackingData.location.lat && trackingData.location.lng && (
+                        <a href={`https://www.google.com/maps?q=${trackingData.location.lat},${trackingData.location.lng}`} target="_blank" rel="noopener noreferrer" style={{ fontSize: '0.78rem', color: 'var(--color-pb-primary)', fontWeight: 600, textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: 4, marginTop: 4 }}>
+                          <i className="fas fa-external-link-alt" style={{ fontSize: '0.7rem' }}></i> View on Maps
+                        </a>
+                      )}
+                    </div>
+                  )}
+                </div>
+              ) : (
+                <div style={{ textAlign: 'center', padding: 30, color: 'var(--color-pb-text-muted)', fontSize: '0.88rem' }}>
+                  No tracking data available for this case.
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
       {showReport && (
         <div className="modal-overlay" onClick={() => setShowReport(false)}>
           <div className="modal-content modal-sm" onClick={e => e.stopPropagation()}>
@@ -272,12 +490,11 @@ export default function DashboardClient() {
             <div className="modal-body">
               <form onSubmit={handleReport} style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
 
-                {/* Live Location */}
                 <div style={{ padding: '12px 14px', borderRadius: 12, background: liveLocation.status === 'ready' ? 'rgba(27,107,82,0.06)' : liveLocation.status === 'denied' ? 'rgba(220,38,38,0.06)' : 'rgba(212,160,23,0.06)', border: '1px solid var(--color-pb-border)' }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4 }}>
                     <i className={`fas ${liveLocation.status === 'detecting' ? 'fa-spinner fa-spin' : liveLocation.status === 'ready' ? 'fa-location-dot' : 'fa-triangle-exclamation'}`} style={{ color: liveLocation.status === 'ready' ? 'var(--color-pb-primary)' : liveLocation.status === 'denied' ? 'var(--color-pb-danger)' : 'var(--color-pb-accent)', fontSize: '0.85rem' }}></i>
                     <span style={{ fontSize: '0.82rem', fontWeight: 600 }}>
-                      {liveLocation.status === 'detecting' && 'Detecting your location…'}
+                      {liveLocation.status === 'detecting' && 'Detecting your location...'}
                       {liveLocation.status === 'ready' && `Location: ${liveLocation.lat}, ${liveLocation.lng}`}
                       {liveLocation.status === 'denied' && 'Location access denied'}
                       {liveLocation.status === 'unavailable' && 'Geolocation not supported'}
@@ -291,20 +508,19 @@ export default function DashboardClient() {
                 <div>
                   <label className="pb-label">Animal Type</label>
                   <select className="pb-select" value={reportForm.animalType} onChange={e => setReportForm(f => ({ ...f, animalType: e.target.value }))} required>
-                    <option value="">Select animal…</option>
-                    {ANIMAL_TYPES.map(a => <option key={a} value={a}>{a}</option>)}
+                    <option value="">Select animal...</option>
+                    {ANIMAL_DATABASE.map(a => <option key={a.id} value={a.name}>{a.name}</option>)}
                   </select>
                 </div>
                 <div>
                   <label className="pb-label">Description</label>
-                  <textarea className="pb-textarea" value={reportForm.description} onChange={e => setReportForm(f => ({ ...f, description: e.target.value }))} placeholder="Describe the animal's condition…" required />
+                  <textarea className="pb-textarea" value={reportForm.description} onChange={e => setReportForm(f => ({ ...f, description: e.target.value }))} placeholder="Describe the animal's condition..." required />
                 </div>
                 <div>
                   <label className="pb-label">Landmark (optional)</label>
                   <input className="pb-input" value={reportForm.location} onChange={e => setReportForm(f => ({ ...f, location: e.target.value }))} placeholder="Nearby landmark or address" />
                 </div>
 
-                {/* Camera Capture Only */}
                 <div>
                   <label className="pb-label">Photo Proof</label>
                   <input ref={fileInputRef} type="file" accept="image/*" capture="environment" style={{ display: 'none' }} onChange={e => setReportImages(prev => [...prev, ...Array.from(e.target.files)])} />
@@ -327,7 +543,7 @@ export default function DashboardClient() {
                 </div>
 
                 <button type="submit" className="btn btn-primary" style={{ width: '100%' }} disabled={reporting}>
-                  {reporting ? <><i className="fas fa-spinner fa-spin"></i> Submitting…</> : <><i className="fas fa-paper-plane"></i> Submit Report</>}
+                  {reporting ? <><i className="fas fa-spinner fa-spin"></i> Submitting...</> : <><i className="fas fa-paper-plane"></i> Submit Report</>}
                 </button>
               </form>
             </div>
@@ -335,7 +551,6 @@ export default function DashboardClient() {
         </div>
       )}
 
-      {/* Notifications Panel */}
       {showNotifications && (
         <div className="modal-overlay" onClick={() => setShowNotifications(false)}>
           <div className="modal-content modal-sm" onClick={e => e.stopPropagation()} style={{ maxHeight: '80vh' }}>
@@ -362,7 +577,6 @@ export default function DashboardClient() {
         </div>
       )}
 
-      {/* Profile Modal */}
       {showProfile && (
         <div className="modal-overlay" onClick={() => setShowProfile(false)}>
           <div className="modal-content modal-sm" onClick={e => e.stopPropagation()}>
@@ -391,7 +605,7 @@ export default function DashboardClient() {
                   </select>
                 </div>
                 <button className="btn btn-primary" style={{ width: '100%' }} onClick={handleSaveProfile} disabled={savingProfile}>
-                  {savingProfile ? <><i className="fas fa-spinner fa-spin"></i> Saving…</> : <><i className="fas fa-save"></i> Save Profile</>}
+                  {savingProfile ? <><i className="fas fa-spinner fa-spin"></i> Saving...</> : <><i className="fas fa-save"></i> Save Profile</>}
                 </button>
               </div>
             </div>

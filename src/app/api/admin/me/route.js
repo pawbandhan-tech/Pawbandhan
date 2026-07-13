@@ -11,7 +11,7 @@ export async function GET(request) {
       select: { id: true, email: true, name: true, createdAt: true, lastLoginAt: true },
     });
     if (!adminUser) return Response.json({ error: 'Admin not found' }, { status: 404 });
-    return Response.json({ admin: adminUser });
+    return Response.json({ admin: { ...adminUser, role: admin.role } });
   } catch (e) {
     return Response.json({ error: 'Server error' }, { status: 500 });
   }

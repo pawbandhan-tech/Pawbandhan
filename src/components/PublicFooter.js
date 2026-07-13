@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import SiteLogo from '@/components/SiteLogo';
 
 export default function PublicFooter() {
   return (
@@ -11,13 +12,7 @@ export default function PublicFooter() {
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 32, marginBottom: 32 }}>
           <div>
             <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 16 }}>
-              <div style={{
-                width: 32, height: 32, borderRadius: 8,
-                background: 'linear-gradient(135deg, var(--color-pb-primary), var(--color-pb-accent))',
-                display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', fontSize: '0.9rem'
-              }}>
-                <i className="fas fa-paw"></i>
-              </div>
+              <SiteLogo size={32} />
               <span style={{ fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: '1.1rem' }}>PawBandhan</span>
             </div>
             <p style={{ fontSize: '0.85rem', color: 'var(--color-pb-text-secondary)', lineHeight: 1.6 }}>

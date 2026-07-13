@@ -1,5 +1,6 @@
 import prisma from '@/lib/prisma';
 import { v4 as uuidv4 } from 'uuid';
+import { generateId } from '@/lib/generate-id';
 
 export async function POST(request) {
   try {
@@ -19,7 +20,7 @@ export async function POST(request) {
       body = await request.json();
     }
 
-    const incidentCode = `PB-${uuidv4().slice(0, 8).toUpperCase()}`;
+    const incidentCode = generateId('PB-CASE');
 
     let userId = null;
     if (body.userId) {

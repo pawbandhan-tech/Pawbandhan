@@ -2,14 +2,7 @@ import { NextResponse } from "next/server";
 import { v4 as uuidv4 } from "uuid";
 import prisma from "@/lib/prisma";
 import { requireAdmin } from "@/lib/admin-auth";
-
-function generateRandomDigits(length) {
-  let result = "";
-  for (let i = 0; i < length; i++) {
-    result += Math.floor(Math.random() * 10).toString();
-  }
-  return result;
-}
+import { generateId } from "@/lib/generate-id";
 
 export async function POST(request) {
   try {
@@ -48,35 +41,36 @@ export async function POST(request) {
 
     const uid = uuidv4();
 
-    const user = await prisma.user.create({
-      data: {
-        uid,
-        firstName: name,
-        middleName: "",
-        lastName: "",
-        phoneNo: phone,
-        email,
-        passwordHash: "",
-        accountNo: `ACC-${Date.now()}`,
-        role: "rider",
-        status: "pending",
-      },
-    });
-
-    const rider = await prisma.rider.create({
-      data: {
-        uid,
-        ngoId: ngoId || null,
-        name,
-        email,
-        phone,
-        vehicleType: vehicleType || "",
-        vehicleNumber: vehicleNumber || "",
-        licenseNumber: licenseNumber || "",
-        status: "pending",
-        riderId: `RID-${generateRandomDigits(4)}`,
-      },
-    });
+    const [user, rider] = await prisma.$transaction([
+      prisma.user.create({
+        data: {
+          uid,
+          firstName: name,
+          middleName: "",
+          lastName: "",
+          phoneNo: phone,
+          email,
+          passwordHash: "",
+          accountNo: `ACC-${Date.now()}`,
+          role: "rider",
+          status: "pending",
+        },
+      }),
+      prisma.rider.create({
+        data: {
+          uid,
+          ngoId: ngoId || null,
+          name,
+          email,
+          phone,
+          vehicleType: vehicleType || "",
+          vehicleNumber: vehicleNumber || "",
+          licenseNumber: licenseNumber || "",
+          status: "pending",
+          riderId: generateId('PB-RID'),
+        },
+      }),
+    ]);
 
     return NextResponse.json({
       success: true,
