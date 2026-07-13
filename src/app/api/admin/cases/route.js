@@ -6,19 +6,31 @@ export async function GET(request) {
   if (!admin) return Response.json({ error: 'Unauthorized' }, { status: 401 });
 
   try {
-    const cases = await prisma.case.findMany({
+    const cases = await prisma.incident.findMany({
       orderBy: { createdAt: 'desc' },
       take: 200,
+      include: {
+        ngo: { select: { name: true } },
+        doctor: { select: { name: true } },
+        rep: { select: { name: true } },
+      },
     });
 
-    const ngoIds = [...new Set(cases.map(c => c.ngoId).filter(Boolean))];
-    const ngos = await prisma.nGO.findMany({ where: { id: { in: ngoIds } } });
-    const ngoMap = {};
-    ngos.forEach(n => { ngoMap[n.id] = n.name; });
-
     const enriched = cases.map(c => ({
-      ...c,
-      ngoName: ngoMap[c.ngoId] || null,
+      id: c.id,
+      incidentCode: c.incidentCode,
+      animalType: c.animalType,
+      description: c.description,
+      status: c.status,
+      workflowStatus: c.workflowStatus,
+      ngoId: c.ngoId,
+      ngoName: c.ngo?.name || null,
+      doctorId: c.doctorId,
+      doctorName: c.doctor?.name || null,
+      repId: c.repId,
+      repName: c.rep?.name || null,
+      createdAt: c.createdAt,
+      updatedAt: c.updatedAt,
     }));
 
     return Response.json(enriched);

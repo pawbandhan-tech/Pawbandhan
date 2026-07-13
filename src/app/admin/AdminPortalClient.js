@@ -31,6 +31,11 @@ export default function AdminPortalClient() {
   const [editingStory, setEditingStory] = useState(null);
   const [editingReview, setEditingReview] = useState(null);
 
+  // Case editing state
+  const [editingCase, setEditingCase] = useState(null);
+  const [caseEditForm, setCaseEditForm] = useState({ status: '', workflowStatus: '', notes: '', ngoId: '', doctorId: '', repId: '' });
+  const [caseOptions, setCaseOptions] = useState({ ngos: [], doctors: [], reps: [] });
+
   // KYC Review state
   const [kycSubmissions, setKycSubmissions] = useState([]);
   const [reviewingKyc, setReviewingKyc] = useState(null);
@@ -344,6 +349,86 @@ export default function AdminPortalClient() {
     setEntityDetailTab('overview');
     setTab('entity-detail');
     setLoading(true);
+  }
+
+  // Case management
+  function openCaseEditor(caseItem) {
+    setEditingCase(caseItem);
+    setCaseEditForm({
+      status: caseItem.status || '',
+      workflowStatus: caseItem.workflowStatus || '',
+      notes: '',
+      ngoId: caseItem.ngoId || caseItem.ngo_id || '',
+      doctorId: caseItem.doctorId || caseItem.doctor_id || '',
+      repId: caseItem.repId || caseItem.rep_id || '',
+    });
+    // Fetch dropdown options
+    Promise.all([
+      adminFetch('/api/admin/verified-ngos').then(r => r.text()).then(t => { try { return JSON.parse(t); } catch { return []; } }).catch(() => []),
+      adminFetch('/api/admin/all-accounts').then(r => r.text()).then(t => { try { return JSON.parse(t); } catch { return []; } }).catch(() => []),
+    ]).then(([ngosList, accounts]) => {
+      const doctors = (accounts || []).filter(a => a._type === 'doctor');
+      const reps = (accounts || []).filter(a => a._type === 'representative' || a._type === 'rider');
+      const ngos = (ngosList || []).filter(n => n.status === 'active' || n.status === 'kyc_submitted');
+      setCaseOptions({ ngos, doctors, reps });
+    });
+  }
+
+  async function saveCaseUpdate(e) {
+    e.preventDefault();
+    setLoading(true);
+    try {
+      const body = {
+        incidentCode: editingCase.incidentCode,
+        status: caseEditForm.status || undefined,
+        workflowStatus: caseEditForm.workflowStatus || undefined,
+        notes: caseEditForm.notes || undefined,
+        ngoId: caseEditForm.ngoId || undefined,
+        doctorId: caseEditForm.doctorId || undefined,
+        repId: caseEditForm.repId || undefined,
+      };
+      const res = await adminFetch('/api/admin/update-case', { method: 'POST', body: JSON.stringify(body) });
+      const json = await res.json();
+      if (res.ok) {
+        showToast('Case updated');
+        if (json.handoverPin) showToast(`Handover PIN: ${json.handoverPin}`, 'success');
+        setEditingCase(null);
+        loadTab('cases');
+      } else {
+        showToast(json.error || 'Failed to update case', 'error');
+      }
+    } catch (e) {
+      showToast('Failed to update case', 'error');
+    }
+    setLoading(false);
+  }
+
+  async function autoRouteCase(action) {
+    if (!editingCase || !editingCase.incidentCode) return;
+    setLoading(true);
+    try {
+      const res = await adminFetch('/api/admin/route-case', {
+        method: 'POST',
+        body: JSON.stringify({ incidentCode: editingCase.incidentCode, action }),
+      });
+      const json = await res.json();
+      if (res.ok) {
+        showToast(json.message || 'Case routed');
+        // Update the form with assigned entity
+        setCaseEditForm(prev => ({
+          ...prev,
+          ngoId: json.ngoId || prev.ngoId,
+          doctorId: json.doctorId || prev.doctorId,
+          repId: json.repId || prev.repId,
+          workflowStatus: json.workflowStatus || prev.workflowStatus,
+        }));
+      } else {
+        showToast(json.error || 'Failed to route case', 'error');
+      }
+    } catch (e) {
+      showToast('Failed to route case', 'error');
+    }
+    setLoading(false);
   }
 
   // Download functions
@@ -701,21 +786,28 @@ export default function AdminPortalClient() {
                   <button className="btn btn-secondary btn-sm" onClick={() => downloadPdf('cases')}>
                     <i className="fas fa-file-pdf"></i> Export Cases (PDF)
                   </button>
+                  <span style={{ marginLeft: 'auto', fontSize: '0.82rem', color: 'var(--color-pb-text-muted)' }}>{cases.length} cases</span>
                 </div>
                 <div className="glass" style={{ padding: 24 }}>
                 {cases.length === 0 ? <p style={{ color: 'var(--color-pb-text-muted)' }}>No cases found.</p> : (
                   <div style={{ overflowX: 'auto' }}>
                     <table className="pb-table">
-                      <thead><tr><th>Code</th><th>Animal</th><th>NGO</th><th>Status</th><th>Workflow</th><th>Created</th></tr></thead>
+                      <thead><tr><th>Code</th><th>Animal</th><th>NGO</th><th>Doctor</th><th>Status</th><th>Workflow</th><th>Created</th><th>Actions</th></tr></thead>
                       <tbody>
                         {cases.map(c => (
                           <tr key={c.id}>
                             <td style={{ fontWeight: 700, fontFamily: 'monospace' }}>{c.incidentCode || `#${c.id}`}</td>
                             <td>{c.animalType || '—'}</td>
                             <td>{c.ngoName || '—'}</td>
-                            <td><span className="badge badge-green">{c.status || 'open'}</span></td>
-                            <td><span className="badge badge-gold">{c.workflowStatus || '—'}</span></td>
+                            <td>{c.doctorName || '—'}</td>
+                            <td><span className={`badge ${c.status === 'active' || c.status === 'open' ? 'badge-green' : c.status === 'closed' ? 'badge-red' : 'badge-gold'}`}>{c.status || '—'}</span></td>
+                            <td><span className="badge badge-blue">{c.workflowStatus || '—'}</span></td>
                             <td style={{ fontSize: '0.8rem', color: 'var(--color-pb-text-muted)' }}>{c.createdAt ? new Date(c.createdAt).toLocaleDateString() : '—'}</td>
+                            <td>
+                              <button className="btn btn-primary btn-sm" onClick={() => openCaseEditor(c)}>
+                                <i className="fas fa-gear"></i> Manage
+                              </button>
+                            </td>
                           </tr>
                         ))}
                       </tbody>
@@ -723,6 +815,113 @@ export default function AdminPortalClient() {
                   </div>
                 )}
                 </div>
+
+                {/* Case Edit Modal */}
+                {editingCase && (
+                  <div className="modal-overlay" onClick={() => setEditingCase(null)}>
+                    <div className="modal-content" onClick={e => e.stopPropagation()} style={{ maxWidth: 680 }}>
+                      <div className="modal-header">
+                        <h3>Manage Case — {editingCase.incidentCode}</h3>
+                        <button className="btn btn-ghost btn-icon" onClick={() => setEditingCase(null)}><i className="fas fa-xmark"></i></button>
+                      </div>
+                      <div className="modal-body" style={{ maxHeight: '65vh', overflowY: 'auto' }}>
+                        <div style={{ marginBottom: 16, padding: 12, borderRadius: 8, background: 'var(--color-pb-bg)', display: 'grid', gridTemplateColumns: 'auto 1fr', gap: '6px 16px', fontSize: '0.85rem' }}>
+                          <span style={{ color: 'var(--color-pb-text-muted)' }}>Animal:</span><span style={{ fontWeight: 600 }}>{editingCase.animalType || '—'}</span>
+                          <span style={{ color: 'var(--color-pb-text-muted)' }}>Description:</span><span>{editingCase.description || '—'}</span>
+                          <span style={{ color: 'var(--color-pb-text-muted)' }}>Current Status:</span><span className={`badge badge-gold`}>{editingCase.workflowStatus || editingCase.status || '—'}</span>
+                        </div>
+
+                        {/* Quick Route Buttons */}
+                        <div style={{ display: 'flex', gap: 8, marginBottom: 16, flexWrap: 'wrap' }}>
+                          <button className="btn btn-secondary btn-sm" onClick={() => autoRouteCase('assign_nearest_ngo')} disabled={loading}>
+                            <i className="fas fa-building"></i> Nearest NGO
+                          </button>
+                          <button className="btn btn-secondary btn-sm" onClick={() => autoRouteCase('assign_nearest_rider')} disabled={loading}>
+                            <i className="fas fa-motorcycle"></i> Nearest Rider
+                          </button>
+                          <button className="btn btn-secondary btn-sm" onClick={() => autoRouteCase('assign_nearest_doctor')} disabled={loading}>
+                            <i className="fas fa-stethoscope"></i> Nearest Doctor
+                          </button>
+                        </div>
+
+                        <form onSubmit={saveCaseUpdate} style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+                          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+                            <div>
+                              <label className="pb-label">Case Status</label>
+                              <select className="pb-select" value={caseEditForm.status} onChange={e => setCaseEditForm(p => ({ ...p, status: e.target.value }))}>
+                                <option value="">No change</option>
+                                <option value="open">Open</option>
+                                <option value="active">Active</option>
+                                <option value="pending">Pending</option>
+                                <option value="in_progress">In Progress</option>
+                                <option value="resolved">Resolved</option>
+                                <option value="closed">Closed</option>
+                              </select>
+                            </div>
+                            <div>
+                              <label className="pb-label">Workflow Stage</label>
+                              <select className="pb-select" value={caseEditForm.workflowStatus} onChange={e => setCaseEditForm(p => ({ ...p, workflowStatus: e.target.value }))}>
+                                <option value="">No change</option>
+                                <option value="reported">Reported</option>
+                                <option value="ngo_assigned">NGO Assigned</option>
+                                <option value="ngo_accepted">NGO Accepted</option>
+                                <option value="rider_dispatched">Rider Dispatched</option>
+                                <option value="rider_picking">En Route to Animal</option>
+                                <option value="animal_picked">Animal Picked Up</option>
+                                <option value="en_route_vet">En Route to Vet</option>
+                                <option value="at_vet">At Vet Clinic</option>
+                                <option value="pre_treatment">Pre-Treatment</option>
+                                <option value="in_treatment">In Treatment</option>
+                                <option value="post_treatment">Treatment Complete</option>
+                                <option value="payment_pending">Payment Pending</option>
+                                <option value="ready_for_drop">Ready for Drop-off</option>
+                                <option value="rider_dropping">En Route to Drop</option>
+                                <option value="delivered">Delivered Safe</option>
+                                <option value="closed">Case Closed</option>
+                              </select>
+                            </div>
+                          </div>
+
+                          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 12 }}>
+                            <div>
+                              <label className="pb-label">Assign NGO</label>
+                              <select className="pb-select" value={caseEditForm.ngoId} onChange={e => setCaseEditForm(p => ({ ...p, ngoId: e.target.value }))}>
+                                <option value="">No change</option>
+                                {caseOptions.ngos.map(n => <option key={n.id} value={n.id}>{n.name || `NGO #${n.id}`}</option>)}
+                              </select>
+                            </div>
+                            <div>
+                              <label className="pb-label">Assign Doctor</label>
+                              <select className="pb-select" value={caseEditForm.doctorId} onChange={e => setCaseEditForm(p => ({ ...p, doctorId: e.target.value }))}>
+                                <option value="">No change</option>
+                                {caseOptions.doctors.map(d => <option key={d.id} value={d.id}>{d._label || d.name || `Doctor #${d.id}`}</option>)}
+                              </select>
+                            </div>
+                            <div>
+                              <label className="pb-label">Assign Rider/Rep</label>
+                              <select className="pb-select" value={caseEditForm.repId} onChange={e => setCaseEditForm(p => ({ ...p, repId: e.target.value }))}>
+                                <option value="">No change</option>
+                                {caseOptions.reps.map(r => <option key={r.id} value={r.id}>{r._label || r.name || `Rider #${r.id}`}</option>)}
+                              </select>
+                            </div>
+                          </div>
+
+                          <div>
+                            <label className="pb-label">Notes / Admin Comment</label>
+                            <textarea className="pb-textarea" value={caseEditForm.notes} onChange={e => setCaseEditForm(p => ({ ...p, notes: e.target.value }))} rows={3} placeholder="Enter admin notes or reason for update…" />
+                          </div>
+
+                          <div style={{ display: 'flex', gap: 10 }}>
+                            <button type="submit" className="btn btn-primary" disabled={loading}>
+                              {loading ? <><i className="fas fa-spinner fa-spin"></i> Saving…</> : <><i className="fas fa-save"></i> Save Changes</>}
+                            </button>
+                            <button type="button" className="btn btn-ghost" onClick={() => setEditingCase(null)}>Cancel</button>
+                          </div>
+                        </form>
+                      </div>
+                    </div>
+                  </div>
+                )}
               </div>
             )}
 
