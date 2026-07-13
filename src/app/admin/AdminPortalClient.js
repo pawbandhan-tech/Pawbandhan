@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import SiteLogo from '@/components/SiteLogo';
 
 function adminFetch(url, opts = {}) {
+  if (typeof window === 'undefined') return Promise.resolve({ ok: false, json: () => ({}) });
   const token = sessionStorage.getItem('pb_admin_token');
   return fetch(url, {
     ...opts,
@@ -56,7 +57,8 @@ export default function AdminPortalClient() {
   const [logoPreview, setLogoPreview] = useState('');
 
   // Role-based permission checks
-  const adminRole = admin?.role || sessionStorage.getItem('pb_admin_role') || 'admin';
+  const [adminRole, setAdminRole] = useState('admin');
+  useEffect(() => { if (typeof window !== 'undefined') setAdminRole(admin?.role || sessionStorage.getItem('pb_admin_role') || 'admin'); }, [admin]);
   const isViewer = adminRole === 'viewer';
   const isStaff = adminRole === 'staff';
   const isRestricted = isViewer || isStaff;
