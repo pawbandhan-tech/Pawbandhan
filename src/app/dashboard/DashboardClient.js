@@ -5,7 +5,9 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import SiteLogo from '@/components/SiteLogo';
 import IdBadge from '@/components/IdBadge';
+import LiveTracker from '@/components/LiveTracker';
 import { ANIMAL_DATABASE } from '@/lib/animals';
+import { CASE_WORKFLOW_STAGES, getWorkflowStage, getProgressPercent } from '@/lib/case-workflow';
 
 const ANIMAL_ICONS = {
   dog: 'fa-dog', cat: 'fa-cat', cow: 'fa-cow', horse: 'fa-horse', bird: 'fa-dove',
@@ -23,92 +25,210 @@ function getAnimalIcon(type) {
   return ANIMAL_ICONS.default;
 }
 
-function CaseTrackingTimeline({ timeline, currentStatus }) {
-  const idx = timeline.findIndex(t => t.status === currentStatus);
-  const activeIdx = idx >= 0 ? idx : 0;
+const ANIMATED_STAGES = ['rider_picking', 'en_route_vet', 'rider_dropping'];
+
+function CaseTrackingTimeline({ workflowStatus }) {
+  const currentIdx = CASE_WORKFLOW_STAGES.findIndex(s => s.key === workflowStatus);
+  const activeIdx = currentIdx >= 0 ? currentIdx : 0;
+  const progress = getProgressPercent(workflowStatus || 'reported');
 
   return (
-    <div style={{ padding: '4px 0' }}>
-      {timeline.map((step, i) => {
-        const isCompleted = i < activeIdx;
-        const isCurrent = i === activeIdx;
-        const isFuture = i > activeIdx;
+    <div>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 14 }}>
+        <div className="workflow-progress-bar" style={{ flex: 1, height: 6 }}>
+          <div className="workflow-progress-fill" style={{ width: `${progress}%` }}></div>
+        </div>
+        <span style={{ fontSize: '0.78rem', fontWeight: 700, color: 'var(--color-pb-primary)' }}>{progress}%</span>
+      </div>
+      <div style={{ padding: '4px 0' }}>
+        {CASE_WORKFLOW_STAGES.map((stage, i) => {
+          const isCompleted = i < activeIdx;
+          const isCurrent = i === activeIdx;
+          const isFuture = i > activeIdx;
+          const isAnimated = stage.animate && isCurrent;
 
-        let dotColor = 'var(--color-pb-border)';
-        let lineColor = 'var(--color-pb-border)';
-        let textColor = 'var(--color-pb-text-muted)';
-        let iconColor = 'var(--color-pb-text-muted)';
+          let dotColor = 'var(--color-pb-border)';
+          let textColor = 'var(--color-pb-text-muted)';
+          let iconColor = 'var(--color-pb-text-muted)';
 
-        if (isCompleted) {
-          dotColor = 'var(--color-pb-primary)';
-          lineColor = 'var(--color-pb-primary)';
-          textColor = 'var(--color-pb-text)';
-          iconColor = 'var(--color-pb-primary)';
-        } else if (isCurrent) {
-          dotColor = step.color === 'green' ? '#22c55e' : step.color === 'red' ? '#ef4444' : 'var(--color-pb-primary)';
-          textColor = 'var(--color-pb-text)';
-          iconColor = dotColor;
-        }
+          if (isCompleted) {
+            dotColor = stage.color;
+            textColor = 'var(--color-pb-text)';
+            iconColor = stage.color;
+          } else if (isCurrent) {
+            dotColor = stage.color;
+            textColor = 'var(--color-pb-text)';
+            iconColor = stage.color;
+          }
 
-        return (
-          <div key={i} style={{ display: 'flex', gap: 14, position: 'relative', minHeight: isFuture ? 56 : 'auto' }}>
-            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', width: 32, flexShrink: 0 }}>
-              <div style={{
-                width: isCurrent ? 28 : 22,
-                height: isCurrent ? 28 : 22,
-                borderRadius: '50%',
-                background: isCompleted || isCurrent ? dotColor : 'transparent',
-                border: isFuture ? '2px solid var(--color-pb-border)' : 'none',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                flexShrink: 0,
-                animation: isCurrent ? 'pulse-dot 2s ease-in-out infinite' : 'none',
-                boxShadow: isCurrent ? `0 0 0 4px ${dotColor}20` : 'none',
-              }}>
-                {isCompleted ? (
-                  <i className="fas fa-check" style={{ fontSize: '0.6rem', color: '#fff' }}></i>
-                ) : isCurrent ? (
-                  <div style={{ width: 8, height: 8, borderRadius: '50%', background: '#fff' }}></div>
-                ) : (
-                  <i className={`fas ${step.icon || 'fa-circle'}`} style={{ fontSize: '0.5rem', color: iconColor }}></i>
-                )}
-              </div>
-              {i < timeline.length - 1 && (
+          return (
+            <div key={stage.key} style={{ display: 'flex', gap: 14, position: 'relative', minHeight: isFuture ? 40 : 'auto' }}>
+              <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', width: 32, flexShrink: 0 }}>
                 <div style={{
-                  width: 2,
-                  flex: 1,
-                  minHeight: 24,
-                  background: isCompleted ? lineColor : 'var(--color-pb-border)',
-                  margin: '2px 0',
-                }}></div>
-              )}
-            </div>
-            <div style={{ paddingBottom: 20, flex: 1 }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 2 }}>
-                <i className={`fas ${step.icon || 'fa-circle-dot'}`} style={{ fontSize: '0.78rem', color: iconColor }}></i>
-                <span style={{ fontWeight: 700, fontSize: '0.85rem', color: textColor }}>{step.title}</span>
-                {isCurrent && (
-                  <span style={{
-                    fontSize: '0.65rem', fontWeight: 700, textTransform: 'uppercase',
-                    padding: '2px 8px', borderRadius: 20,
-                    background: `${dotColor}15`, color: dotColor, letterSpacing: '0.05em',
-                  }}>current</span>
+                  width: isCurrent ? 28 : 20,
+                  height: isCurrent ? 28 : 20,
+                  borderRadius: '50%',
+                  background: isCompleted || isCurrent ? dotColor : 'transparent',
+                  border: isFuture ? `2px solid ${stage.color}30` : 'none',
+                  display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0,
+                  animation: isAnimated ? 'pulse 2s ease-in-out infinite' : 'none',
+                  boxShadow: isCurrent ? `0 0 0 4px ${dotColor}20` : 'none',
+                  transition: 'all 0.3s ease',
+                }}>
+                  {isCompleted ? (
+                    <i className="fas fa-check" style={{ fontSize: '0.55rem', color: '#fff' }}></i>
+                  ) : isCurrent ? (
+                    <div style={{ width: 8, height: 8, borderRadius: '50%', background: '#fff' }}></div>
+                  ) : (
+                    <i className={`fas ${stage.icon}`} style={{ fontSize: '0.45rem', color: iconColor }}></i>
+                  )}
+                </div>
+                {i < CASE_WORKFLOW_STAGES.length - 1 && (
+                  <div style={{ width: 2, flex: 1, minHeight: 12, background: isCompleted ? dotColor : 'var(--color-pb-border)', margin: '2px 0', transition: 'background 0.3s' }}></div>
                 )}
               </div>
-              {step.description && (
-                <div style={{ fontSize: '0.78rem', color: 'var(--color-pb-text-muted)', lineHeight: 1.4 }}>{step.description}</div>
-              )}
-              <div style={{ fontSize: '0.72rem', color: 'var(--color-pb-text-muted)', marginTop: 2 }}>
-                {step.timestamp ? new Date(step.timestamp).toLocaleString() : ''}
+              <div style={{ paddingBottom: 12, flex: 1 }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 1 }}>
+                  <i className={`fas ${stage.icon}`} style={{ fontSize: '0.72rem', color: iconColor, animation: isAnimated ? 'pulse 1.5s infinite' : 'none' }}></i>
+                  <span style={{ fontWeight: isCurrent ? 800 : 600, fontSize: '0.82rem', color: textColor }}>{stage.label}</span>
+                  {isCurrent && (
+                    <span style={{ fontSize: '0.6rem', fontWeight: 700, textTransform: 'uppercase', padding: '2px 7px', borderRadius: 20, background: `${dotColor}15`, color: dotColor, letterSpacing: '0.05em' }}>current</span>
+                  )}
+                  {stage.requiresPin && isCompleted && (
+                    <span style={{ fontSize: '0.6rem', color: 'var(--color-pb-accent)' }}><i className="fas fa-lock"></i></span>
+                  )}
+                </div>
+                {isCurrent && stage.description && (
+                  <div style={{ fontSize: '0.75rem', color: 'var(--color-pb-text-muted)', lineHeight: 1.4 }}>{stage.description}</div>
+                )}
               </div>
             </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+function PaymentSection({ caseItem, caseCode, totals, onPaid }) {
+  const [payMethod, setPayMethod] = useState('');
+  const [showPayForm, setShowPayForm] = useState(false);
+  const [paying, setPaying] = useState(false);
+  const [communityMode, setCommunityMode] = useState(false);
+  const [communityProgress, setCommunityProgress] = useState(0);
+
+  const totalAmount = totals?.subtotal || 0;
+  const commission = totals?.commission || 0;
+  const grandTotal = totals?.grandTotal || 0;
+
+  async function handlePay() {
+    setPaying(true);
+    try {
+      const res = await fetch(`/api/cases/${caseCode}/payment`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ paymentMethod: payMethod || 'upi' }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Payment failed');
+      setShowPayForm(false);
+      onPaid();
+    } catch (err) { console.error(err); }
+    setPaying(false);
+  }
+
+  function handleCommunityList() {
+    setCommunityMode(true);
+    setCommunityProgress(0);
+  }
+
+  if (communityMode) {
+    const goal = grandTotal;
+    const raised = Math.round(goal * 0.3);
+    return (
+      <div style={{ padding: '16px 18px', borderRadius: 14, border: '1px solid var(--color-pb-border)', background: 'var(--color-pb-surface)', marginTop: 12 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 12 }}>
+          <i className="fas fa-people-group" style={{ color: 'var(--color-pb-primary)' }}></i>
+          <span style={{ fontWeight: 700, fontSize: '0.92rem' }}>Community Funding</span>
+        </div>
+        <div style={{ marginBottom: 12 }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.82rem', marginBottom: 4 }}>
+            <span style={{ color: 'var(--color-pb-text-muted)' }}>Raised</span>
+            <span style={{ fontWeight: 700 }}>₹{raised.toLocaleString()} / ₹{goal.toLocaleString()}</span>
           </div>
-        );
-      })}
-      {timeline.length === 0 && (
-        <div style={{ textAlign: 'center', padding: 20, color: 'var(--color-pb-text-muted)', fontSize: '0.85rem' }}>
-          No tracking data available yet.
+          <div className="workflow-progress-bar" style={{ height: 8 }}>
+            <div className="workflow-progress-fill" style={{ width: `${Math.round((raised / goal) * 100)}%` }}></div>
+          </div>
+        </div>
+        <div style={{ fontSize: '0.82rem', color: 'var(--color-pb-text-secondary)', textAlign: 'center', padding: '12px 0' }}>
+          <i className="fas fa-share-nodes" style={{ marginRight: 6, color: 'var(--color-pb-primary)' }}></i>
+          Share this case with friends and family to raise funds
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div style={{ padding: '16px 18px', borderRadius: 14, border: '1px solid var(--color-pb-border)', background: 'var(--color-pb-surface)', marginTop: 12 }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 12 }}>
+        <i className="fas fa-indian-rupee-sign" style={{ color: 'var(--color-pb-accent)' }}></i>
+        <span style={{ fontWeight: 700, fontSize: '0.92rem' }}>Payment</span>
+      </div>
+      <div style={{ marginBottom: 12 }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 6, fontSize: '0.85rem' }}>
+          <span style={{ color: 'var(--color-pb-text-secondary)' }}>Treatment Cost</span>
+          <span style={{ fontWeight: 600 }}>₹{totalAmount.toLocaleString()}</span>
+        </div>
+        <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 8, fontSize: '0.85rem' }}>
+          <span style={{ color: 'var(--color-pb-text-secondary)' }}>Platform Commission (15%)</span>
+          <span style={{ fontWeight: 600, color: 'var(--color-pb-accent)' }}>₹{commission.toLocaleString()}</span>
+        </div>
+        <div style={{ borderTop: '1px solid var(--color-pb-border)', paddingTop: 8, display: 'flex', justifyContent: 'space-between' }}>
+          <span style={{ fontWeight: 800 }}>Total Payable</span>
+          <span style={{ fontWeight: 800, fontSize: '1.1rem', color: 'var(--color-pb-primary)' }}>₹{grandTotal.toLocaleString()}</span>
+        </div>
+      </div>
+
+      {!showPayForm ? (
+        <div style={{ display: 'flex', gap: 10 }}>
+          <button className="btn btn-primary" style={{ flex: 1 }} onClick={() => setShowPayForm(true)}>
+            <i className="fas fa-credit-card"></i> Pay Now
+          </button>
+          <button className="btn btn-secondary" style={{ flex: 1 }} onClick={handleCommunityList}>
+            <i className="fas fa-people-group"></i> Community Pay
+          </button>
+        </div>
+      ) : (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+          <div style={{ display: 'flex', gap: 8 }}>
+            <button onClick={() => setPayMethod('upi')} style={{ flex: 1, padding: '10px', borderRadius: 10, border: payMethod === 'upi' ? '2px solid var(--color-pb-primary)' : '1px solid var(--color-pb-border)', background: payMethod === 'upi' ? 'rgba(27,107,82,0.06)' : 'transparent', cursor: 'pointer', fontWeight: 700, fontSize: '0.82rem', fontFamily: 'var(--font-sans)', color: 'var(--color-pb-text)' }}>
+              <i className="fas fa-mobile-screen" style={{ marginRight: 4 }}></i> UPI
+            </button>
+            <button onClick={() => setPayMethod('card')} style={{ flex: 1, padding: '10px', borderRadius: 10, border: payMethod === 'card' ? '2px solid var(--color-pb-primary)' : '1px solid var(--color-pb-border)', background: payMethod === 'card' ? 'rgba(27,107,82,0.06)' : 'transparent', cursor: 'pointer', fontWeight: 700, fontSize: '0.82rem', fontFamily: 'var(--font-sans)', color: 'var(--color-pb-text)' }}>
+              <i className="fas fa-credit-card" style={{ marginRight: 4 }}></i> Card
+            </button>
+          </div>
+          {payMethod === 'upi' && (
+            <div>
+              <label className="pb-label">UPI ID</label>
+              <input className="pb-input" placeholder="yourname@upi" />
+            </div>
+          )}
+          {payMethod === 'card' && (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+              <div><label className="pb-label">Card Number</label><input className="pb-input" placeholder="XXXX XXXX XXXX XXXX" /></div>
+              <div style={{ display: 'flex', gap: 10 }}>
+                <div style={{ flex: 1 }}><label className="pb-label">Expiry</label><input className="pb-input" placeholder="MM/YY" /></div>
+                <div style={{ flex: 1 }}><label className="pb-label">CVV</label><input className="pb-input" type="password" placeholder="***" /></div>
+              </div>
+            </div>
+          )}
+          <div style={{ display: 'flex', gap: 8 }}>
+            <button className="btn btn-ghost btn-sm" onClick={() => setShowPayForm(false)} style={{ flex: 1 }}>Cancel</button>
+            <button className="btn btn-primary btn-sm" onClick={handlePay} disabled={paying || !payMethod} style={{ flex: 1 }}>
+              {paying ? <><i className="fas fa-spinner fa-spin"></i> Processing...</> : <>Pay ₹{grandTotal.toLocaleString()}</>}
+            </button>
+          </div>
         </div>
       )}
     </div>
@@ -138,6 +258,7 @@ export default function DashboardClient() {
   const [trackingData, setTrackingData] = useState(null);
   const [trackingLoading, setTrackingLoading] = useState(false);
   const [showTracking, setShowTracking] = useState(false);
+  const [caseTotals, setCaseTotals] = useState(null);
 
   const [newCaseCode, setNewCaseCode] = useState(null);
 
@@ -151,10 +272,7 @@ export default function DashboardClient() {
   useEffect(() => {
     if (!showReport) return;
     setLiveLocation({ status: 'detecting', lat: '', lng: '', address: '' });
-    if (!navigator.geolocation) {
-      setLiveLocation(prev => ({ ...prev, status: 'unavailable' }));
-      return;
-    }
+    if (!navigator.geolocation) { setLiveLocation(prev => ({ ...prev, status: 'unavailable' })); return; }
     navigator.geolocation.getCurrentPosition(
       async (pos) => {
         const lat = pos.coords.latitude;
@@ -192,29 +310,19 @@ export default function DashboardClient() {
 
   function showToast(msg, type = 'success') { setToast({ msg, type }); setTimeout(() => setToast(null), 3000); }
 
-  useEffect(() => {
-    if (profile) {
-      setProfileForm({ name: profile.name || '', phone: profile.phone || '', gender: profile.gender || '' });
-    }
-  }, [profile]);
+  useEffect(() => { if (profile) setProfileForm({ name: profile.name || '', phone: profile.phone || '', gender: profile.gender || '' }); }, [profile]);
 
   async function handleSaveProfile() {
     if (!uid) return;
     setSavingProfile(true);
     try {
-      const res = await fetch(`/api/users/${uid}/profile`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(profileForm),
-      });
+      const res = await fetch(`/api/users/${uid}/profile`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(profileForm) });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || 'Save failed');
       setProfile(prev => ({ ...prev, ...profileForm }));
       showToast('Profile updated');
       setShowProfile(false);
-    } catch (err) {
-      showToast(err.message, 'error');
-    }
+    } catch (err) { showToast(err.message, 'error'); }
     setSavingProfile(false);
   }
 
@@ -243,7 +351,6 @@ export default function DashboardClient() {
       fd.append('location', reportForm.location);
       fd.append('userId', uid);
       reportImages.forEach(img => fd.append('images', img));
-
       const res = await fetch('/api/incidents/report', { method: 'POST', body: fd });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || 'Report failed');
@@ -252,14 +359,11 @@ export default function DashboardClient() {
       setReportForm({ animalType: '', description: '', location: '', latitude: '', longitude: '' });
       setReportImages([]);
       loadDashboard(uid);
-
       if (data.incidentCode) {
         setNewCaseCode(data.incidentCode);
         setTimeout(() => openTracking({ incidentCode: data.incidentCode, animalType: reportForm.animalType }), 500);
       }
-    } catch (err) {
-      showToast(err.message, 'error');
-    }
+    } catch (err) { showToast(err.message, 'error'); }
     setReporting(false);
   }
 
@@ -270,15 +374,15 @@ export default function DashboardClient() {
     setShowTracking(true);
     setTrackingLoading(true);
     setTrackingData(null);
+    setCaseTotals(null);
     try {
-      const res = await fetch(`/api/incidents/${code}/tracking`);
-      if (res.ok) {
-        const data = await res.json();
-        setTrackingData(data);
-      }
-    } catch (e) {
-      console.error(e);
-    }
+      const [trackRes, expRes] = await Promise.all([
+        fetch(`/api/incidents/${code}/tracking`).catch(() => null),
+        fetch(`/api/cases/${code}/expenses`).catch(() => null),
+      ]);
+      if (trackRes?.ok) { const data = await trackRes.json(); setTrackingData(data); }
+      if (expRes?.ok) { const data = await expRes.json(); setCaseTotals(data.totals || null); }
+    } catch (e) { console.error(e); }
     setTrackingLoading(false);
   }
 
@@ -295,15 +399,12 @@ export default function DashboardClient() {
     </div>
   );
 
+  const trackingStatus = trackingData?.currentStatus || trackingCase?.workflowStatus || 'reported';
+  const isAnimating = ANIMATED_STAGES.includes(trackingStatus);
+  const isPaymentPending = trackingStatus === 'payment_pending';
+
   return (
     <div style={{ minHeight: '100vh', background: 'var(--color-pb-bg)' }}>
-      <style>{`
-        @keyframes pulse-dot {
-          0%, 100% { box-shadow: 0 0 0 4px rgba(27,107,82,0.15); }
-          50% { box-shadow: 0 0 0 8px rgba(27,107,82,0.05); }
-        }
-      `}</style>
-
       {toast && (
         <div className="toast-container">
           <div className={`toast toast-${toast.type}`}><i className={`fas ${toast.type === 'success' ? 'fa-check-circle' : 'fa-exclamation-circle'}`}></i>{toast.msg}</div>
@@ -330,9 +431,7 @@ export default function DashboardClient() {
               <span style={{ position: 'absolute', top: 2, right: 2, width: 8, height: 8, borderRadius: '50%', background: 'var(--color-pb-danger)' }}></span>
             )}
           </button>
-          <button className="btn btn-ghost btn-icon" onClick={() => setShowProfile(true)}>
-            <i className="fas fa-user-circle"></i>
-          </button>
+          <button className="btn btn-ghost btn-icon" onClick={() => setShowProfile(true)}><i className="fas fa-user-circle"></i></button>
           <button className="btn btn-ghost btn-sm" onClick={logout}><i className="fas fa-right-from-bracket"></i></button>
         </div>
       </header>
@@ -361,10 +460,7 @@ export default function DashboardClient() {
             <div style={{ fontWeight: 700, fontSize: '0.9rem', marginBottom: 4 }}>Report Rescue</div>
             <div style={{ fontSize: '0.78rem', color: 'var(--color-pb-text-muted)' }}>Report an emergency</div>
           </button>
-          <button className="glass" style={{ padding: '20px 16px', textAlign: 'left', cursor: 'pointer', border: 'none', fontFamily: 'inherit' }} onClick={() => {
-            const firstCase = cases[0];
-            if (firstCase) openTracking(firstCase);
-          }}>
+          <button className="glass" style={{ padding: '20px 16px', textAlign: 'left', cursor: 'pointer', border: 'none', fontFamily: 'inherit' }} onClick={() => { const firstCase = cases[0]; if (firstCase) openTracking(firstCase); }}>
             <div style={{ width: 40, height: 40, borderRadius: 12, background: 'rgba(212,160,23,0.1)', color: 'var(--color-pb-accent)', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 12 }}>
               <i className="fas fa-folder-open"></i>
             </div>
@@ -386,46 +482,51 @@ export default function DashboardClient() {
             <p style={{ color: 'var(--color-pb-text-muted)', fontSize: '0.88rem' }}>No cases yet. Tap "Report Rescue" to get started.</p>
           ) : (
             <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-              {cases.map((c, i) => (
-                <div key={i} onClick={() => openTracking(c)} style={{ cursor: 'pointer', padding: '16px 18px', background: 'rgba(27,107,82,0.03)', borderRadius: 14, border: '1px solid var(--color-pb-border)', transition: 'all 0.2s', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, flexWrap: 'wrap' }}
-                  onMouseEnter={e => { e.currentTarget.style.borderColor = 'var(--color-pb-primary)'; e.currentTarget.style.background = 'rgba(27,107,82,0.06)'; }}
-                  onMouseLeave={e => { e.currentTarget.style.borderColor = 'var(--color-pb-border)'; e.currentTarget.style.background = 'rgba(27,107,82,0.03)'; }}
-                >
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 14, flex: 1 }}>
-                    <div style={{ width: 44, height: 44, borderRadius: 12, background: 'rgba(27,107,82,0.1)', color: 'var(--color-pb-primary)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                      <i className={`fas ${getAnimalIcon(c.animalType)}`} style={{ fontSize: '1rem' }}></i>
+              {cases.map((c, i) => {
+                const stage = getWorkflowStage(c.workflowStatus || c.status || 'reported');
+                const progress = getProgressPercent(c.workflowStatus || c.status || 'reported');
+                const isCAnim = ANIMATED_STAGES.includes(c.workflowStatus || c.status);
+                return (
+                  <div key={i} onClick={() => openTracking(c)} style={{ cursor: 'pointer', padding: '16px 18px', background: 'rgba(27,107,82,0.03)', borderRadius: 14, border: '1px solid var(--color-pb-border)', transition: 'all 0.2s', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, flexWrap: 'wrap' }}
+                    onMouseEnter={e => { e.currentTarget.style.borderColor = 'var(--color-pb-primary)'; e.currentTarget.style.background = 'rgba(27,107,82,0.06)'; }}
+                    onMouseLeave={e => { e.currentTarget.style.borderColor = 'var(--color-pb-border)'; e.currentTarget.style.background = 'rgba(27,107,82,0.03)'; }}
+                  >
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 14, flex: 1 }}>
+                      <div style={{ width: 44, height: 44, borderRadius: 12, background: `${stage.color}12`, color: stage.color, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                        <i className={`fas ${getAnimalIcon(c.animalType)}`} style={{ fontSize: '1rem', animation: isCAnim ? 'pulse 2s infinite' : 'none' }}></i>
+                      </div>
+                      <div style={{ flex: 1 }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap', marginBottom: 4 }}>
+                          <span style={{ fontWeight: 700, fontSize: '0.92rem' }}>{c.animalType || 'Animal'}</span>
+                          <IdBadge id={c.incidentCode || `PB-CASE-${c.id}`} />
+                        </div>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 6 }}>
+                          <div style={{ padding: '3px 10px', borderRadius: 12, background: `${stage.color}12`, color: stage.color, fontWeight: 700, fontSize: '0.72rem', display: 'inline-flex', alignItems: 'center', gap: 4 }}>
+                            <i className={`fas ${stage.icon}`} style={{ animation: isCAnim ? 'pulse 1.5s infinite' : 'none' }}></i> {stage.label}
+                          </div>
+                        </div>
+                        <div className="workflow-progress-bar" style={{ width: '100%', maxWidth: 200 }}>
+                          <div className="workflow-progress-fill" style={{ width: `${progress}%` }}></div>
+                        </div>
+                      </div>
                     </div>
-                    <div style={{ flex: 1 }}>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap', marginBottom: 4 }}>
-                        <span style={{ fontWeight: 700, fontSize: '0.92rem' }}>{c.animalType || 'Animal'}</span>
-                        <IdBadge id={c.incidentCode || `PB-CASE-${c.id}`} />
-                      </div>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                        <span className={`badge ${(c.workflowStatus || c.status || '').includes('closed') || (c.workflowStatus || c.status || '').includes('released') ? 'badge-green' : (c.workflowStatus || c.status || '').includes('rejected') ? 'badge-red' : 'badge-gold'}`}>
-                          {c.workflowStatus || c.status || 'open'}
-                        </span>
-                        <span style={{ fontSize: '0.75rem', color: 'var(--color-pb-text-muted)' }}>
-                          {c.createdAt ? new Date(c.createdAt).toLocaleDateString() : ''}
-                        </span>
-                      </div>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 6, color: 'var(--color-pb-primary)', fontSize: '0.85rem', fontWeight: 600 }}>
+                      Track <i className="fas fa-chevron-right" style={{ fontSize: '0.7rem' }}></i>
                     </div>
                   </div>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 6, color: 'var(--color-pb-primary)', fontSize: '0.85rem', fontWeight: 600 }}>
-                    Track <i className="fas fa-chevron-right" style={{ fontSize: '0.7rem' }}></i>
-                  </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           )}
         </div>
       </div>
 
       {showTracking && (
-        <div className="modal-overlay" onClick={() => { setShowTracking(false); setTrackingCase(null); setTrackingData(null); }}>
+        <div className="modal-overlay" onClick={() => { setShowTracking(false); setTrackingCase(null); setTrackingData(null); setCaseTotals(null); }}>
           <div className="modal-content modal-sm" onClick={e => e.stopPropagation()} style={{ maxWidth: 520, maxHeight: '85vh', overflowY: 'auto' }}>
             <div className="modal-header">
               <h3>Track Case</h3>
-              <button className="btn btn-ghost btn-icon" onClick={() => { setShowTracking(false); setTrackingCase(null); setTrackingData(null); }}><i className="fas fa-xmark"></i></button>
+              <button className="btn btn-ghost btn-icon" onClick={() => { setShowTracking(false); setTrackingCase(null); setTrackingData(null); setCaseTotals(null); }}><i className="fas fa-xmark"></i></button>
             </div>
             <div className="modal-body">
               {trackingLoading ? (
@@ -435,23 +536,39 @@ export default function DashboardClient() {
                 </div>
               ) : trackingData ? (
                 <div>
-                  <div style={{ padding: '14px 16px', borderRadius: 14, background: 'rgba(27,107,82,0.04)', border: '1px solid var(--color-pb-border)', marginBottom: 20 }}>
+                  <div style={{ padding: '14px 16px', borderRadius: 14, background: 'rgba(27,107,82,0.04)', border: '1px solid var(--color-pb-border)', marginBottom: 16 }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 10 }}>
-                      <div style={{ width: 40, height: 40, borderRadius: 10, background: 'rgba(27,107,82,0.1)', color: 'var(--color-pb-primary)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                      <div style={{ width: 40, height: 40, borderRadius: 10, background: `${getWorkflowStage(trackingStatus).color}12`, color: getWorkflowStage(trackingStatus).color, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                         <i className={`fas ${getAnimalIcon(trackingData.case?.animalType)}`}></i>
                       </div>
-                      <div>
+                      <div style={{ flex: 1 }}>
                         <div style={{ fontWeight: 700, fontSize: '0.95rem' }}>{trackingData.case?.animalType || 'Animal'}</div>
                         <IdBadge id={trackingData.case?.incidentCode} />
                       </div>
+                      <div style={{ padding: '4px 10px', borderRadius: 12, background: `${getWorkflowStage(trackingStatus).color}12`, color: getWorkflowStage(trackingStatus).color, fontWeight: 700, fontSize: '0.75rem' }}>
+                        <i className={`fas ${getWorkflowStage(trackingStatus).icon}`} style={{ marginRight: 3, animation: isAnimating ? 'pulse 1.5s infinite' : 'none' }}></i>
+                        {getWorkflowStage(trackingStatus).label}
+                      </div>
                     </div>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
-                      <span className="badge badge-blue">{trackingData.currentStatus || 'reported'}</span>
-                      {trackingData.case?.ngo && <span style={{ fontSize: '0.78rem', color: 'var(--color-pb-text-muted)' }}>Assigned to {trackingData.case.ngo.name}</span>}
-                    </div>
+                    {trackingData.case?.ngo && (
+                      <div style={{ fontSize: '0.78rem', color: 'var(--color-pb-text-muted)' }}>Assigned to {trackingData.case.ngo.name}</div>
+                    )}
                   </div>
 
-                  <CaseTrackingTimeline timeline={trackingData.timeline} currentStatus={trackingData.currentStatus} />
+                  {isAnimating && (
+                    <LiveTracker caseCode={trackingData.case?.incidentCode || trackingCase?.incidentCode} />
+                  )}
+
+                  <CaseTrackingTimeline workflowStatus={trackingStatus} />
+
+                  {isPaymentPending && caseTotals && (
+                    <PaymentSection
+                      caseItem={trackingData.case}
+                      caseCode={trackingData.case?.incidentCode || trackingCase?.incidentCode}
+                      totals={caseTotals}
+                      onPaid={() => { showToast('Payment successful!'); openTracking(trackingCase); }}
+                    />
+                  )}
 
                   {trackingData.location && (
                     <div style={{ marginTop: 16, padding: '12px 14px', borderRadius: 12, background: 'rgba(37,99,235,0.04)', border: '1px solid var(--color-pb-border)' }}>
@@ -489,7 +606,6 @@ export default function DashboardClient() {
             </div>
             <div className="modal-body">
               <form onSubmit={handleReport} style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
-
                 <div style={{ padding: '12px 14px', borderRadius: 12, background: liveLocation.status === 'ready' ? 'rgba(27,107,82,0.06)' : liveLocation.status === 'denied' ? 'rgba(220,38,38,0.06)' : 'rgba(212,160,23,0.06)', border: '1px solid var(--color-pb-border)' }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4 }}>
                     <i className={`fas ${liveLocation.status === 'detecting' ? 'fa-spinner fa-spin' : liveLocation.status === 'ready' ? 'fa-location-dot' : 'fa-triangle-exclamation'}`} style={{ color: liveLocation.status === 'ready' ? 'var(--color-pb-primary)' : liveLocation.status === 'denied' ? 'var(--color-pb-danger)' : 'var(--color-pb-accent)', fontSize: '0.85rem' }}></i>
@@ -504,7 +620,6 @@ export default function DashboardClient() {
                     <div style={{ fontSize: '0.75rem', color: 'var(--color-pb-text-muted)', lineHeight: 1.4 }}>{liveLocation.address}</div>
                   )}
                 </div>
-
                 <div>
                   <label className="pb-label">Animal Type</label>
                   <select className="pb-select" value={reportForm.animalType} onChange={e => setReportForm(f => ({ ...f, animalType: e.target.value }))} required>
@@ -520,7 +635,6 @@ export default function DashboardClient() {
                   <label className="pb-label">Landmark (optional)</label>
                   <input className="pb-input" value={reportForm.location} onChange={e => setReportForm(f => ({ ...f, location: e.target.value }))} placeholder="Nearby landmark or address" />
                 </div>
-
                 <div>
                   <label className="pb-label">Photo Proof</label>
                   <input ref={fileInputRef} type="file" accept="image/*" capture="environment" style={{ display: 'none' }} onChange={e => setReportImages(prev => [...prev, ...Array.from(e.target.files)])} />
@@ -541,7 +655,6 @@ export default function DashboardClient() {
                     </div>
                   )}
                 </div>
-
                 <button type="submit" className="btn btn-primary" style={{ width: '100%' }} disabled={reporting}>
                   {reporting ? <><i className="fas fa-spinner fa-spin"></i> Submitting...</> : <><i className="fas fa-paper-plane"></i> Submit Report</>}
                 </button>
@@ -586,20 +699,10 @@ export default function DashboardClient() {
             </div>
             <div className="modal-body">
               <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
-                <div>
-                  <label className="pb-label">Name</label>
-                  <input className="pb-input" value={profileForm.name} onChange={e => setProfileForm(f => ({ ...f, name: e.target.value }))} />
-                </div>
-                <div>
-                  <label className="pb-label">Email</label>
-                  <input className="pb-input" value={profile?.email || ''} disabled />
-                </div>
-                <div>
-                  <label className="pb-label">Phone</label>
-                  <input className="pb-input" value={profileForm.phone} onChange={e => setProfileForm(f => ({ ...f, phone: e.target.value }))} />
-                </div>
-                <div>
-                  <label className="pb-label">Gender</label>
+                <div><label className="pb-label">Name</label><input className="pb-input" value={profileForm.name} onChange={e => setProfileForm(f => ({ ...f, name: e.target.value }))} /></div>
+                <div><label className="pb-label">Email</label><input className="pb-input" value={profile?.email || ''} disabled /></div>
+                <div><label className="pb-label">Phone</label><input className="pb-input" value={profileForm.phone} onChange={e => setProfileForm(f => ({ ...f, phone: e.target.value }))} /></div>
+                <div><label className="pb-label">Gender</label>
                   <select className="pb-select" value={profileForm.gender} onChange={e => setProfileForm(f => ({ ...f, gender: e.target.value }))}>
                     <option value="">Select</option><option value="male">Male</option><option value="female">Female</option><option value="other">Other</option>
                   </select>

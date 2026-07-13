@@ -41,6 +41,17 @@ export default function AdminPortalClient() {
   const [selectedOnboarding, setSelectedOnboarding] = useState(null);
   const [onboardingLoading, setOnboardingLoading] = useState(false);
 
+  // Entity detail & password reset state
+  const [viewingEntity, setViewingEntity] = useState(null);
+  const [entityDetailTab, setEntityDetailTab] = useState('overview');
+  const [resetPasswordModal, setResetPasswordModal] = useState(null);
+  const [newPassword, setNewPassword] = useState('');
+  const [resetPasswordLoading, setResetPasswordLoading] = useState(false);
+
+  // Commission config state
+  const [commissionConfig, setCommissionConfig] = useState({ percentage: 15, minAmount: 0, maxAmount: 999999, description: '' });
+  const [commissionSaving, setCommissionSaving] = useState(false);
+
   // CMS state
   const [cmsTab, setCmsTab] = useState('news');
   const [cmsData, setCmsData] = useState({});
@@ -118,9 +129,18 @@ export default function AdminPortalClient() {
       } else if (t === 'cms') {
         const cms = await adminFetch('/api/admin/cms').then(r => r.json());
         setCmsData(cms || {});
+      } else if (t === 'entity-detail') {
+        if (viewingEntity) {
+          const detail = await adminFetch(`/api/admin/entity-detail?type=${viewingEntity._type}&id=${viewingEntity.id}`).then(r => r.json());
+          setViewingEntity(prev => ({ ...prev, ...detail }));
+        }
       } else if (t === 'settings') {
-        const sc = await adminFetch('/api/admin/site-config').then(r => r.json());
+        const [sc, cc] = await Promise.all([
+          adminFetch('/api/admin/site-config').then(r => r.json()),
+          adminFetch('/api/admin/commission').then(r => r.ok ? r.json() : { percentage: 15, minAmount: 0, maxAmount: 999999, description: '' }),
+        ]);
         setSiteConfig(sc || {});
+        setCommissionConfig(cc || { percentage: 15, minAmount: 0, maxAmount: 999999, description: '' });
         if (sc && sc.logo_url) setLogoPreview(sc.logo_url);
       }
     } catch (e) { console.error(e); }
@@ -163,6 +183,33 @@ export default function AdminPortalClient() {
     const res = await adminFetch('/api/admin/site-config', { method: 'POST', body: JSON.stringify(data) });
     if (res.ok) { showToast('Site config saved'); loadTab('settings'); }
     else showToast('Failed to save', 'error');
+  }
+
+  async function saveCommissionConfig(e) {
+    e.preventDefault();
+    if (!canEditSettings) { showPermDenied(); return; }
+    setCommissionSaving(true);
+    try {
+      const res = await adminFetch('/api/admin/commission', {
+        method: 'POST',
+        body: JSON.stringify({
+          percentage: parseFloat(commissionConfig.percentage) || 15,
+          minAmount: parseFloat(commissionConfig.minAmount) || 0,
+          maxAmount: parseFloat(commissionConfig.maxAmount) || 999999,
+          description: commissionConfig.description || '',
+        }),
+      });
+      const json = await res.json();
+      if (res.ok) {
+        showToast('Commission config saved');
+        setCommissionConfig(json.config || commissionConfig);
+      } else {
+        showToast(json.error || 'Failed to save', 'error');
+      }
+    } catch {
+      showToast('Failed to save commission config', 'error');
+    }
+    setCommissionSaving(false);
   }
 
   async function saveStory(e) {
@@ -247,6 +294,47 @@ export default function AdminPortalClient() {
     const json = await res.json();
     if (res.ok) { showToast('Rider created'); setShowCreateRider(false); loadTab('accounts'); }
     else showToast(json.error || 'Failed to create rider', 'error');
+  }
+
+  function generateRandomPassword() {
+    const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghjkmnpqrstuvwxyz23456789!@#$%';
+    let pw = '';
+    for (let i = 0; i < 16; i++) pw += chars[Math.floor(Math.random() * chars.length)];
+    return pw;
+  }
+
+  async function handleResetPassword(e) {
+    e.preventDefault();
+    if (!resetPasswordModal) return;
+    setResetPasswordLoading(true);
+    try {
+      const res = await adminFetch('/api/admin/reset-password', {
+        method: 'POST',
+        body: JSON.stringify({
+          entityType: resetPasswordModal._type,
+          entityId: resetPasswordModal.id,
+          newPassword,
+        }),
+      });
+      const json = await res.json();
+      if (res.ok) {
+        showToast('Password reset successfully');
+        setResetPasswordModal(null);
+        setNewPassword('');
+      } else {
+        showToast(json.error || 'Failed to reset password', 'error');
+      }
+    } catch {
+      showToast('Failed to reset password', 'error');
+    }
+    setResetPasswordLoading(false);
+  }
+
+  function openViewEntity(account) {
+    setViewingEntity({ ...account, _type: account._type, cases: [], activityLogs: [], user: null, treatmentPhotos: [], treatmentReports: [] });
+    setEntityDetailTab('overview');
+    setTab('entity-detail');
+    setLoading(true);
   }
 
   // KYC Review functions
@@ -403,6 +491,39 @@ export default function AdminPortalClient() {
         </div>
       )}
 
+      {/* Reset Password Modal */}
+      {resetPasswordModal && (
+        <div className="modal-overlay" onClick={() => { setResetPasswordModal(null); setNewPassword(''); }}>
+          <div className="modal-content modal-sm" onClick={e => e.stopPropagation()} style={{ maxWidth: 420 }}>
+            <div className="modal-header">
+              <h3>Reset Password</h3>
+              <button className="btn btn-ghost btn-icon" onClick={() => { setResetPasswordModal(null); setNewPassword(''); }}><i className="fas fa-xmark"></i></button>
+            </div>
+            <div className="modal-body">
+              <div style={{ marginBottom: 16 }}>
+                <div style={{ fontSize: '0.82rem', color: 'var(--color-pb-text-muted)', marginBottom: 4 }}>Account</div>
+                <div style={{ fontWeight: 700 }}>{resetPasswordModal._label || resetPasswordModal.name || resetPasswordModal.email}</div>
+                <div style={{ fontSize: '0.78rem', color: 'var(--color-pb-text-muted)' }}>{resetPasswordModal.email} · <span className={`badge ${typeColors[resetPasswordModal._type] || 'badge-green'}`} style={{ fontSize: '0.68rem' }}>{resetPasswordModal._type}</span></div>
+              </div>
+              <form onSubmit={handleResetPassword} style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+                <div>
+                  <label className="pb-label">New Password</label>
+                  <div style={{ display: 'flex', gap: 8 }}>
+                    <input className="pb-input" type="text" value={newPassword} onChange={e => setNewPassword(e.target.value)} required style={{ flex: 1 }} />
+                    <button type="button" className="btn btn-secondary btn-sm" onClick={() => setNewPassword(generateRandomPassword())} title="Generate random password">
+                      <i className="fas fa-dice"></i>
+                    </button>
+                  </div>
+                </div>
+                <button type="submit" className="btn btn-primary" style={{ width: '100%' }} disabled={resetPasswordLoading || !newPassword}>
+                  {resetPasswordLoading ? <><i className="fas fa-spinner fa-spin"></i> Resetting…</> : <><i className="fas fa-key"></i> Reset Password</>}
+                </button>
+              </form>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Sidebar */}
       <aside className="portal-sidebar">
         <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 28, padding: '0 4px' }}>
@@ -545,9 +666,17 @@ export default function AdminPortalClient() {
                             <td><span className={`badge ${a.status === 'active' ? 'badge-green' : a.status === 'pending' ? 'badge-gold' : 'badge-red'}`}>{a.status || '—'}</span></td>
                             <td style={{ fontSize: '0.8rem', color: 'var(--color-pb-text-muted)' }}>{a.createdAt ? new Date(a.createdAt).toLocaleDateString() : '—'}</td>
                             <td>
-                              <button className={`btn btn-sm ${a.status === 'active' ? 'btn-ghost' : 'btn-primary'}`} onClick={() => toggleUserStatus(a)} title={a.status === 'active' ? 'Suspend' : 'Activate'}>
-                                <i className={`fas ${a.status === 'active' ? 'fa-ban' : 'fa-check'}`}></i>
-                              </button>
+                              <div style={{ display: 'flex', gap: 6 }}>
+                                <button className="btn btn-secondary btn-sm" onClick={() => openViewEntity(a)} title="View details">
+                                  <i className="fas fa-eye"></i>
+                                </button>
+                                <button className="btn btn-ghost btn-sm" onClick={() => { setResetPasswordModal(a); setNewPassword(generateRandomPassword()); }} title="Reset password">
+                                  <i className="fas fa-key"></i>
+                                </button>
+                                <button className={`btn btn-sm ${a.status === 'active' ? 'btn-ghost' : 'btn-primary'}`} onClick={() => toggleUserStatus(a)} title={a.status === 'active' ? 'Suspend' : 'Activate'}>
+                                  <i className={`fas ${a.status === 'active' ? 'fa-ban' : 'fa-check'}`}></i>
+                                </button>
+                              </div>
                             </td>
                           </tr>
                         ))}
@@ -1304,9 +1433,375 @@ export default function AdminPortalClient() {
               </div>
             )}
 
+            {/* ENTITY DETAIL TAB */}
+            {tab === 'entity-detail' && viewingEntity && (
+              <div>
+                {/* Back button + header */}
+                <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 24 }}>
+                  <button className="btn btn-ghost btn-sm" onClick={() => { setViewingEntity(null); setTab('accounts'); }}>
+                    <i className="fas fa-arrow-left"></i> Back to Accounts
+                  </button>
+                  <span style={{ fontWeight: 700, fontSize: '1.15rem', fontFamily: 'var(--font-display)' }}>
+                    {viewingEntity.name || viewingEntity._label || 'Entity'}
+                  </span>
+                  <span className={`badge ${typeColors[viewingEntity._type] || 'badge-green'}`}>{viewingEntity._type}</span>
+                  <span className={`badge ${viewingEntity.status === 'active' ? 'badge-green' : viewingEntity.status === 'pending' ? 'badge-gold' : 'badge-red'}`}>{viewingEntity.status || '—'}</span>
+                </div>
+
+                {/* Stat cards */}
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: 14, marginBottom: 24 }}>
+                  {[
+                    { label: 'Cases', value: (viewingEntity.cases || []).length, icon: 'fa-folder-open', color: 'var(--color-pb-primary)' },
+                    { label: 'Activity Logs', value: (viewingEntity.activityLogs || []).length, icon: 'fa-clock-rotate-left', color: 'var(--color-pb-doctor)' },
+                    { label: 'Member Since', value: viewingEntity.createdAt ? new Date(viewingEntity.createdAt).toLocaleDateString() : '—', icon: 'fa-calendar', color: 'var(--color-pb-ngo)' },
+                  ].map((s, i) => (
+                    <div key={i} className="glass" style={{ padding: 16 }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                        <div style={{ width: 38, height: 38, borderRadius: 10, background: `${s.color}15`, color: s.color, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                          <i className={`fas ${s.icon}`} style={{ fontSize: '0.85rem' }}></i>
+                        </div>
+                        <div>
+                          <div style={{ fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: '1.15rem' }}>{s.value}</div>
+                          <div style={{ fontSize: '0.72rem', color: 'var(--color-pb-text-muted)' }}>{s.label}</div>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+
+                {/* Tab bar */}
+                <div style={{ display: 'flex', gap: 4, marginBottom: 20, borderBottom: '2px solid var(--color-pb-border)', paddingBottom: 0 }}>
+                  {[
+                    { key: 'overview', label: 'Overview', icon: 'fa-user' },
+                    { key: 'cases', label: 'Cases', icon: 'fa-folder-open' },
+                    { key: 'activity', label: 'Activity', icon: 'fa-clock-rotate-left' },
+                    { key: 'kyc', label: 'KYC', icon: 'fa-id-card' },
+                    ...(viewingEntity._type === 'doctor' ? [{ key: 'photos', label: 'Photos & Reports', icon: 'fa-images' }] : []),
+                  ].map(t => (
+                    <button key={t.key} onClick={() => setEntityDetailTab(t.key)}
+                      style={{ padding: '10px 16px', border: 'none', background: 'none', cursor: 'pointer', fontWeight: entityDetailTab === t.key ? 700 : 500, color: entityDetailTab === t.key ? 'var(--color-pb-primary)' : 'var(--color-pb-text-muted)', borderBottom: entityDetailTab === t.key ? '2px solid var(--color-pb-primary)' : '2px solid transparent', marginBottom: -2, fontSize: '0.85rem', display: 'flex', alignItems: 'center', gap: 6 }}>
+                      <i className={`fas ${t.icon}`} style={{ fontSize: '0.8rem' }}></i> {t.label}
+                    </button>
+                  ))}
+                </div>
+
+                {/* Overview sub-tab */}
+                {entityDetailTab === 'overview' && (
+                  <div className="glass" style={{ padding: 24 }}>
+                    <h4 style={{ fontWeight: 700, margin: '0 0 16px', fontSize: '0.95rem' }}>Profile Information</h4>
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))', gap: 14 }}>
+                      {Object.entries(viewingEntity).filter(([k]) => !['_type', '_label', 'cases', 'activityLogs', 'user', 'treatmentPhotos', 'treatmentReports', 'ngoRiders', 'ngoRepresentatives', 'totalIncidents', 'trackingHistory', 'checkins', 'payments', 'kycData'].includes(k) && viewingEntity[k] != null && viewingEntity[k] !== '').map(([key, val]) => (
+                        <div key={key}>
+                          <div style={{ fontSize: '0.72rem', color: 'var(--color-pb-text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 2 }}>{key.replace(/([A-Z])/g, ' $1').replace(/_/g, ' ')}</div>
+                          <div style={{ fontSize: '0.88rem', fontWeight: 600, wordBreak: 'break-all' }}>
+                            {typeof val === 'boolean' ? (val ? 'Yes' : 'No') : typeof val === 'object' ? JSON.stringify(val) : String(val)}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                    {viewingEntity.lat && viewingEntity.lng && (
+                      <div style={{ marginTop: 16 }}>
+                        <div style={{ fontSize: '0.72rem', color: 'var(--color-pb-text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 4 }}>Location</div>
+                        <a href={`https://www.google.com/maps?q=${viewingEntity.lat},${viewingEntity.lng}`} target="_blank" rel="noopener noreferrer" style={{ color: 'var(--color-pb-primary)', fontSize: '0.88rem', fontWeight: 600 }}>
+                          <i className="fas fa-map-marker-alt"></i> {String(viewingEntity.lat)}, {String(viewingEntity.lng)} — View on Maps
+                        </a>
+                      </div>
+                    )}
+                    {viewingEntity.user && (
+                      <div style={{ marginTop: 20, borderTop: '1px solid var(--color-pb-border)', paddingTop: 16 }}>
+                        <h4 style={{ fontWeight: 700, margin: '0 0 12px', fontSize: '0.95rem' }}>Linked User Account</h4>
+                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: 12 }}>
+                          <div><div style={{ fontSize: '0.72rem', color: 'var(--color-pb-text-muted)', textTransform: 'uppercase', marginBottom: 2 }}>Email</div><div style={{ fontSize: '0.88rem', fontWeight: 600 }}>{viewingEntity.user.email || '—'}</div></div>
+                          <div><div style={{ fontSize: '0.72rem', color: 'var(--color-pb-text-muted)', textTransform: 'uppercase', marginBottom: 2 }}>Name</div><div style={{ fontSize: '0.88rem', fontWeight: 600 }}>{[viewingEntity.user.firstName, viewingEntity.user.middleName, viewingEntity.user.lastName].filter(Boolean).join(' ') || '—'}</div></div>
+                          <div><div style={{ fontSize: '0.72rem', color: 'var(--color-pb-text-muted)', textTransform: 'uppercase', marginBottom: 2 }}>Phone</div><div style={{ fontSize: '0.88rem', fontWeight: 600 }}>{viewingEntity.user.phoneNo || '—'}</div></div>
+                          <div><div style={{ fontSize: '0.72rem', color: 'var(--color-pb-text-muted)', textTransform: 'uppercase', marginBottom: 2 }}>Role</div><div style={{ fontSize: '0.88rem', fontWeight: 600 }}>{viewingEntity.user.role || '—'}</div></div>
+                          <div><div style={{ fontSize: '0.72rem', color: 'var(--color-pb-text-muted)', textTransform: 'uppercase', marginBottom: 2 }}>Status</div><div><span className={`badge ${viewingEntity.user.status === 'active' ? 'badge-green' : 'badge-red'}`}>{viewingEntity.user.status || '—'}</span></div></div>
+                        </div>
+                      </div>
+                    )}
+                    {viewingEntity._type === 'ngo' && (
+                      <div style={{ marginTop: 20, borderTop: '1px solid var(--color-pb-border)', paddingTop: 16 }}>
+                        <h4 style={{ fontWeight: 700, margin: '0 0 12px', fontSize: '0.95rem' }}>NGO Members</h4>
+                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14 }}>
+                          <div>
+                            <div style={{ fontSize: '0.78rem', fontWeight: 600, color: 'var(--color-pb-text-muted)', marginBottom: 6 }}>Riders ({(viewingEntity.ngoRiders || []).length})</div>
+                            {(viewingEntity.ngoRiders || []).length === 0 ? <div style={{ fontSize: '0.82rem', color: 'var(--color-pb-text-muted)' }}>No riders</div> : (
+                              <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+                                {viewingEntity.ngoRiders.map((r, i) => (
+                                  <div key={i} style={{ fontSize: '0.82rem', padding: '6px 10px', background: 'var(--color-pb-bg)', borderRadius: 6 }}>
+                                    <span style={{ fontWeight: 600 }}>{r.name || '—'}</span> <span className={`badge ${r.status === 'active' ? 'badge-green' : 'badge-gold'}`} style={{ fontSize: '0.65rem' }}>{r.status}</span>
+                                  </div>
+                                ))}
+                              </div>
+                            )}
+                          </div>
+                          <div>
+                            <div style={{ fontSize: '0.78rem', fontWeight: 600, color: 'var(--color-pb-text-muted)', marginBottom: 6 }}>Representatives ({(viewingEntity.ngoRepresentatives || []).length})</div>
+                            {(viewingEntity.ngoRepresentatives || []).length === 0 ? <div style={{ fontSize: '0.82rem', color: 'var(--color-pb-text-muted)' }}>No representatives</div> : (
+                              <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+                                {viewingEntity.ngoRepresentatives.map((r, i) => (
+                                  <div key={i} style={{ fontSize: '0.82rem', padding: '6px 10px', background: 'var(--color-pb-bg)', borderRadius: 6 }}>
+                                    <span style={{ fontWeight: 600 }}>{r.name || '—'}</span> <span className={`badge ${r.status === 'active' ? 'badge-green' : 'badge-gold'}`} style={{ fontSize: '0.65rem' }}>{r.status}</span>
+                                  </div>
+                                ))}
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {/* Cases sub-tab */}
+                {entityDetailTab === 'cases' && (
+                  <div className="glass" style={{ padding: 24 }}>
+                    {(viewingEntity.cases || []).length === 0 ? (
+                      <p style={{ color: 'var(--color-pb-text-muted)', fontSize: '0.88rem' }}>No cases found for this entity.</p>
+                    ) : (
+                      <div style={{ overflowX: 'auto' }}>
+                        <table className="pb-table">
+                          <thead><tr><th>Code</th><th>Animal</th><th>Status</th><th>Workflow</th><th>Created</th><th></th></tr></thead>
+                          <tbody>
+                            {(viewingEntity.cases || []).map(c => (
+                              <tr key={c.id}>
+                                <td style={{ fontWeight: 700, fontFamily: 'monospace' }}>{c.incidentCode || `#${c.id}`}</td>
+                                <td>{c.animalType || '—'}</td>
+                                <td><span className="badge badge-green">{c.status || 'open'}</span></td>
+                                <td><span className="badge badge-gold">{c.workflowStatus || '—'}</span></td>
+                                <td style={{ fontSize: '0.8rem', color: 'var(--color-pb-text-muted)' }}>{c.createdAt ? new Date(c.createdAt).toLocaleDateString() : '—'}</td>
+                                <td>
+                                  {c.timeline && c.timeline.length > 0 && (
+                                    <details>
+                                      <summary style={{ cursor: 'pointer', fontSize: '0.78rem', color: 'var(--color-pb-primary)' }}>{c.timeline.length} events</summary>
+                                      <div style={{ padding: '8px 0', display: 'flex', flexDirection: 'column', gap: 6 }}>
+                                        {c.timeline.slice(0, 10).map((t, i) => (
+                                          <div key={i} style={{ fontSize: '0.78rem', padding: '6px 8px', background: 'var(--color-pb-bg)', borderRadius: 4 }}>
+                                            <span style={{ fontWeight: 600 }}>{t.status || '—'}</span>
+                                            <span style={{ color: 'var(--color-pb-text-muted)', marginLeft: 8 }}>{t.createdAt ? new Date(t.createdAt).toLocaleString() : ''}</span>
+                                            {t.note && <div style={{ color: 'var(--color-pb-text-secondary)', marginTop: 2 }}>{t.note}</div>}
+                                          </div>
+                                        ))}
+                                      </div>
+                                    </details>
+                                  )}
+                                </td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {/* Activity sub-tab */}
+                {entityDetailTab === 'activity' && (
+                  <div className="glass" style={{ padding: 24 }}>
+                    {(viewingEntity.activityLogs || []).length === 0 ? (
+                      <p style={{ color: 'var(--color-pb-text-muted)', fontSize: '0.88rem' }}>No activity logs found.</p>
+                    ) : (
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: 0 }}>
+                        {viewingEntity.activityLogs.map((log, i) => {
+                          const actionIcons = {
+                            admin_password_reset: { icon: 'fa-key', color: '#eab308' },
+                            status_change: { icon: 'fa-toggle-on', color: '#22c55e' },
+                            kyc_approved: { icon: 'fa-id-card', color: '#22c55e' },
+                            kyc_rejected: { icon: 'fa-id-card', color: '#ef4444' },
+                            login: { icon: 'fa-right-to-bracket', color: '#3b82f6' },
+                            case_created: { icon: 'fa-folder-plus', color: 'var(--color-pb-primary)' },
+                          };
+                          const matched = actionIcons[log.action] || { icon: 'fa-circle-info', color: 'var(--color-pb-text-muted)' };
+                          return (
+                            <div key={log.id || i} style={{ display: 'flex', gap: 12, padding: '12px 0', borderBottom: i < (viewingEntity.activityLogs || []).length - 1 ? '1px solid var(--color-pb-border)' : 'none' }}>
+                              <div style={{ width: 32, height: 32, borderRadius: 8, background: `${matched.color}15`, color: matched.color, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                                <i className={`fas ${matched.icon}`} style={{ fontSize: '0.75rem' }}></i>
+                              </div>
+                              <div style={{ flex: 1, minWidth: 0 }}>
+                                <div style={{ fontSize: '0.85rem', fontWeight: 600 }}>{log.action?.replace(/_/g, ' ') || '—'}</div>
+                                {log.details && (
+                                  <div style={{ fontSize: '0.78rem', color: 'var(--color-pb-text-secondary)', marginTop: 2, wordBreak: 'break-all' }}>
+                                    {typeof log.details === 'object' ? Object.entries(log.details).map(([k, v]) => `${k}: ${v}`).join(' · ') : String(log.details)}
+                                  </div>
+                                )}
+                              </div>
+                              <div style={{ fontSize: '0.75rem', color: 'var(--color-pb-text-muted)', whiteSpace: 'nowrap', flexShrink: 0 }}>
+                                {log.createdAt ? new Date(log.createdAt).toLocaleString() : '—'}
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {/* KYC sub-tab */}
+                {entityDetailTab === 'kyc' && (
+                  <div className="glass" style={{ padding: 24 }}>
+                    {viewingEntity.kycData && typeof viewingEntity.kycData === 'object' ? (
+                      <div>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 20 }}>
+                          <span style={{ fontWeight: 700, fontSize: '0.95rem' }}>KYC Status</span>
+                          <span className={`badge ${viewingEntity.status === 'active' ? 'badge-green' : viewingEntity.status === 'kyc_submitted' || viewingEntity.status === 'pending' ? 'badge-gold' : 'badge-red'}`}>
+                            {viewingEntity.status === 'active' ? 'Approved' : viewingEntity.status === 'rejected' ? 'Rejected' : viewingEntity.status === 'kyc_resubmit' ? 'Reupload Requested' : 'Pending'}
+                          </span>
+                        </div>
+                        {viewingEntity.kycData.approvedAt && <div style={{ fontSize: '0.82rem', color: 'var(--color-pb-text-muted)', marginBottom: 4 }}>Approved: {new Date(viewingEntity.kycData.approvedAt).toLocaleString()}</div>}
+                        {viewingEntity.kycData.rejectedAt && <div style={{ fontSize: '0.82rem', color: '#ef4444', marginBottom: 4 }}>Rejected: {new Date(viewingEntity.kycData.rejectedAt).toLocaleString()}</div>}
+                        {viewingEntity.kycData.rejectionReason && <div style={{ fontSize: '0.82rem', color: '#ef4444', marginBottom: 12, fontStyle: 'italic' }}>Reason: {viewingEntity.kycData.rejectionReason}</div>}
+                        <h4 style={{ fontWeight: 700, margin: '16px 0 10px', fontSize: '0.9rem' }}>Documents</h4>
+                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(240px, 1fr))', gap: 10 }}>
+                          {Object.entries(viewingEntity.kycData).filter(([k]) => !['approvedAt', 'rejectedAt', 'rejectionReason', 'reuploadRequestedAt', 'reuploadReason', 'approvedBy', 'rejectedBy'].includes(k)).map(([key, val]) => (
+                            <div key={key} style={{ padding: 12, background: 'var(--color-pb-bg)', borderRadius: 8, fontSize: '0.82rem' }}>
+                              <div style={{ fontWeight: 600, marginBottom: 4, textTransform: 'capitalize' }}>{key.replace(/([A-Z])/g, ' $1').replace(/_/g, ' ')}</div>
+                              {val && typeof val === 'object' ? (
+                                Object.entries(val).map(([k2, v2]) => (
+                                  <div key={k2} style={{ marginBottom: 2 }}>
+                                    <span style={{ color: 'var(--color-pb-text-muted)', textTransform: 'capitalize' }}>{k2.replace(/([A-Z])/g, ' $1')}: </span>
+                                    {typeof v2 === 'string' && v2.startsWith('http') ? (
+                                      <a href={v2} target="_blank" rel="noopener noreferrer" style={{ color: 'var(--color-pb-primary)' }}><i className="fas fa-external-link-alt"></i> View</a>
+                                    ) : (
+                                      <span style={{ fontWeight: 500 }}>{String(v2)}</span>
+                                    )}
+                                  </div>
+                                ))
+                              ) : val && typeof val === 'string' && val.startsWith('http') ? (
+                                <a href={val} target="_blank" rel="noopener noreferrer" style={{ color: 'var(--color-pb-primary)' }}><i className="fas fa-external-link-alt"></i> View document</a>
+                              ) : (
+                                <span style={{ fontWeight: 500 }}>{val ? String(val) : 'Not provided'}</span>
+                              )}
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    ) : (
+                      <p style={{ color: 'var(--color-pb-text-muted)', fontSize: '0.88rem' }}>No KYC data available.</p>
+                    )}
+                  </div>
+                )}
+
+                {/* Photos sub-tab (doctors only) */}
+                {entityDetailTab === 'photos' && viewingEntity._type === 'doctor' && (
+                  <div className="glass" style={{ padding: 24 }}>
+                    {viewingEntity.treatmentReports && viewingEntity.treatmentReports.length > 0 && (
+                      <div style={{ marginBottom: 24 }}>
+                        <h4 style={{ fontWeight: 700, margin: '0 0 12px', fontSize: '0.95rem' }}>Treatment Reports</h4>
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+                          {viewingEntity.treatmentReports.map((r, i) => (
+                            <div key={i} style={{ padding: 14, background: 'var(--color-pb-bg)', borderRadius: 8 }}>
+                              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 6 }}>
+                                <span style={{ fontFamily: 'monospace', fontWeight: 700, fontSize: '0.82rem' }}>{r.incidentCode}</span>
+                                <span style={{ fontSize: '0.78rem', color: 'var(--color-pb-text-muted)' }}>{r.createdAt ? new Date(r.createdAt).toLocaleDateString() : ''}</span>
+                              </div>
+                              <div style={{ fontSize: '0.85rem', whiteSpace: 'pre-wrap' }}>{r.report}</div>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                    {viewingEntity.treatmentPhotos && viewingEntity.treatmentPhotos.length > 0 && (
+                      <div>
+                        <h4 style={{ fontWeight: 700, margin: '0 0 12px', fontSize: '0.95rem' }}>Treatment Photos</h4>
+                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(180px, 1fr))', gap: 10 }}>
+                          {viewingEntity.treatmentPhotos.map((p, i) => (
+                            <div key={i} style={{ position: 'relative', borderRadius: 8, overflow: 'hidden', background: 'var(--color-pb-bg)' }}>
+                              {p.fileUrl ? (
+                                <a href={p.fileUrl} target="_blank" rel="noopener noreferrer" style={{ display: 'block' }}>
+                                  <div style={{ width: '100%', height: 140, background: 'var(--color-pb-border)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                                    <i className="fas fa-image" style={{ fontSize: 24, color: 'var(--color-pb-text-muted)' }}></i>
+                                  </div>
+                                </a>
+                              ) : (
+                                <div style={{ width: '100%', height: 140, background: 'var(--color-pb-border)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                                  <i className="fas fa-image" style={{ fontSize: 24, color: 'var(--color-pb-text-muted)' }}></i>
+                                </div>
+                              )}
+                              <div style={{ padding: '6px 8px' }}>
+                                <div style={{ fontSize: '0.72rem', fontWeight: 600, textTransform: 'capitalize' }}>{(p.photoType || 'photo').replace(/_/g, ' ')}</div>
+                                <div style={{ fontSize: '0.68rem', color: 'var(--color-pb-text-muted)' }}>{p.createdAt ? new Date(p.createdAt).toLocaleDateString() : ''}</div>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                    {(!viewingEntity.treatmentReports || viewingEntity.treatmentReports.length === 0) && (!viewingEntity.treatmentPhotos || viewingEntity.treatmentPhotos.length === 0) && (
+                      <p style={{ color: 'var(--color-pb-text-muted)', fontSize: '0.88rem' }}>No photos or treatment reports found.</p>
+                    )}
+                  </div>
+                )}
+              </div>
+            )}
+
             {/* SITE CONFIG TAB */}
             {tab === 'settings' && (
-              <div className="glass" style={{ padding: 28 }}>
+              <div>
+                {/* Commission Settings */}
+                <div className="glass" style={{ padding: 28, marginBottom: 24 }}>
+                  <h3 style={{ fontFamily: 'var(--font-display)', fontWeight: 700, margin: '0 0 6px' }}>
+                    <i className="fas fa-percent" style={{ marginRight: 8, color: 'var(--color-pb-primary)' }}></i>
+                    Commission Settings
+                  </h3>
+                  <p style={{ fontSize: '0.82rem', color: 'var(--color-pb-text-muted)', marginBottom: 20 }}>
+                    Configure the platform commission percentage applied to case expenses.
+                  </p>
+                  <form onSubmit={saveCommissionConfig} style={{ display: 'flex', flexDirection: 'column', gap: 16, maxWidth: 500 }}>
+                    <div>
+                      <label className="pb-label">Commission Percentage (%)</label>
+                      <input
+                        className="pb-input"
+                        type="number"
+                        min="0"
+                        max="100"
+                        step="0.5"
+                        value={commissionConfig.percentage || ''}
+                        onChange={e => setCommissionConfig(prev => ({ ...prev, percentage: e.target.value }))}
+                        required
+                      />
+                      <div style={{ fontSize: '0.75rem', color: 'var(--color-pb-text-muted)', marginTop: 4 }}>
+                        Current rate: <strong>{commissionConfig.percentage || 15}%</strong> — Applied on top of case expenses
+                      </div>
+                    </div>
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+                      <div>
+                        <label className="pb-label">Minimum Amount (₹)</label>
+                        <input
+                          className="pb-input"
+                          type="number"
+                          min="0"
+                          value={commissionConfig.minAmount || ''}
+                          onChange={e => setCommissionConfig(prev => ({ ...prev, minAmount: e.target.value }))}
+                        />
+                      </div>
+                      <div>
+                        <label className="pb-label">Maximum Amount (₹)</label>
+                        <input
+                          className="pb-input"
+                          type="number"
+                          min="0"
+                          value={commissionConfig.maxAmount || ''}
+                          onChange={e => setCommissionConfig(prev => ({ ...prev, maxAmount: e.target.value }))}
+                        />
+                      </div>
+                    </div>
+                    <div>
+                      <label className="pb-label">Description</label>
+                      <input
+                        className="pb-input"
+                        value={commissionConfig.description || ''}
+                        onChange={e => setCommissionConfig(prev => ({ ...prev, description: e.target.value }))}
+                        placeholder="e.g. Platform commission for rescue operations"
+                      />
+                    </div>
+                    <button type="submit" className="btn btn-primary" style={{ alignSelf: 'flex-start' }} disabled={commissionSaving}>
+                      {commissionSaving ? <><i className="fas fa-spinner fa-spin"></i> Saving…</> : <><i className="fas fa-save"></i> Save Commission Settings</>}
+                    </button>
+                  </form>
+                </div>
+
+                {/* Site Configuration */}
+                <div className="glass" style={{ padding: 28 }}>
                 <h3 style={{ fontFamily: 'var(--font-display)', fontWeight: 700, margin: '0 0 20px' }}>Site Configuration</h3>
                 <form onSubmit={saveSiteConfig} style={{ display: 'flex', flexDirection: 'column', gap: 16, maxWidth: 600 }}>
                   <div><label className="pb-label">Hero Title</label><input className="pb-input" name="hero_title" defaultValue={siteConfig.hero_title || ''} /></div>
@@ -1340,6 +1835,7 @@ export default function AdminPortalClient() {
                   </div>
                   <button type="submit" className="btn btn-primary" style={{ alignSelf: 'flex-start' }}><i className="fas fa-save"></i> Save configuration</button>
                 </form>
+                </div>
               </div>
             )}
           </>

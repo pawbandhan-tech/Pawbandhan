@@ -67,6 +67,8 @@ model NGO {
   address       String?  @db.Text
   city          String?  @db.VarChar(100)
   state         String?  @db.VarChar(100)
+  lat           Decimal? @db.Decimal(10, 8)
+  lng           Decimal? @db.Decimal(11, 8)
   serviceArea   String?  @map("service_area") @db.Text
   workType      String?  @map("work_type") @db.VarChar(100)
   status        String?  @default("pending") @db.VarChar(20)
@@ -96,6 +98,8 @@ model Doctor {
   specialization String?  @db.VarChar(255)
   licenseNumber  String?  @map("license_number") @db.VarChar(100)
   hospitalName   String?  @map("hospital_name") @db.VarChar(255)
+  lat            Decimal? @db.Decimal(10, 8)
+  lng            Decimal? @db.Decimal(11, 8)
   status         String?  @default("pending") @db.VarChar(20)
   prn            String?  @unique @db.VarChar(50)
   tempId         String?  @map("temp_id") @unique @db.VarChar(50)
@@ -121,6 +125,8 @@ model Rider {
   vehicleType    String?  @map("vehicle_type") @db.VarChar(100)
   vehicleNumber  String?  @map("vehicle_number") @db.VarChar(100)
   licenseNumber  String?  @map("license_number") @db.VarChar(100)
+  lat            Decimal? @db.Decimal(10, 8)
+  lng            Decimal? @db.Decimal(11, 8)
   status         String?  @default("pending") @db.VarChar(20)
   riderId        String?  @map("rider_id") @unique @db.VarChar(50)
   kycData        Json?    @map("kyc_data")
@@ -186,6 +192,17 @@ model Incident {
   doctorId        Int?      @map("doctor_id")
   injuryType      String?   @map("injury_type") @db.VarChar(100)
   handoverOtp     String?   @map("handover_otp") @db.VarChar(10)
+  handoverPin     String?   @map("handover_pin") @db.VarChar(10)
+  pickupLat       Decimal?  @map("pickup_lat") @db.Decimal(10, 8)
+  pickupLng       Decimal?  @map("pickup_lng") @db.Decimal(11, 8)
+  dropLat         Decimal?  @map("drop_lat") @db.Decimal(10, 8)
+  dropLng         Decimal?  @map("drop_lng") @db.Decimal(11, 8)
+  dropAddress     String?   @map("drop_address") @db.Text
+  estimatedCost   Decimal?  @map("estimated_cost") @db.Decimal(10, 2)
+  finalCost       Decimal?  @map("final_cost") @db.Decimal(10, 2)
+  commissionPct   Decimal?  @map("commission_pct") @db.Decimal(5, 2) @default(15)
+  paymentMethod   String?   @map("payment_method") @db.VarChar(30)
+  paymentStatus   String?   @map("payment_status") @db.VarChar(30) @default("pending")
   dogTagId        String?   @map("dog_tag_id") @db.VarChar(50)
   resolutionType  String?   @map("resolution_type") @db.VarChar(50)
   releaseLat      Decimal?  @map("release_lat") @db.Decimal(10, 8)
@@ -202,6 +219,7 @@ model Incident {
   doctor    Doctor?    @relation(fields: [doctorId], references: [id])
   timeline  CaseTimeline[]
   photos    CasePhoto[]
+  expenses  CaseExpense[]
 
   @@map("incidents")
 }
@@ -382,4 +400,83 @@ model RepReview {
   rep Representative? @relation(fields: [repId], references: [id])
 
   @@map("rep_reviews")
+}
+
+// ─── Activity Logs ───
+
+model ActivityLog {
+  id            Int      @id @default(autoincrement())
+  entityType    String?  @map("entity_type") @db.VarChar(30)
+  entityId      Int?     @map("entity_id")
+  entityUid     String?  @map("entity_uid") @db.VarChar(255)
+  action        String?  @db.VarChar(100)
+  details       Json?
+  ip            String?  @db.VarChar(50)
+  createdAt     DateTime @default(now()) @map("created_at")
+
+  @@map("activity_logs")
+}
+
+// ─── Case Expenses ───
+
+model CaseExpense {
+  id            Int      @id @default(autoincrement())
+  incidentCode  String?  @map("incident_code") @db.VarChar(50)
+  description   String?  @db.VarChar(255)
+  amount        Decimal? @db.Decimal(10, 2)
+  category      String?  @db.VarChar(50)
+  addedBy       String?  @map("added_by") @db.VarChar(30)
+  createdAt     DateTime @default(now()) @map("created_at")
+
+  incident Incident? @relation(fields: [incidentCode], references: [incidentCode])
+
+  @@map("case_expenses")
+}
+
+// ─── Case Payments ───
+
+model CasePayment {
+  id            Int      @id @default(autoincrement())
+  incidentCode  String?  @map("incident_code") @db.VarChar(50)
+  customerUid   String?  @map("customer_uid") @db.VarChar(255)
+  totalAmount   Decimal? @map("total_amount") @db.Decimal(10, 2)
+  commissionAmt Decimal? @map("commission_amt") @db.Decimal(10, 2)
+  netAmount     Decimal? @map("net_amount") @db.Decimal(10, 2)
+  paymentMethod String?  @map("payment_method") @db.VarChar(30)
+  paymentStatus String?  @map("payment_status") @db.VarChar(30) @default("pending")
+  paidAt        DateTime? @map("paid_at")
+  createdAt     DateTime @default(now()) @map("created_at")
+
+  @@map("case_payments")
+}
+
+// ─── Rider Tracking (Real-time) ───
+
+model RiderTracking {
+  id            Int      @id @default(autoincrement())
+  riderUid      String?  @map("rider_uid") @db.VarChar(255)
+  incidentCode  String?  @map("incident_code") @db.VarChar(50)
+  lat           Decimal? @db.Decimal(10, 8)
+  lng           Decimal? @db.Decimal(11, 8)
+  heading       Decimal? @db.Decimal(5, 2)
+  speed         Decimal? @db.Decimal(6, 2)
+  status        String?  @db.VarChar(50)
+  createdAt     DateTime @default(now()) @map("created_at")
+
+  @@map("rider_tracking")
+}
+
+// ─── Commission Config ───
+
+model CommissionConfig {
+  id            Int      @id @default(autoincrement())
+  percentage    Decimal? @db.Decimal(5, 2) @default(15)
+  minAmount     Decimal? @map("min_amount") @db.Decimal(10, 2) @default(0)
+  maxAmount     Decimal? @map("max_amount") @db.Decimal(10, 2) @default(999999)
+  description   String?  @db.Text
+  active        Boolean? @default(true)
+  createdAt     DateTime @default(now()) @map("created_at")
+  updatedAt     DateTime @default(now()) @map("updated_at")
+
+  @@map("commission_config")
 }

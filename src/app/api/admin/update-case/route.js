@@ -2,6 +2,12 @@ import { NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
 import { requireAdmin } from '@/lib/admin-auth';
 
+function generatePin() {
+  return String(Math.floor(1000 + Math.random() * 9000));
+}
+
+const PIN_REQUIRED_STATUSES = ['animal_picked', 'at_vet', 'delivered'];
+
 export async function POST(request) {
   try {
     const auth = requireAdmin(request);
@@ -24,12 +30,21 @@ export async function POST(request) {
     }
 
     const updateData = {};
+    let generatedPin = null;
+
     if (status !== undefined) updateData.status = status;
     if (workflowStatus !== undefined) updateData.workflowStatus = workflowStatus;
     if (notes !== undefined) updateData.notes = notes;
     if (ngoId !== undefined) updateData.ngoId = ngoId ? parseInt(ngoId, 10) : null;
     if (repId !== undefined) updateData.repId = repId ? parseInt(repId, 10) : null;
     if (doctorId !== undefined) updateData.doctorId = doctorId ? parseInt(doctorId, 10) : null;
+
+    // Auto-generate handover PIN when status changes to a PIN-required stage
+    const targetStatus = workflowStatus || status;
+    if (targetStatus && PIN_REQUIRED_STATUSES.includes(targetStatus)) {
+      generatedPin = generatePin();
+      updateData.handoverPin = generatedPin;
+    }
 
     const [updatedIncident, timelineEntry] = await prisma.$transaction([
       prisma.incident.update({
@@ -54,11 +69,18 @@ export async function POST(request) {
       });
     }
 
-    return NextResponse.json({
+    const response = {
       success: true,
       incident: updatedIncident,
       timelineEntry,
-    });
+    };
+
+    if (generatedPin) {
+      response.handoverPin = generatedPin;
+      response.pinNote = `Handover PIN generated for "${targetStatus}" stage. Show this PIN to the field team.`;
+    }
+
+    return NextResponse.json(response);
   } catch (error) {
     console.error('Update case error:', error);
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
