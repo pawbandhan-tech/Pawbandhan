@@ -229,8 +229,31 @@ export default function DashboardClient() {
                   <input className="pb-input" value={reportForm.location} onChange={e => setReportForm(f => ({ ...f, location: e.target.value }))} placeholder="Landmark or address" />
                 </div>
                 <div>
-                  <label className="pb-label">Photos (optional)</label>
-                  <input className="pb-input" type="file" accept="image/*" multiple onChange={e => setReportImages(Array.from(e.target.files))} />
+                  <label className="pb-label">Photos</label>
+                  <div style={{ display: 'flex', gap: 10 }}>
+                    <label className="btn btn-ghost" style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, padding: '12px', cursor: 'pointer', border: '2px dashed var(--color-pb-border)', borderRadius: 12, fontSize: '0.85rem' }}>
+                      <i className="fas fa-camera" style={{ color: 'var(--color-pb-primary)' }}></i>
+                      <span>Take Photo</span>
+                      <input type="file" accept="image/*" capture="environment" multiple style={{ display: 'none' }} onChange={e => setReportImages(prev => [...prev, ...Array.from(e.target.files)])} />
+                    </label>
+                    <label className="btn btn-ghost" style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, padding: '12px', cursor: 'pointer', border: '2px dashed var(--color-pb-border)', borderRadius: 12, fontSize: '0.85rem' }}>
+                      <i className="fas fa-images" style={{ color: 'var(--color-pb-accent)' }}></i>
+                      <span>Gallery</span>
+                      <input type="file" accept="image/*" multiple style={{ display: 'none' }} onChange={e => setReportImages(prev => [...prev, ...Array.from(e.target.files)])} />
+                    </label>
+                  </div>
+                  {reportImages.length > 0 && (
+                    <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginTop: 10 }}>
+                      {reportImages.map((img, i) => (
+                        <div key={i} style={{ position: 'relative', width: 64, height: 64, borderRadius: 10, overflow: 'hidden', border: '1px solid var(--color-pb-border)' }}>
+                          <img src={URL.createObjectURL(img)} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                          <button type="button" onClick={() => setReportImages(prev => prev.filter((_, j) => j !== i))} style={{ position: 'absolute', top: 2, right: 2, width: 18, height: 18, borderRadius: '50%', background: 'rgba(0,0,0,0.6)', color: '#fff', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.65rem' }}>
+                            <i className="fas fa-xmark"></i>
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  )}
                 </div>
                 <button type="submit" className="btn btn-primary" style={{ width: '100%' }} disabled={reporting}>
                   {reporting ? <><i className="fas fa-spinner fa-spin"></i> Submitting…</> : <><i className="fas fa-paper-plane"></i> Submit Report</>}
