@@ -11,10 +11,19 @@ export default function FloatingSupport() {
       <div style={{ position: 'fixed', bottom: 24, right: 24, zIndex: 9999 }}>
         <button
           className="btn btn-primary"
-          style={{ borderRadius: '50%', width: 56, height: 56, boxShadow: '0 4px 20px rgba(139,92,246,0.4)' }}
+          style={{
+            borderRadius: '50%', width: 60, height: 60,
+            boxShadow: '0 4px 24px rgba(139,92,246,0.5)',
+            background: 'linear-gradient(135deg, var(--color-pb-primary), var(--color-pb-accent))',
+            border: '2px solid rgba(255,255,255,0.4)',
+            animation: 'trackingDot 2s infinite',
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            cursor: 'pointer',
+          }}
           onClick={() => { setIsOpen(true); }}
+          title="Need help? Chat with us!"
         >
-          <i className="fas fa-headset" style={{ fontSize: 20 }}></i>
+          <i className="fas fa-paw" style={{ fontSize: 26, color: '#fff' }}></i>
         </button>
       </div>
 
@@ -34,8 +43,8 @@ export default function FloatingSupport() {
                 <i className="fas fa-xmark"></i>
               </button>
               <h3 style={{ fontFamily: 'var(--font-display)', fontWeight: 700, marginBottom: 20 }}>
-                <i className="fas fa-headset" style={{ marginRight: 8, color: 'var(--color-pb-primary)' }}></i>
-                PawBandhan Support
+                <i className="fas fa-paw" style={{ marginRight: 8, color: 'var(--color-pb-primary)' }}></i>
+                Need Help?
               </h3>
               <SupportWidget userType="visitor" />
             </div>

@@ -508,23 +508,26 @@ model CommissionConfig {
 // ─── Support Tickets ───
 
 model SupportTicket {
-  id            Int      @id @default(autoincrement())
-  ticketCode    String?  @map("ticket_code") @unique @db.VarChar(20)
-  subject       String?  @db.VarChar(255)
-  description   String?  @db.Text
-  category      String?  @db.VarChar(50)
-  priority      String?  @default("medium") @db.VarChar(20)
-  status        String?  @default("open") @db.VarChar(20)
-  createdBy     String?  @map("created_by") @db.VarChar(50)
-  creatorUid    String?  @map("creator_uid") @db.VarChar(255)
-  creatorEmail  String?  @map("creator_email") @db.VarChar(255)
-  creatorName   String?  @map("creator_name") @db.VarChar(255)
-  assignedTo    String?  @map("assigned_to") @db.VarChar(255)
-  resolvedAt    DateTime? @map("resolved_at")
-  createdAt     DateTime @default(now()) @map("created_at")
-  updatedAt     DateTime @default(now()) @map("updated_at")
+  id              Int      @id @default(autoincrement())
+  ticketCode      String?  @map("ticket_code") @unique @db.VarChar(30)
+  subject         String?  @db.VarChar(255)
+  description     String?  @db.Text
+  category        String?  @db.VarChar(50)
+  priority        String?  @default("medium") @db.VarChar(20)
+  status          String?  @default("open") @db.VarChar(20)
+  createdBy       String?  @map("created_by") @db.VarChar(50)
+  creatorUid      String?  @map("creator_uid") @db.VarChar(255)
+  creatorEmail    String?  @map("creator_email") @db.VarChar(255)
+  creatorName     String?  @map("creator_name") @db.VarChar(255)
+  isLiveChat      Boolean? @default(false) @map("is_live_chat")
+  assignedTo      String?  @map("assigned_to") @db.VarChar(255)
+  assignedToUid   String?  @map("assigned_to_uid") @db.VarChar(255)
+  transferredFrom String?  @map("transferred_from") @db.VarChar(255)
+  resolvedAt      DateTime? @map("resolved_at")
+  createdAt       DateTime @default(now()) @map("created_at")
+  updatedAt       DateTime @default(now()) @map("updated_at")
 
-  replies       TicketReply[]
+  replies         TicketReply[]
 
   @@map("support_tickets")
 }
@@ -541,4 +544,21 @@ model TicketReply {
   ticket        SupportTicket? @relation(fields: [ticketId], references: [id])
 
   @@map("ticket_replies")
+}
+
+model SupportAgent {
+  id            Int      @id @default(autoincrement())
+  uid           String?  @unique @db.VarChar(255)
+  name          String?  @db.VarChar(255)
+  email         String?  @unique @db.VarChar(255)
+  role          String?  @default("agent") @db.VarChar(30)
+  department    String?  @db.VarChar(100)
+  active        Boolean? @default(true)
+  currentLoad   Int?     @default(0) @map("current_load")
+  maxLoad       Int?     @default(10) @map("max_load")
+  online        Boolean? @default(false)
+  lastActiveAt  DateTime? @map("last_active_at")
+  createdAt     DateTime @default(now()) @map("created_at")
+
+  @@map("support_agents")
 }

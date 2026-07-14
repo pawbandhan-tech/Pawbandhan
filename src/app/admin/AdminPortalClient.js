@@ -34,6 +34,11 @@ export default function AdminPortalClient() {
   const [editingCase, setEditingCase] = useState(null);
   const [showCaseModal, setShowCaseModal] = useState(false);
 
+  // Support agent management state
+  const [supportAgents, setSupportAgents] = useState([]);
+  const [editingAgent, setEditingAgent] = useState(null);
+  const [showAgentForm, setShowAgentForm] = useState(false);
+
   // KYC Review state
   const [kycSubmissions, setKycSubmissions] = useState([]);
   const [reviewingKyc, setReviewingKyc] = useState(null);
@@ -141,7 +146,8 @@ export default function AdminPortalClient() {
         const cms = await adminFetch('/api/admin/cms').then(r => r.json());
         setCmsData(cms || {});
       } else if (t === 'support') {
-        // SupportWidget handles its own loading
+        const sRes = await adminFetch('/api/admin/support').then(r => r.json());
+        setSupportAgents(Array.isArray(sRes.agents) ? sRes.agents : []);
       } else if (t === 'entity-detail') {
         if (viewingEntity) {
           const detail = await adminFetch(`/api/admin/entity-detail?type=${viewingEntity._type}&id=${viewingEntity.id}`).then(r => r.json());
@@ -1822,8 +1828,100 @@ export default function AdminPortalClient() {
 
             {/* SUPPORT TAB */}
             {tab === 'support' && (
-              <div className="glass" style={{ padding: 24 }}>
-                <SupportWidget uid="" email={admin?.email} name={admin?.name} userType="admin" isAdmin={true} />
+              <div>
+                <div className="glass" style={{ padding: 24, marginBottom: 24 }}>
+                  <SupportWidget uid="" email={admin?.email} name={admin?.name} userType="admin" isAdmin={isStaff ? false : true} isStaff={isStaff} agentName={admin?.name} />
+                </div>
+
+                {adminRole === 'admin' && (
+                  <div>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
+                      <h3 style={{ fontFamily: 'var(--font-display)', fontWeight: 700, margin: 0, fontSize: '1.1rem' }}>
+                        <i className="fas fa-users-gear" style={{ marginRight: 8, color: 'var(--color-pb-primary)' }}></i>
+                        Support Agents
+                      </h3>
+                      {canCreate && <button className="btn btn-primary btn-sm" onClick={() => { setEditingAgent(null); setShowAgentForm(true); }}><i className="fas fa-plus"></i> Add Agent</button>}
+                    </div>
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: 14 }}>
+                      {supportAgents.map(a => (
+                        <div key={a.id} className="glass" style={{ padding: 18 }}>
+                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 10 }}>
+                            <div>
+                              <div style={{ fontWeight: 700, fontSize: '0.92rem' }}>{a.name}</div>
+                              <div style={{ fontSize: '0.78rem', color: 'var(--color-pb-text-muted)' }}>{a.department || 'Support'} | {a.role || 'agent'}</div>
+                            </div>
+                            <div style={{ textAlign: 'right' }}>
+                              <div style={{ width: 10, height: 10, borderRadius: '50%', background: a.online ? '#22c55e' : '#9ca3af', display: 'inline-block', marginBottom: 4 }}></div>
+                              <div style={{ fontSize: '0.72rem', color: 'var(--color-pb-text-muted)' }}>{a.online ? 'Online' : 'Offline'}</div>
+                            </div>
+                          </div>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}>
+                            <div style={{ flex: 1, height: 6, borderRadius: 3, background: 'var(--color-pb-border)', overflow: 'hidden' }}>
+                              <div style={{ height: '100%', borderRadius: 3, background: (a.currentLoad||0) >= (a.maxLoad||10) * 0.8 ? 'var(--color-pb-danger)' : 'var(--color-pb-primary)', width: `${((a.currentLoad||0)/(a.maxLoad||10))*100}%`, transition: 'width 0.3s' }}></div>
+                            </div>
+                            <span style={{ fontSize: '0.75rem', fontWeight: 600 }}>{a.currentLoad || 0}/{a.maxLoad || 10}</span>
+                          </div>
+                          <div style={{ display: 'flex', gap: 6 }}>
+                            {canCreate && <button className="btn btn-secondary btn-sm" onClick={() => { setEditingAgent(a); setShowAgentForm(true); }}><i className="fas fa-pen"></i></button>}
+                            {canDelete && <button className="btn btn-ghost btn-sm" onClick={async () => { if (confirm('Delete agent?')) { await adminFetch('/api/admin/support', { method: 'POST', body: JSON.stringify({ action: 'agent-delete', id: a.id }) }); loadTab('support'); } }} style={{ color: 'var(--color-pb-danger)' }}><i className="fas fa-trash"></i></button>}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {showAgentForm && (
+                  <div className="modal-overlay" onClick={() => { setShowAgentForm(false); setEditingAgent(null); }}>
+                    <div className="modal-content modal-sm" onClick={e => e.stopPropagation()}>
+                      <div className="modal-header"><h3>{editingAgent ? 'Edit Agent' : 'Add Agent'}</h3><button className="btn btn-ghost btn-icon" onClick={() => { setShowAgentForm(false); setEditingAgent(null); }}><i className="fas fa-xmark"></i></button></div>
+                      <div className="modal-body">
+                        <form onSubmit={async (e) => {
+                          e.preventDefault();
+                          const form = new FormData(e.target);
+                          const data = Object.fromEntries(form);
+                          if (editingAgent?.id) data.id = editingAgent.id;
+                          data.currentLoad = parseInt(data.currentLoad) || 0;
+                          data.maxLoad = parseInt(data.maxLoad) || 10;
+                          data.online = data.online === 'true';
+                          data.active = data.active === 'true';
+                          const res = await adminFetch('/api/admin/support', { method: 'POST', body: JSON.stringify({ ...data, action: editingAgent?.id ? 'agent-update' : 'agent-create' }) });
+                          const json = await res.json();
+                          if (json.ok) { showToast('Agent saved'); setShowAgentForm(false); setEditingAgent(null); loadTab('support'); }
+                          else showToast('Failed', 'error');
+                        }} style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+                          <div><label className="pb-label">Name</label><input className="pb-input" name="name" defaultValue={editingAgent?.name || ''} required /></div>
+                          <div><label className="pb-label">Email</label><input className="pb-input" name="email" type="email" defaultValue={editingAgent?.email || ''} required /></div>
+                          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+                            <div><label className="pb-label">Department</label><input className="pb-input" name="department" defaultValue={editingAgent?.department || 'Support'} /></div>
+                            <div><label className="pb-label">Role</label>
+                              <select className="pb-select" name="role" defaultValue={editingAgent?.role || 'agent'}>
+                                <option value="agent">Agent</option><option value="senior">Senior Agent</option><option value="lead">Team Lead</option>
+                              </select>
+                            </div>
+                          </div>
+                          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+                            <div><label className="pb-label">Current Load</label><input className="pb-input" name="currentLoad" type="number" defaultValue={editingAgent?.currentLoad || 0} /></div>
+                            <div><label className="pb-label">Max Load</label><input className="pb-input" name="maxLoad" type="number" defaultValue={editingAgent?.maxLoad || 10} /></div>
+                          </div>
+                          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+                            <div><label className="pb-label">Online</label>
+                              <select className="pb-select" name="online" defaultValue={editingAgent?.online ? 'true' : 'false'}>
+                                <option value="true">Online</option><option value="false">Offline</option>
+                              </select>
+                            </div>
+                            <div><label className="pb-label">Active</label>
+                              <select className="pb-select" name="active" defaultValue={editingAgent?.active !== false ? 'true' : 'false'}>
+                                <option value="true">Active</option><option value="false">Inactive</option>
+                              </select>
+                            </div>
+                          </div>
+                          <button type="submit" className="btn btn-primary" style={{ width: '100%' }}><i className="fas fa-save"></i> Save Agent</button>
+                        </form>
+                      </div>
+                    </div>
+                  </div>
+                )}
               </div>
             )}
 
@@ -2270,6 +2368,45 @@ export default function AdminPortalClient() {
                       <div><label className="pb-label"><i className="fab fa-telegram" style={{ marginRight: 6 }}></i>Telegram URL</label><input className="pb-input" name="telegram" defaultValue={cmsData.social_telegram || ''} placeholder="https://t.me/..." /></div>
                     </div>
                     <button type="submit" className="btn btn-primary" style={{ alignSelf: 'flex-start' }}><i className="fas fa-save"></i> Save Social Links</button>
+                  </form>
+                </div>
+
+                {/* Live Chat Settings */}
+                <div className="glass" style={{ padding: 28, marginBottom: 24 }}>
+                  <h3 style={{ fontFamily: 'var(--font-display)', fontWeight: 700, margin: '0 0 6px' }}>
+                    <i className="fas fa-headset" style={{ marginRight: 8, color: 'var(--color-pb-primary)' }}></i>
+                    Live Chat Settings
+                  </h3>
+                  <p style={{ fontSize: '0.82rem', color: 'var(--color-pb-text-muted)', marginBottom: 20 }}>Configure live chat availability hours and days.</p>
+                  <form onSubmit={async (e) => {
+                    e.preventDefault();
+                    const form = new FormData(e.target);
+                    const data = Object.fromEntries(form);
+                    const chatData = {};
+                    for (const [k, v] of Object.entries(data)) { chatData['chat_' + k] = v; }
+                    const res = await adminFetch('/api/admin/cms', { method: 'POST', body: JSON.stringify(chatData) });
+                    if (res.ok) showToast('Chat settings saved');
+                    else showToast('Failed to save', 'error');
+                  }} style={{ display: 'flex', flexDirection: 'column', gap: 14, maxWidth: 600 }}>
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+                      <div>
+                        <label className="pb-label">Live Chat Enabled</label>
+                        <select className="pb-select" name="enabled" defaultValue={cmsData.chat_enabled || 'true'}>
+                          <option value="true">Yes — Enabled</option>
+                          <option value="false">No — Disabled</option>
+                        </select>
+                      </div>
+                      <div>
+                        <label className="pb-label">Chat Days (comma-separated)</label>
+                        <input className="pb-input" name="days" defaultValue={cmsData.chat_days || 'mon,tue,wed,thu,fri,sat'} placeholder="mon,tue,wed,thu,fri,sat" />
+                        <div style={{ fontSize: '0.72rem', color: 'var(--color-pb-text-muted)', marginTop: 2 }}>Use: mon,tue,wed,thu,fri,sat,sun</div>
+                      </div>
+                    </div>
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+                      <div><label className="pb-label">Start Time (24h IST)</label><input className="pb-input" name="start" defaultValue={cmsData.chat_start || '09:00'} placeholder="09:00" /></div>
+                      <div><label className="pb-label">End Time (24h IST)</label><input className="pb-input" name="end" defaultValue={cmsData.chat_end || '18:00'} placeholder="18:00" /></div>
+                    </div>
+                    <button type="submit" className="btn btn-primary" style={{ alignSelf: 'flex-start' }}><i className="fas fa-save"></i> Save Chat Settings</button>
                   </form>
                 </div>
 
