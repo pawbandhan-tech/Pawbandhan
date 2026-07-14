@@ -32,19 +32,24 @@ async function autoAssign(priority) {
 export async function GET(request) {
   try {
     const { searchParams } = new URL(request.url);
-    const uid = searchParams.get('uid');
-    const email = searchParams.get('email');
+    const uid = (searchParams.get('uid') || '').trim();
+    const email = (searchParams.get('email') || '').trim();
+
     let where = {};
     if (uid) where.creatorUid = uid;
-    if (email) where.creatorEmail = email;
+    else if (email) where.creatorEmail = email;
+    // If no uid AND no email, return ALL tickets (admin/public view)
 
     const tickets = await prisma.supportTicket.findMany({
-      where,
+      where: Object.keys(where).length > 0 ? where : {},
       include: { replies: { orderBy: { createdAt: 'asc' } } },
       orderBy: { updatedAt: 'desc' },
     });
     return NextResponse.json(tickets);
-  } catch (e) { return NextResponse.json([]); }
+  } catch (e) {
+    console.error('[api/support/tickets] GET', e);
+    return NextResponse.json([]);
+  }
 }
 
 export async function POST(request) {

@@ -57,17 +57,30 @@ export default function SupportWidget({ uid, email, name, userType = 'customer',
 
   async function createTicket(e) {
     e.preventDefault();
+    setLoading(true);
     const form = new FormData(e.target);
     const data = Object.fromEntries(form);
     data.creatorUid = uid || '';
     data.creatorEmail = email || '';
-    data.creatorName = name || '';
+    data.creatorName = name || 'You';
     data.createdBy = userType;
     data.isLiveChat = data.isLiveChat === 'on';
-    const res = await fetch(createUrl, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data) });
-    const json = await res.json();
-    if (json.ok) { showToast('Ticket created!'); setShowForm(false); loadTickets(); }
-    else showToast(json.error || 'Failed to create', 'error');
+    try {
+      const res = await fetch(createUrl, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data) });
+      const json = await res.json();
+      if (json.ok && json.ticket) {
+        // Prepend new ticket to local state immediately
+        setTickets(prev => [json.ticket, ...prev]);
+        showToast(`Ticket ${json.ticket.ticketCode} created!`);
+        setShowForm(false);
+        e.target.reset();
+      } else {
+        showToast(json.error || 'Failed to create', 'error');
+      }
+    } catch (e) {
+      showToast('Network error. Please try again.', 'error');
+    }
+    setLoading(false);
   }
 
   async function sendReply(e) {
