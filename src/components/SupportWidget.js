@@ -18,12 +18,23 @@ export default function SupportWidget({ uid, email, name, userType = 'customer',
   const replyUrl = '/api/support/reply';
   const createUrl = '/api/support/tickets';
 
+  function authFetch(url, opts = {}) {
+    if (isAdmin || isStaff) {
+      const token = sessionStorage.getItem('pb_admin_token');
+      return fetch(url, {
+        ...opts,
+        headers: { 'Content-Type': 'application/json', ...(opts.headers || {}), Authorization: `Bearer ${token}` },
+      });
+    }
+    return fetch(url, { headers: { 'Content-Type': 'application/json' }, ...opts });
+  }
+
   function showToast(msg, type = 'success') { setToast({ msg, type }); setTimeout(() => setToast(null), 3000); }
 
   async function loadTickets() {
     setLoading(true);
     try {
-      const res = await fetch(apiUrl);
+      const res = await authFetch(apiUrl);
       const data = await res.json();
       if (isAdmin || isStaff) {
         setTickets(Array.isArray(data.tickets) ? data.tickets : []);
@@ -37,7 +48,7 @@ export default function SupportWidget({ uid, email, name, userType = 'customer',
 
   async function loadChatConfig() {
     try {
-      const res = await fetch('/api/support/chat-config');
+      const res = await authFetch('/api/support/chat-config');
       const data = await res.json();
       setChatConfig(data);
     } catch (e) { /* ignore */ }
@@ -46,7 +57,7 @@ export default function SupportWidget({ uid, email, name, userType = 'customer',
   useEffect(() => { loadTickets(); loadChatConfig(); }, []);
 
   async function fetchCreatorDetails(ticketId) {
-    const res = await fetch('/api/admin/support', {
+    const res = await authFetch('/api/admin/support', {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ action: 'creator-details', ticketId }),
     });
@@ -74,7 +85,7 @@ export default function SupportWidget({ uid, email, name, userType = 'customer',
     }
     data.isLiveChat = data.isLiveChat === 'on';
     try {
-      const res = await fetch(createUrl, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data) });
+      const res = await authFetch(createUrl, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data) });
       const json = await res.json();
       if (json.ok && json.ticket) {
         setTickets(prev => [json.ticket, ...prev]);
@@ -95,7 +106,7 @@ export default function SupportWidget({ uid, email, name, userType = 'customer',
     const form = new FormData(e.target);
     const message = form.get('message');
     if (!message) return;
-    const res = await fetch(replyUrl, {
+    const res = await authFetch(replyUrl, {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ ticketId: selectedTicket.id, message, senderType: isAdmin ? 'admin' : isStaff ? 'staff' : userType, senderUid: uid || '', senderName: name || agentName || (isAdmin ? 'Admin' : isStaff ? 'Support Staff' : 'User') }),
     });
@@ -105,14 +116,14 @@ export default function SupportWidget({ uid, email, name, userType = 'customer',
   }
 
   async function updateStatus(ticketId, status) {
-    const res = await fetch('/api/admin/support', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'update-status', ticketId, status }) });
+    const res = await authFetch('/api/admin/support', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'update-status', ticketId, status }) });
     const json = await res.json();
     if (json.ok) { showToast('Status updated'); loadTickets(); }
     else showToast('Failed', 'error');
   }
 
   async function transferTicket(ticketId, toAgentUid, toAgentName) {
-    const res = await fetch('/api/admin/support', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'transfer', ticketId, assignedTo: toAgentName, assignedToUid: toAgentUid }) });
+    const res = await authFetch('/api/admin/support', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'transfer', ticketId, assignedTo: toAgentName, assignedToUid: toAgentUid }) });
     const json = await res.json();
     if (json.ok) { showToast(`Transferred to ${toAgentName}`); setShowTransfer(false); loadTickets(); }
     else showToast('Transfer failed', 'error');
