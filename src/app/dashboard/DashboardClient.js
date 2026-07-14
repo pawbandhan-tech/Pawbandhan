@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import SiteLogo from '@/components/SiteLogo';
 import IdBadge from '@/components/IdBadge';
+import SupportWidget from '@/components/SupportWidget';
 import LiveTracker from '@/components/LiveTracker';
 import { ANIMAL_DATABASE } from '@/lib/animals';
 import { CASE_WORKFLOW_STAGES, getWorkflowStage, getProgressPercent } from '@/lib/case-workflow';
@@ -550,6 +551,10 @@ export default function DashboardClient() {
             <div style={{ fontWeight: 700, fontSize: '0.9rem', marginBottom: 4 }}>My Profile</div>
             <div style={{ fontSize: '0.78rem', color: 'var(--color-pb-text-muted)' }}>Edit your details</div>
           </button>
+        </div>
+
+        <div className="glass" style={{ padding: 24, marginBottom: 24 }}>
+          <SupportWidget uid={uid} email={profile?.email} name={profile?.name} userType="customer" />
         </div>
 
         <div className="glass" style={{ padding: 24, marginBottom: 24 }}>

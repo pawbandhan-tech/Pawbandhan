@@ -23,9 +23,9 @@ export function generatePrescriptionPDF(prescription) {
   doc.setFontSize(9);
   doc.setTextColor(100);
   doc.text(`Case ID: ${caseCode || 'N/A'}`, 20, 52);
-  doc.text(`Date: ${new Date(timestamp || Date.now()).toLocaleString('en-IN')}`, 120, 52);
+  doc.text(`Date: ${new Date(timestamp || Date.now()).toLocaleString('en-IN', { timeZone: 'Asia/Kolkata' })}`, 120, 52);
   doc.text(`IP Address: ${ip || 'N/A'}`, 20, 58);
-  doc.text(`Generated: ${new Date().toLocaleString('en-IN')}`, 120, 58);
+  doc.text(`Generated: ${new Date().toLocaleString('en-IN', { timeZone: 'Asia/Kolkata' })}`, 120, 58);
 
   doc.setFontSize(12);
   doc.setTextColor(0);
@@ -135,7 +135,7 @@ export function generateCaseReportPDF(caseData) {
       ['Injury Type', incident?.injuryType || 'N/A'],
       ['Description', incident?.description || 'N/A'],
       ['Location', `${incident?.latitude || 'N/A'}, ${incident?.longitude || 'N/A'}`],
-      ['Created', incident?.createdAt ? new Date(incident.createdAt).toLocaleString('en-IN') : 'N/A'],
+      ['Created', incident?.createdAt ? new Date(incident.createdAt).toLocaleString('en-IN', { timeZone: 'Asia/Kolkata' }) : 'N/A'],
       ['Reported By', caseData.userName || 'N/A'],
       ['Assigned NGO', caseData.ngoName || 'N/A'],
       ['Assigned Doctor', caseData.doctorName || 'N/A'],
@@ -165,7 +165,7 @@ export function generateCaseReportPDF(caseData) {
         t.status || '',
         t.actorType || '',
         t.note || '',
-        t.createdAt ? new Date(t.createdAt).toLocaleString('en-IN') : '',
+        t.createdAt ? new Date(t.createdAt).toLocaleString('en-IN', { timeZone: 'Asia/Kolkata' }) : '',
       ]),
       theme: 'grid',
       headStyles: { fillColor: [139, 92, 246] },
@@ -188,7 +188,7 @@ export function generateCaseReportPDF(caseData) {
         e.description || '',
         `₹${e.amount || 0}`,
         e.category || '',
-        e.createdAt ? new Date(e.createdAt).toLocaleString('en-IN') : '',
+        e.createdAt ? new Date(e.createdAt).toLocaleString('en-IN', { timeZone: 'Asia/Kolkata' }) : '',
       ]),
       theme: 'grid',
       headStyles: { fillColor: [139, 92, 246] },
@@ -233,7 +233,7 @@ export function generateEntityReportPDF(entities, title, columns) {
 
   doc.setFontSize(8);
   doc.setTextColor(100);
-  doc.text(`Generated: ${new Date().toLocaleString('en-IN')}`, 105, 36, { align: 'center' });
+  doc.text(`Generated: ${new Date().toLocaleString('en-IN', { timeZone: 'Asia/Kolkata' })}`, 105, 36, { align: 'center' });
 
   doc.autoTable({
     startY: 42,

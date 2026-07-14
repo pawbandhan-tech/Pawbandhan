@@ -35,41 +35,34 @@ export default function AuthForm({ role = 'customer', title, subtitle }) {
     representative: '/rep/dashboard',
   };
 
-  const sessionKeys = {
-    customer: 'customer_uid',
-    ngo: 'ngo_uid',
-    doctor: 'doctor_uid',
-    representative: 'representative_uid',
-  };
-
   async function handleSubmit(e) {
     e.preventDefault();
     setLoading(true);
     setError('');
 
-    const apiEndpoint = role === 'customer' ? '/api/auth/customer' : '/api/auth/partner';
-
     try {
       if (tab === 'login') {
-        const res = await fetch(apiEndpoint, {
+        // Customer portal login
+        const res = await fetch('/api/auth/customer', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ email, password, role, action: 'login' }),
+          body: JSON.stringify({ email, password, action: 'login' }),
         });
         const data = await res.json();
         if (!res.ok) throw new Error(data.error || 'Login failed');
-        sessionStorage.setItem(sessionKeys[role], data.uid || data.id);
+        sessionStorage.setItem(`${role}_uid`, data.uid || data.id);
         if (data.name) sessionStorage.setItem(`${role}_name`, data.name);
         router.push(dashboardRoutes[role]);
       } else {
-        const res = await fetch(apiEndpoint, {
+        // Register
+        const res = await fetch('/api/auth/customer', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ email, password, name, phone, role, action: 'register' }),
         });
         const data = await res.json();
         if (!res.ok) throw new Error(data.error || 'Registration failed');
-        sessionStorage.setItem(sessionKeys[role], data.uid || data.id);
+        sessionStorage.setItem(`${role}_uid`, data.uid || data.id);
         if (data.name) sessionStorage.setItem(`${role}_name`, data.name);
         router.push(dashboardRoutes[role]);
       }

@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import SiteLogo from '@/components/SiteLogo';
+import SupportWidget from '@/components/SupportWidget';
 
 function adminFetch(url, opts = {}) {
   if (typeof window === 'undefined') return Promise.resolve({ ok: false, json: () => ({}) });
@@ -30,11 +31,8 @@ export default function AdminPortalClient() {
   const [editingNgo, setEditingNgo] = useState(null);
   const [editingStory, setEditingStory] = useState(null);
   const [editingReview, setEditingReview] = useState(null);
-
-  // Case editing state
   const [editingCase, setEditingCase] = useState(null);
-  const [caseEditForm, setCaseEditForm] = useState({ status: '', workflowStatus: '', notes: '', ngoId: '', doctorId: '', repId: '' });
-  const [caseOptions, setCaseOptions] = useState({ ngos: [], doctors: [], reps: [] });
+  const [showCaseModal, setShowCaseModal] = useState(false);
 
   // KYC Review state
   const [kycSubmissions, setKycSubmissions] = useState([]);
@@ -142,6 +140,8 @@ export default function AdminPortalClient() {
       } else if (t === 'cms') {
         const cms = await adminFetch('/api/admin/cms').then(r => r.json());
         setCmsData(cms || {});
+      } else if (t === 'support') {
+        // SupportWidget handles its own loading
       } else if (t === 'entity-detail') {
         if (viewingEntity) {
           const detail = await adminFetch(`/api/admin/entity-detail?type=${viewingEntity._type}&id=${viewingEntity.id}`).then(r => r.json());
@@ -177,6 +177,7 @@ export default function AdminPortalClient() {
     { key: 'reviews', icon: 'fa-star', label: 'Reviews' },
     { key: 'team', icon: 'fa-people-group', label: 'Team' },
     { key: 'cms', icon: 'fa-newspaper', label: 'CMS' },
+    { key: 'support', icon: 'fa-headset', label: 'Support' },
     { key: 'settings', icon: 'fa-gear', label: 'Site Config' },
   ];
 
@@ -349,86 +350,6 @@ export default function AdminPortalClient() {
     setEntityDetailTab('overview');
     setTab('entity-detail');
     setLoading(true);
-  }
-
-  // Case management
-  function openCaseEditor(caseItem) {
-    setEditingCase(caseItem);
-    setCaseEditForm({
-      status: caseItem.status || '',
-      workflowStatus: caseItem.workflowStatus || '',
-      notes: '',
-      ngoId: caseItem.ngoId || caseItem.ngo_id || '',
-      doctorId: caseItem.doctorId || caseItem.doctor_id || '',
-      repId: caseItem.repId || caseItem.rep_id || '',
-    });
-    // Fetch dropdown options
-    Promise.all([
-      adminFetch('/api/admin/verified-ngos').then(r => r.text()).then(t => { try { return JSON.parse(t); } catch { return []; } }).catch(() => []),
-      adminFetch('/api/admin/all-accounts').then(r => r.text()).then(t => { try { return JSON.parse(t); } catch { return []; } }).catch(() => []),
-    ]).then(([ngosList, accounts]) => {
-      const doctors = (accounts || []).filter(a => a._type === 'doctor');
-      const reps = (accounts || []).filter(a => a._type === 'representative' || a._type === 'rider');
-      const ngos = (ngosList || []).filter(n => n.status === 'active' || n.status === 'kyc_submitted');
-      setCaseOptions({ ngos, doctors, reps });
-    });
-  }
-
-  async function saveCaseUpdate(e) {
-    e.preventDefault();
-    setLoading(true);
-    try {
-      const body = {
-        incidentCode: editingCase.incidentCode,
-        status: caseEditForm.status || undefined,
-        workflowStatus: caseEditForm.workflowStatus || undefined,
-        notes: caseEditForm.notes || undefined,
-        ngoId: caseEditForm.ngoId || undefined,
-        doctorId: caseEditForm.doctorId || undefined,
-        repId: caseEditForm.repId || undefined,
-      };
-      const res = await adminFetch('/api/admin/update-case', { method: 'POST', body: JSON.stringify(body) });
-      const json = await res.json();
-      if (res.ok) {
-        showToast('Case updated');
-        if (json.handoverPin) showToast(`Handover PIN: ${json.handoverPin}`, 'success');
-        setEditingCase(null);
-        loadTab('cases');
-      } else {
-        showToast(json.error || 'Failed to update case', 'error');
-      }
-    } catch (e) {
-      showToast('Failed to update case', 'error');
-    }
-    setLoading(false);
-  }
-
-  async function autoRouteCase(action) {
-    if (!editingCase || !editingCase.incidentCode) return;
-    setLoading(true);
-    try {
-      const res = await adminFetch('/api/admin/route-case', {
-        method: 'POST',
-        body: JSON.stringify({ incidentCode: editingCase.incidentCode, action }),
-      });
-      const json = await res.json();
-      if (res.ok) {
-        showToast(json.message || 'Case routed');
-        // Update the form with assigned entity
-        setCaseEditForm(prev => ({
-          ...prev,
-          ngoId: json.ngoId || prev.ngoId,
-          doctorId: json.doctorId || prev.doctorId,
-          repId: json.repId || prev.repId,
-          workflowStatus: json.workflowStatus || prev.workflowStatus,
-        }));
-      } else {
-        showToast(json.error || 'Failed to route case', 'error');
-      }
-    } catch (e) {
-      showToast('Failed to route case', 'error');
-    }
-    setLoading(false);
   }
 
   // Download functions
@@ -786,142 +707,225 @@ export default function AdminPortalClient() {
                   <button className="btn btn-secondary btn-sm" onClick={() => downloadPdf('cases')}>
                     <i className="fas fa-file-pdf"></i> Export Cases (PDF)
                   </button>
-                  <span style={{ marginLeft: 'auto', fontSize: '0.82rem', color: 'var(--color-pb-text-muted)' }}>{cases.length} cases</span>
                 </div>
                 <div className="glass" style={{ padding: 24 }}>
-                {cases.length === 0 ? <p style={{ color: 'var(--color-pb-text-muted)' }}>No cases found.</p> : (
-                  <div style={{ overflowX: 'auto' }}>
-                    <table className="pb-table">
-                      <thead><tr><th>Code</th><th>Animal</th><th>NGO</th><th>Doctor</th><th>Status</th><th>Workflow</th><th>Created</th><th>Actions</th></tr></thead>
-                      <tbody>
-                        {cases.map(c => (
-                          <tr key={c.id}>
-                            <td style={{ fontWeight: 700, fontFamily: 'monospace' }}>{c.incidentCode || `#${c.id}`}</td>
-                            <td>{c.animalType || '—'}</td>
-                            <td>{c.ngoName || '—'}</td>
-                            <td>{c.doctorName || '—'}</td>
-                            <td><span className={`badge ${c.status === 'active' || c.status === 'open' ? 'badge-green' : c.status === 'closed' ? 'badge-red' : 'badge-gold'}`}>{c.status || '—'}</span></td>
-                            <td><span className="badge badge-blue">{c.workflowStatus || '—'}</span></td>
-                            <td style={{ fontSize: '0.8rem', color: 'var(--color-pb-text-muted)' }}>{c.createdAt ? new Date(c.createdAt).toLocaleDateString() : '—'}</td>
-                            <td>
-                              <button className="btn btn-primary btn-sm" onClick={() => openCaseEditor(c)}>
-                                <i className="fas fa-gear"></i> Manage
-                              </button>
-                            </td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </div>
-                )}
-                </div>
-
-                {/* Case Edit Modal */}
-                {editingCase && (
-                  <div className="modal-overlay" onClick={() => setEditingCase(null)}>
-                    <div className="modal-content" onClick={e => e.stopPropagation()} style={{ maxWidth: 680 }}>
-                      <div className="modal-header">
-                        <h3>Manage Case — {editingCase.incidentCode}</h3>
-                        <button className="btn btn-ghost btn-icon" onClick={() => setEditingCase(null)}><i className="fas fa-xmark"></i></button>
-                      </div>
-                      <div className="modal-body" style={{ maxHeight: '65vh', overflowY: 'auto' }}>
-                        <div style={{ marginBottom: 16, padding: 12, borderRadius: 8, background: 'var(--color-pb-bg)', display: 'grid', gridTemplateColumns: 'auto 1fr', gap: '6px 16px', fontSize: '0.85rem' }}>
-                          <span style={{ color: 'var(--color-pb-text-muted)' }}>Animal:</span><span style={{ fontWeight: 600 }}>{editingCase.animalType || '—'}</span>
-                          <span style={{ color: 'var(--color-pb-text-muted)' }}>Description:</span><span>{editingCase.description || '—'}</span>
-                          <span style={{ color: 'var(--color-pb-text-muted)' }}>Current Status:</span><span className={`badge badge-gold`}>{editingCase.workflowStatus || editingCase.status || '—'}</span>
-                        </div>
-
-                        {/* Quick Route Buttons */}
-                        <div style={{ display: 'flex', gap: 8, marginBottom: 16, flexWrap: 'wrap' }}>
-                          <button className="btn btn-secondary btn-sm" onClick={() => autoRouteCase('assign_nearest_ngo')} disabled={loading}>
-                            <i className="fas fa-building"></i> Nearest NGO
-                          </button>
-                          <button className="btn btn-secondary btn-sm" onClick={() => autoRouteCase('assign_nearest_rider')} disabled={loading}>
-                            <i className="fas fa-motorcycle"></i> Nearest Rider
-                          </button>
-                          <button className="btn btn-secondary btn-sm" onClick={() => autoRouteCase('assign_nearest_doctor')} disabled={loading}>
-                            <i className="fas fa-stethoscope"></i> Nearest Doctor
-                          </button>
-                        </div>
-
-                        <form onSubmit={saveCaseUpdate} style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
-                          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
-                            <div>
-                              <label className="pb-label">Case Status</label>
-                              <select className="pb-select" value={caseEditForm.status} onChange={e => setCaseEditForm(p => ({ ...p, status: e.target.value }))}>
-                                <option value="">No change</option>
-                                <option value="open">Open</option>
-                                <option value="active">Active</option>
-                                <option value="pending">Pending</option>
-                                <option value="in_progress">In Progress</option>
-                                <option value="resolved">Resolved</option>
-                                <option value="closed">Closed</option>
-                              </select>
-                            </div>
-                            <div>
-                              <label className="pb-label">Workflow Stage</label>
-                              <select className="pb-select" value={caseEditForm.workflowStatus} onChange={e => setCaseEditForm(p => ({ ...p, workflowStatus: e.target.value }))}>
-                                <option value="">No change</option>
-                                <option value="reported">Reported</option>
-                                <option value="ngo_assigned">NGO Assigned</option>
-                                <option value="ngo_accepted">NGO Accepted</option>
-                                <option value="rider_dispatched">Rider Dispatched</option>
-                                <option value="rider_picking">En Route to Animal</option>
-                                <option value="animal_picked">Animal Picked Up</option>
-                                <option value="en_route_vet">En Route to Vet</option>
-                                <option value="at_vet">At Vet Clinic</option>
-                                <option value="pre_treatment">Pre-Treatment</option>
-                                <option value="in_treatment">In Treatment</option>
-                                <option value="post_treatment">Treatment Complete</option>
-                                <option value="payment_pending">Payment Pending</option>
-                                <option value="ready_for_drop">Ready for Drop-off</option>
-                                <option value="rider_dropping">En Route to Drop</option>
-                                <option value="delivered">Delivered Safe</option>
-                                <option value="closed">Case Closed</option>
-                              </select>
-                            </div>
-                          </div>
-
-                          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 12 }}>
-                            <div>
-                              <label className="pb-label">Assign NGO</label>
-                              <select className="pb-select" value={caseEditForm.ngoId} onChange={e => setCaseEditForm(p => ({ ...p, ngoId: e.target.value }))}>
-                                <option value="">No change</option>
-                                {caseOptions.ngos.map(n => <option key={n.id} value={n.id}>{n.name || `NGO #${n.id}`}</option>)}
-                              </select>
-                            </div>
-                            <div>
-                              <label className="pb-label">Assign Doctor</label>
-                              <select className="pb-select" value={caseEditForm.doctorId} onChange={e => setCaseEditForm(p => ({ ...p, doctorId: e.target.value }))}>
-                                <option value="">No change</option>
-                                {caseOptions.doctors.map(d => <option key={d.id} value={d.id}>{d._label || d.name || `Doctor #${d.id}`}</option>)}
-                              </select>
-                            </div>
-                            <div>
-                              <label className="pb-label">Assign Rider/Rep</label>
-                              <select className="pb-select" value={caseEditForm.repId} onChange={e => setCaseEditForm(p => ({ ...p, repId: e.target.value }))}>
-                                <option value="">No change</option>
-                                {caseOptions.reps.map(r => <option key={r.id} value={r.id}>{r._label || r.name || `Rider #${r.id}`}</option>)}
-                              </select>
-                            </div>
-                          </div>
-
-                          <div>
-                            <label className="pb-label">Notes / Admin Comment</label>
-                            <textarea className="pb-textarea" value={caseEditForm.notes} onChange={e => setCaseEditForm(p => ({ ...p, notes: e.target.value }))} rows={3} placeholder="Enter admin notes or reason for update…" />
-                          </div>
-
-                          <div style={{ display: 'flex', gap: 10 }}>
-                            <button type="submit" className="btn btn-primary" disabled={loading}>
-                              {loading ? <><i className="fas fa-spinner fa-spin"></i> Saving…</> : <><i className="fas fa-save"></i> Save Changes</>}
-                            </button>
-                            <button type="button" className="btn btn-ghost" onClick={() => setEditingCase(null)}>Cancel</button>
-                          </div>
-                        </form>
-                      </div>
+                  {cases.length === 0 ? <p style={{ color: 'var(--color-pb-text-muted)' }}>No cases found.</p> : (
+                    <div style={{ overflowX: 'auto' }}>
+                      <table className="pb-table">
+                        <thead><tr><th>Code</th><th>Animal</th><th>NGO</th><th>Doctor</th><th>Status</th><th>Workflow</th><th>Payment</th><th>Created</th><th>Actions</th></tr></thead>
+                        <tbody>
+                          {cases.map(c => (
+                            <tr key={c.id}>
+                              <td style={{ fontWeight: 700, fontFamily: 'monospace' }}>{c.incidentCode || `#${c.id}`}</td>
+                              <td>{c.animalType || '—'}</td>
+                              <td style={{ fontSize: '0.85rem' }}>{c.ngoName || '—'}</td>
+                              <td style={{ fontSize: '0.85rem' }}>{c.doctorName || '—'}</td>
+                              <td><span className="badge badge-green">{c.status || 'open'}</span></td>
+                              <td><span className="badge badge-gold">{c.workflowStatus || '—'}</span></td>
+                              <td><span className={`badge ${c.paymentStatus === 'paid' ? 'badge-green' : c.paymentStatus === 'pending' ? 'badge-gold' : 'badge-red'}`}>{c.paymentStatus || '—'}</span></td>
+                              <td style={{ fontSize: '0.8rem', color: 'var(--color-pb-text-muted)' }}>{c.createdAt ? new Date(c.createdAt).toLocaleDateString('en-IN') : '—'}</td>
+                              <td><button className="btn btn-secondary btn-sm" onClick={() => {
+                                setEditingCase(c);
+                                setShowCaseModal(true);
+                              }}><i className="fas fa-pen"></i> Edit</button></td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
                     </div>
+                  )}
+                </div>
+              </div>
+            )}
+
+            {/* Case Edit Modal */}
+            {showCaseModal && editingCase && (
+              <div className="modal-overlay" onClick={() => { setShowCaseModal(false); setEditingCase(null); }}>
+                <div className="modal-content" onClick={e => e.stopPropagation()} style={{ maxWidth: 750, maxHeight: '90vh' }}>
+                  <div className="modal-header">
+                    <h3>Manage Case: {editingCase.incidentCode || `#${editingCase.id}`}</h3>
+                    <button className="btn btn-ghost btn-icon" onClick={() => { setShowCaseModal(false); setEditingCase(null); }}><i className="fas fa-xmark"></i></button>
                   </div>
-                )}
+                  <div className="modal-body" style={{ display: 'flex', flexDirection: 'column', gap: 14, maxHeight: '65vh', overflowY: 'auto' }}>
+                    <form id="case-edit-form" onSubmit={async (e) => {
+                      e.preventDefault();
+                      const form = new FormData(e.target);
+                      const data = Object.fromEntries(form);
+                      data.id = editingCase.id;
+                      ['ngoId','doctorId','repId'].forEach(f => { if (data[f] !== undefined) data[f] = parseInt(data[f]) || null; });
+                      ['estimatedCost','finalCost','commissionPct'].forEach(f => { if (data[f] !== undefined) data[f] = parseFloat(data[f]) || 0; });
+                      ['latitude','longitude','releaseLat','releaseLng','pickupLat','pickupLng','dropLat','dropLng'].forEach(f => { if (data[f] !== undefined) data[f] = parseFloat(data[f]) || null; });
+
+                      const res = await adminFetch('/api/admin/update-case', { method: 'POST', body: JSON.stringify(data) });
+                      const json = await res.json();
+                      if (json.success) {
+                        showToast('Case updated successfully');
+                        if (json.handoverPin) showToast(`PIN: ${json.handoverPin}`, 'info');
+                        setShowCaseModal(false);
+                        setEditingCase(null);
+                        loadTab('cases');
+                      } else {
+                        showToast(json.error || 'Failed to update', 'error');
+                      }
+                    }} style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+
+                      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+                        <div>
+                          <label className="pb-label">Animal Type</label>
+                          <select className="pb-select" name="animalType" defaultValue={editingCase.animalType || ''}>
+                            <option value="">— Select —</option>
+                            <option value="dog">Dog</option><option value="cat">Cat</option>
+                            <option value="cow">Cow</option><option value="buffalo">Buffalo</option>
+                            <option value="horse">Horse</option><option value="goat">Goat</option>
+                            <option value="sheep">Sheep</option><option value="rabbit">Rabbit</option>
+                            <option value="bird">Bird</option><option value="pig">Pig</option>
+                            <option value="donkey">Donkey</option><option value="monkey">Monkey</option>
+                            <option value="snake">Snake</option><option value="other">Other</option>
+                          </select>
+                        </div>
+                        <div>
+                          <label className="pb-label">Injury Type</label>
+                          <select className="pb-select" name="injuryType" defaultValue={editingCase.injuryType || ''}>
+                            <option value="">— Select —</option>
+                            <option value="injured">Injured</option>
+                            <option value="sick">Sick</option>
+                            <option value="stuck">Stuck/Trapped</option>
+                            <option value="abandoned">Abandoned</option>
+                            <option value="accident">Accident</option>
+                            <option value="stray">Stray</option>
+                          </select>
+                        </div>
+                      </div>
+
+                      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 12 }}>
+                        <div>
+                          <label className="pb-label">Status</label>
+                          <select className="pb-select" name="status" defaultValue={editingCase.status || 'open'}>
+                            <option value="open">Open</option><option value="in_progress">In Progress</option>
+                            <option value="on_hold">On Hold</option><option value="resolved">Resolved</option>
+                            <option value="closed">Closed</option>
+                          </select>
+                        </div>
+                        <div>
+                          <label className="pb-label">Workflow Stage</label>
+                          <select className="pb-select" name="workflowStatus" defaultValue={editingCase.workflowStatus || 'reported'}>
+                            <option value="reported">Reported</option>
+                            <option value="ngo_assigned">NGO Assigned</option>
+                            <option value="ngo_accepted">NGO Accepted</option>
+                            <option value="rider_dispatched">Rider Dispatched</option>
+                            <option value="rider_picking">En Route to Animal</option>
+                            <option value="animal_picked">Animal Picked Up</option>
+                            <option value="en_route_vet">En Route to Vet</option>
+                            <option value="at_vet">At Vet Clinic</option>
+                            <option value="pre_treatment">Pre-Treatment</option>
+                            <option value="in_treatment">Under Treatment</option>
+                            <option value="post_treatment">Treatment Complete</option>
+                            <option value="payment_pending">Awaiting Payment</option>
+                            <option value="ready_for_drop">Ready for Drop</option>
+                            <option value="rider_dropping">En Route to Drop</option>
+                            <option value="delivered">Delivered Safe</option>
+                            <option value="closed">Case Closed</option>
+                          </select>
+                        </div>
+                        <div>
+                          <label className="pb-label">Payment Status</label>
+                          <select className="pb-select" name="paymentStatus" defaultValue={editingCase.paymentStatus || 'pending'}>
+                            <option value="pending">Pending</option>
+                            <option value="community_listed">Community Listed</option>
+                            <option value="partially_paid">Partially Paid</option>
+                            <option value="paid">Paid</option>
+                            <option value="refunded">Refunded</option>
+                          </select>
+                        </div>
+                      </div>
+
+                      <div>
+                        <label className="pb-label">Description</label>
+                        <textarea className="pb-textarea" name="description" defaultValue={editingCase.description || ''} rows={2} />
+                      </div>
+
+                      <div>
+                        <label className="pb-label">Notes / Admin Remarks</label>
+                        <textarea className="pb-textarea" name="notes" defaultValue={editingCase.notes || ''} rows={2} />
+                      </div>
+
+                      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+                        <div>
+                          <label className="pb-label">Estimated Cost (₹)</label>
+                          <input className="pb-input" name="estimatedCost" type="number" defaultValue={editingCase.estimatedCost || ''} />
+                        </div>
+                        <div>
+                          <label className="pb-label">Final Cost (₹)</label>
+                          <input className="pb-input" name="finalCost" type="number" defaultValue={editingCase.finalCost || ''} />
+                        </div>
+                        <div>
+                          <label className="pb-label">Commission (%)</label>
+                          <input className="pb-input" name="commissionPct" type="number" step="0.5" defaultValue={editingCase.commissionPct || 15} />
+                        </div>
+                        <div>
+                          <label className="pb-label">Payment Method</label>
+                          <select className="pb-select" name="paymentMethod" defaultValue={editingCase.paymentMethod || ''}>
+                            <option value="">— Select —</option>
+                            <option value="direct">Direct</option>
+                            <option value="community">Community</option>
+                            <option value="partial">Partial</option>
+                          </select>
+                        </div>
+                      </div>
+
+                      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 12 }}>
+                        <div>
+                          <label className="pb-label">NGO ID</label>
+                          <input className="pb-input" name="ngoId" type="number" defaultValue={editingCase.ngoId || ''} />
+                        </div>
+                        <div>
+                          <label className="pb-label">Doctor ID</label>
+                          <input className="pb-input" name="doctorId" type="number" defaultValue={editingCase.doctorId || ''} />
+                        </div>
+                        <div>
+                          <label className="pb-label">Rider/Rep ID</label>
+                          <input className="pb-input" name="repId" type="number" defaultValue={editingCase.repId || ''} />
+                        </div>
+                      </div>
+
+                      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+                        <div><label className="pb-label">Resolution Type</label><input className="pb-input" name="resolutionType" defaultValue={editingCase.resolutionType || ''} /></div>
+                        <div><label className="pb-label">Dog Tag ID</label><input className="pb-input" name="dogTagId" defaultValue={editingCase.dogTagId || ''} /></div>
+                        <div><label className="pb-label">Handover PIN</label><input className="pb-input" name="handoverPin" defaultValue={editingCase.handoverPin || ''} placeholder="Leave empty to auto-generate" /></div>
+                        <div><label className="pb-label">Release Address</label><input className="pb-input" name="releaseAddress" defaultValue={editingCase.releaseAddress || ''} /></div>
+                      </div>
+
+                      <div>
+                        <label className="pb-label">Treatment Report</label>
+                        <textarea className="pb-textarea" name="treatmentReport" defaultValue={editingCase.treatmentReport || ''} rows={2} />
+                      </div>
+
+                      <div>
+                        <label className="pb-label">Location (Lat, Lng)</label>
+                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+                          <input className="pb-input" name="latitude" placeholder="Latitude" defaultValue={editingCase.latitude || ''} />
+                          <input className="pb-input" name="longitude" placeholder="Longitude" defaultValue={editingCase.longitude || ''} />
+                        </div>
+                      </div>
+
+                      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+                        <div>
+                          <label className="pb-label">Drop Location (Lat, Lng)</label>
+                          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+                            <input className="pb-input" name="dropLat" placeholder="Lat" defaultValue={editingCase.dropLat || ''} />
+                            <input className="pb-input" name="dropLng" placeholder="Lng" defaultValue={editingCase.dropLng || ''} />
+                          </div>
+                        </div>
+                        <div><label className="pb-label">Drop Address</label><input className="pb-input" name="dropAddress" defaultValue={editingCase.dropAddress || ''} /></div>
+                      </div>
+
+                      <div style={{ display: 'flex', gap: 12, justifyContent: 'flex-end', paddingTop: 8, borderTop: '1px solid var(--color-pb-border)' }}>
+                        <button type="button" className="btn btn-ghost" onClick={() => { setShowCaseModal(false); setEditingCase(null); }}>Cancel</button>
+                        <button type="submit" className="btn btn-primary"><i className="fas fa-save"></i> Save All Changes</button>
+                      </div>
+                    </form>
+                  </div>
+                </div>
               </div>
             )}
 
@@ -1813,6 +1817,13 @@ export default function AdminPortalClient() {
                     </form>
                   </div>
                 )}
+              </div>
+            )}
+
+            {/* SUPPORT TAB */}
+            {tab === 'support' && (
+              <div className="glass" style={{ padding: 24 }}>
+                <SupportWidget uid="" email={admin?.email} name={admin?.name} userType="admin" isAdmin={true} />
               </div>
             )}
 

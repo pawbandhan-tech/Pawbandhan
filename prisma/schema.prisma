@@ -504,3 +504,41 @@ model CommissionConfig {
 
   @@map("commission_config")
 }
+
+// ─── Support Tickets ───
+
+model SupportTicket {
+  id            Int      @id @default(autoincrement())
+  ticketCode    String?  @map("ticket_code") @unique @db.VarChar(20)
+  subject       String?  @db.VarChar(255)
+  description   String?  @db.Text
+  category      String?  @db.VarChar(50)
+  priority      String?  @default("medium") @db.VarChar(20)
+  status        String?  @default("open") @db.VarChar(20)
+  createdBy     String?  @map("created_by") @db.VarChar(50)
+  creatorUid    String?  @map("creator_uid") @db.VarChar(255)
+  creatorEmail  String?  @map("creator_email") @db.VarChar(255)
+  creatorName   String?  @map("creator_name") @db.VarChar(255)
+  assignedTo    String?  @map("assigned_to") @db.VarChar(255)
+  resolvedAt    DateTime? @map("resolved_at")
+  createdAt     DateTime @default(now()) @map("created_at")
+  updatedAt     DateTime @default(now()) @map("updated_at")
+
+  replies       TicketReply[]
+
+  @@map("support_tickets")
+}
+
+model TicketReply {
+  id            Int      @id @default(autoincrement())
+  ticketId      Int?     @map("ticket_id")
+  message       String?  @db.Text
+  senderType    String?  @map("sender_type") @db.VarChar(30)
+  senderUid     String?  @map("sender_uid") @db.VarChar(255)
+  senderName    String?  @map("sender_name") @db.VarChar(255)
+  createdAt     DateTime @default(now()) @map("created_at")
+
+  ticket        SupportTicket? @relation(fields: [ticketId], references: [id])
+
+  @@map("ticket_replies")
+}

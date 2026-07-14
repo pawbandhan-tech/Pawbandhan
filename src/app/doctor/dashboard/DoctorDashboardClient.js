@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import SiteLogo from '@/components/SiteLogo';
+import SupportWidget from '@/components/SupportWidget';
 import { CASE_WORKFLOW_STAGES, getWorkflowStage, getProgressPercent } from '@/lib/case-workflow';
 
 const ANIMAL_ICONS = { dog: 'fa-dog', cat: 'fa-cat', cow: 'fa-cow', horse: 'fa-horse', bird: 'fa-dove', default: 'fa-paw' };
@@ -723,6 +724,10 @@ export default function DoctorDashboardClient() {
               <div><div style={{ fontSize: '0.78rem', color: 'var(--color-pb-text-muted)', marginBottom: 4 }}>Hospital</div><div style={{ fontWeight: 600, fontSize: '0.92rem' }}>{doctor?.hospitalName || '—'}</div></div>
               <div><div style={{ fontSize: '0.78rem', color: 'var(--color-pb-text-muted)', marginBottom: 4 }}>PRN</div><div style={{ fontWeight: 600, fontSize: '0.92rem' }}>{doctor?.prn || '—'}</div></div>
             </div>
+          </div>
+
+          <div className="glass" style={{ padding: 24, marginTop: 24 }}>
+            <SupportWidget uid={uid} email={profile?.email} name={profile?.name} userType="doctor" />
           </div>
         </div>
       )}

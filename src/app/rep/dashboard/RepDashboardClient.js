@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import SiteLogo from '@/components/SiteLogo';
+import SupportWidget from '@/components/SupportWidget';
 
 export default function RepDashboardClient() {
   const router = useRouter();
@@ -259,6 +260,11 @@ export default function RepDashboardClient() {
               ))}
             </div>
           )}
+        </div>
+
+        {/* Support */}
+        <div className="glass" style={{ padding: 24, marginBottom: 24 }}>
+          <SupportWidget uid={uid} email={profile?.email} name={profile?.name} userType="rep" />
         </div>
 
         {/* Profile */}

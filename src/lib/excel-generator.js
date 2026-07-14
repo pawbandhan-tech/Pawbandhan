@@ -27,7 +27,7 @@ export function casesToRows(cases) {
     'Est. Cost': c.estimatedCost || 0,
     'Final Cost': c.finalCost || 0,
     'Payment Status': c.paymentStatus || '',
-    'Created': c.createdAt ? new Date(c.createdAt).toLocaleDateString('en-IN') : '',
+    'Created': c.createdAt ? new Date(c.createdAt).toLocaleDateString('en-IN', { timeZone: 'Asia/Kolkata' }) : '',
   }));
 }
 
@@ -38,7 +38,7 @@ export function accountsToRows(accounts) {
     'Type': a._type || '',
     'Status': a.status || '',
     'Phone': a.phone || '',
-    'Created': a.createdAt ? new Date(a.createdAt).toLocaleDateString('en-IN') : '',
+    'Created': a.createdAt ? new Date(a.createdAt).toLocaleDateString('en-IN', { timeZone: 'Asia/Kolkata' }) : '',
   }));
 }
 
@@ -48,6 +48,6 @@ export function expensesToRows(expenses) {
     'Description': e.description || '',
     'Amount': e.amount || 0,
     'Category': e.category || '',
-    'Date': e.createdAt ? new Date(e.createdAt).toLocaleDateString('en-IN') : '',
+    'Date': e.createdAt ? new Date(e.createdAt).toLocaleDateString('en-IN', { timeZone: 'Asia/Kolkata' }) : '',
   }));
 }

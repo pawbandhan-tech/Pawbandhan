@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import SiteLogo from '@/components/SiteLogo';
+import SupportWidget from '@/components/SupportWidget';
 
 export default function NgoDashboardClient() {
   const router = useRouter();
@@ -200,6 +201,11 @@ export default function NgoDashboardClient() {
               ))}
             </div>
           )}
+        </div>
+
+        {/* Support */}
+        <div className="glass" style={{ padding: 24, marginBottom: 24 }}>
+          <SupportWidget uid={uid} email={ngo?.email} name={ngo?.name} userType="ngo" />
         </div>
 
         {/* Profile Summary */}
