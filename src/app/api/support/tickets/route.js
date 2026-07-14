@@ -2,11 +2,9 @@ import prisma from '@/lib/prisma';
 import { NextResponse } from 'next/server';
 
 function generateTicketCode() {
-  const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
-  let seg1 = '', seg2 = '';
-  for (let i = 0; i < 4; i++) seg1 += chars[Math.floor(Math.random() * chars.length)];
-  for (let i = 0; i < 4; i++) seg2 += chars[Math.floor(Math.random() * chars.length)];
-  return `PB-TKT-${seg1}-${seg2}`;
+  const ts = Date.now().toString().slice(-8);
+  const rand = String(Math.floor(1000 + Math.random() * 9000));
+  return `PB-TKT-${ts}${rand}`;
 }
 
 async function autoAssign(priority) {

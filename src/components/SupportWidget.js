@@ -60,16 +60,23 @@ export default function SupportWidget({ uid, email, name, userType = 'customer',
     setLoading(true);
     const form = new FormData(e.target);
     const data = Object.fromEntries(form);
-    data.creatorUid = uid || '';
-    data.creatorEmail = email || '';
-    data.creatorName = name || 'You';
-    data.createdBy = userType;
+    // Admin creating on behalf of a user
+    if (isAdmin && data.adminCreatorName) {
+      data.creatorUid = data.adminCreatorUid || '';
+      data.creatorEmail = data.adminCreatorEmail || '';
+      data.creatorName = data.adminCreatorName;
+      data.createdBy = 'admin_on_behalf';
+    } else {
+      data.creatorUid = uid || '';
+      data.creatorEmail = email || '';
+      data.creatorName = name || (isAdmin ? 'Admin' : 'You');
+      data.createdBy = userType;
+    }
     data.isLiveChat = data.isLiveChat === 'on';
     try {
       const res = await fetch(createUrl, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data) });
       const json = await res.json();
       if (json.ok && json.ticket) {
-        // Prepend new ticket to local state immediately
         setTickets(prev => [json.ticket, ...prev]);
         showToast(`Ticket ${json.ticket.ticketCode} created!`);
         setShowForm(false);
@@ -351,10 +358,26 @@ export default function SupportWidget({ uid, email, name, userType = 'customer',
         <div className="modal-overlay" onClick={() => setShowForm(false)}>
           <div className="modal-content modal-sm" onClick={e => e.stopPropagation()}>
             <div className="modal-header"><h3><i className="fas fa-paw" style={{ marginRight: 6, color: 'var(--color-pb-primary)' }}></i>Create Support Ticket</h3><button className="btn btn-ghost btn-icon" onClick={() => setShowForm(false)}><i className="fas fa-xmark"></i></button></div>
-            <div className="modal-body">
+            <div className="modal-body" style={{ maxHeight: '70vh', overflowY: 'auto' }}>
               <form onSubmit={createTicket} style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
-                <div><label className="pb-label">Subject</label><input className="pb-input" name="subject" required placeholder="Brief summary of your issue" /></div>
-                <div><label className="pb-label">Description</label><textarea className="pb-textarea" name="description" rows={4} required placeholder="Detailed description of your issue" /></div>
+                {isAdmin && (
+                  <>
+                    <div style={{ padding: '12px 14px', borderRadius: 10, background: 'rgba(139,92,246,0.08)', border: '1px solid rgba(139,92,246,0.15)' }}>
+                      <div style={{ fontWeight: 700, fontSize: '0.82rem', marginBottom: 10, color: 'var(--color-pb-primary)' }}>
+                        <i className="fas fa-user-pen" style={{ marginRight: 6 }}></i>Create ticket on behalf of:
+                      </div>
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                        <div><input className="pb-input" name="adminCreatorName" placeholder="User name" style={{ fontSize: '0.85rem' }} /></div>
+                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
+                          <input className="pb-input" name="adminCreatorEmail" type="email" placeholder="User email" style={{ fontSize: '0.85rem' }} />
+                          <input className="pb-input" name="adminCreatorUid" placeholder="User UID (optional)" style={{ fontSize: '0.85rem' }} />
+                        </div>
+                      </div>
+                    </div>
+                  </>
+                )}
+                <div><label className="pb-label">Subject</label><input className="pb-input" name="subject" required placeholder="Brief summary of the issue" /></div>
+                <div><label className="pb-label">Description</label><textarea className="pb-textarea" name="description" rows={4} required placeholder="Detailed description" /></div>
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
                   <div><label className="pb-label">Category</label>
                     <select className="pb-select" name="category">
