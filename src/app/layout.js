@@ -1,6 +1,5 @@
 import './globals.css';
 import FloatingSupport from '@/components/FloatingSupport';
-import SupportWidget from '@/components/SupportWidget';
 
 export const metadata = {
   title: {
@@ -29,14 +28,6 @@ export default function RootLayout({ children }) {
       <body className="pb-public">
         {children}
         <FloatingSupport />
-        <dialog id="global-support-dialog" style={{ border: 'none', borderRadius: 16, padding: 0, maxWidth: 700, width: '90vw', maxHeight: '80vh', overflow: 'auto', background: 'var(--color-pb-bg)' }}>
-          <div style={{ padding: 24 }}>
-            <button style={{ float: 'right', background: 'none', border: 'none', fontSize: 20, cursor: 'pointer' }} onClick={() => document.getElementById('global-support-dialog')?.close()}>
-              <i className="fas fa-xmark"></i>
-            </button>
-            <SupportWidget userType="visitor" />
-          </div>
-        </dialog>
       </body>
     </html>
   );
